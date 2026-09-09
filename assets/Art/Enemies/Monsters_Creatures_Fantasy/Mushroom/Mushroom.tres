@@ -1,0 +1,101 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://di25ph4x42x85"]
+
+[ext_resource type="Texture2D" uid="uid://dvt8hm15utje2" path="res://assets/Art/Enemies/Monsters_Creatures_Fantasy/Mushroom/Idle.png" id="1_idle"]
+[ext_resource type="Texture2D" uid="uid://nhkr7eddxba5" path="res://assets/Art/Enemies/Monsters_Creatures_Fantasy/Mushroom/Attack.png" id="2_attack"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_0"]
+atlas = ExtResource("2_attack")
+region = Rect2(0, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_1"]
+atlas = ExtResource("2_attack")
+region = Rect2(150, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_2"]
+atlas = ExtResource("2_attack")
+region = Rect2(300, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_3"]
+atlas = ExtResource("2_attack")
+region = Rect2(450, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_4"]
+atlas = ExtResource("2_attack")
+region = Rect2(600, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_5"]
+atlas = ExtResource("2_attack")
+region = Rect2(750, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_6"]
+atlas = ExtResource("2_attack")
+region = Rect2(900, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_atk_7"]
+atlas = ExtResource("2_attack")
+region = Rect2(1050, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_0"]
+atlas = ExtResource("1_idle")
+region = Rect2(0, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_1"]
+atlas = ExtResource("1_idle")
+region = Rect2(150, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_2"]
+atlas = ExtResource("1_idle")
+region = Rect2(300, 0, 150, 150)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_3"]
+atlas = ExtResource("1_idle")
+region = Rect2(450, 0, 150, 150)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_atk_7")
+}],
+"loop": false,
+"name": &"Attack",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_idle_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_idle_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_idle_3")
+}],
+"loop": true,
+"name": &"Idle",
+"speed": 5.0
+}]

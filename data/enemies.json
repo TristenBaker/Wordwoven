@@ -1,0 +1,68 @@
+{
+	"rat": {
+		"name": "Giant Rat",
+		"health": 18,
+		"attack": 4,
+		"gold": 24,
+		"texture": "uid://dgdm6vfix0e5c",
+		"frame_width": 0,
+		"tag_pool": ["filthy", "quick", "hungry", "small"],
+		"tag_count": 1,
+		"tier": 1
+	},
+	"goblin": {
+		"name": "Goblin",
+		"health": 24,
+		"attack": 5,
+		"gold": 32,
+		"texture": "uid://4xk3byq3stme",
+		"frame_width": 150,
+		"tag_pool": ["greedy", "sneaky", "angry", "crafty"],
+		"tag_count": 1,
+		"tier": 1
+	},
+	"mushroom": {
+		"name": "Myconid",
+		"health": 32,
+		"attack": 6,
+		"gold": 40,
+		"texture": "uid://dvt8hm15utje2",
+		"frame_width": 150,
+		"tag_pool": ["poisonous", "damp", "dark", "rooted"],
+		"tag_count": 1,
+		"tier": 2
+	},
+	"skeleton": {
+		"name": "Skeleton",
+		"health": 38,
+		"attack": 7,
+		"gold": 48,
+		"texture": "uid://bencke4h02jxv",
+		"frame_width": 150,
+		"tag_pool": ["dead", "brittle", "cold", "armed"],
+		"tag_count": 2,
+		"tier": 2
+	},
+	"flying_eye": {
+		"name": "Flying Eye",
+		"health": 44,
+		"attack": 8,
+		"gold": 56,
+		"texture": "uid://cq2v2bcs28yng",
+		"frame_width": 150,
+		"tag_pool": ["watchful", "flying", "strange", "round"],
+		"tag_count": 2,
+		"tier": 3
+	},
+	"dragon": {
+		"name": "Red Dragon",
+		"health": 70,
+		"attack": 10,
+		"gold": 120,
+		"texture": "uid://bcf2uyfvx7of7",
+		"frame_width": 0,
+		"tag_pool": ["fiery", "huge", "ancient", "greedy"],
+		"tag_count": 2,
+		"tier": 4
+	}
+}

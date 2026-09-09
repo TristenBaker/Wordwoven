@@ -1,0 +1,63 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy.gd" id="1_enemy"]
+[ext_resource type="FontFile" uid="uid://rqd0nt2kx661" path="res://assets/Fonts/Junicode-Bold.ttf" id="2_bold"]
+
+[node name="Enemy" type="Control"]
+custom_minimum_size = Vector2(360, 380)
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_enemy")
+
+[node name="Sprite" type="TextureRect" parent="."]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 0.0
+offset_right = 120.0
+offset_bottom = 240.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoBox" type="VBoxContainer" parent="."]
+layout_mode = 0
+anchor_top = 0.0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 248.0
+offset_right = 160.0
+offset_bottom = 380.0
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="InfoBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_bold")
+theme_override_font_sizes/font_size = 30
+text = "Enemy"
+horizontal_alignment = 1
+
+[node name="HealthBar" type="ProgressBar" parent="InfoBox"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+max_value = 1.0
+value = 1.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="InfoBox/HealthBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 16
+text = "1 / 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TagsLabel" type="Label" parent="InfoBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 22
+text = "tags"
+horizontal_alignment = 1

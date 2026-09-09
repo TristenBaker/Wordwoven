@@ -1,0 +1,94 @@
+{
+	"filthy": {
+		"n": ["soap"], "v": ["wash"],
+		"a": ["clean"], "r": ["cleanly"]
+	},
+	"quick": {
+		"n": ["tar"], "v": ["slow"],
+		"a": ["sluggish"], "r": ["slowly"]
+	},
+	"hungry": {
+		"n": ["feast"], "v": ["feed"],
+		"a": ["full"], "r": ["fully"]
+	},
+	"small": {
+		"n": ["giant"], "v": ["enlarge"],
+		"a": ["large"], "r": ["hugely"]
+	},
+	"greedy": {
+		"n": ["charity"], "v": ["donate"],
+		"a": ["generous"], "r": ["generously"]
+	},
+	"sneaky": {
+		"n": ["spotlight"], "v": ["reveal"],
+		"a": ["obvious"], "r": ["openly"]
+	},
+	"angry": {
+		"n": ["peace"], "v": ["soothe"],
+		"a": ["calm"], "r": ["calmly"]
+	},
+	"crafty": {
+		"n": ["honesty"], "v": ["expose"],
+		"a": ["honest"], "r": ["honestly"]
+	},
+	"poisonous": {
+		"n": ["antidote"], "v": ["cure"],
+		"a": ["harmless"], "r": ["safely"]
+	},
+	"damp": {
+		"n": ["towel"], "v": ["dry"],
+		"a": ["dry"], "r": ["dryly"]
+	},
+	"dark": {
+		"n": ["light"], "v": ["illuminate"],
+		"a": ["bright"], "r": ["brightly"]
+	},
+	"rooted": {
+		"n": ["wind"], "v": ["uproot"],
+		"a": ["mobile"], "r": ["freely"]
+	},
+	"dead": {
+		"n": ["life"], "v": ["revive"],
+		"a": ["living"], "r": ["vigorously"]
+	},
+	"brittle": {
+		"n": ["cushion"], "v": ["soften"],
+		"a": ["flexible"], "r": ["flexibly"]
+	},
+	"cold": {
+		"n": ["fire"], "v": ["warm"],
+		"a": ["hot"], "r": ["warmly"]
+	},
+	"armed": {
+		"n": ["shield"], "v": ["disarm"],
+		"a": ["defenseless"], "r": ["harmlessly"]
+	},
+	"watchful": {
+		"n": ["lullaby"], "v": ["distract"],
+		"a": ["careless"], "r": ["carelessly"]
+	},
+	"flying": {
+		"n": ["gravity"], "v": ["ground"],
+		"a": ["grounded"], "r": ["downward"]
+	},
+	"strange": {
+		"n": ["friend"], "v": ["familiarize"],
+		"a": ["familiar"], "r": ["normally"]
+	},
+	"round": {
+		"n": ["corner"], "v": ["flatten"],
+		"a": ["angular"], "r": ["squarely"]
+	},
+	"fiery": {
+		"n": ["water", "ice"], "v": ["extinguish", "douse"],
+		"a": ["icy", "cold"], "r": ["coldly"]
+	},
+	"huge": {
+		"n": ["needle"], "v": ["shrink"],
+		"a": ["tiny"], "r": ["minutely"]
+	},
+	"ancient": {
+		"n": ["youth"], "v": ["renew"],
+		"a": ["young"], "r": ["newly"]
+	}
+}

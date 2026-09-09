@@ -1,0 +1,32 @@
+WORDNET DATABASE SETUP
+======================
+
+This folder should contain the WordNet lexical database.
+
+QUICK SETUP:
+1. Download: http://wordnetcode.princeton.edu/wn3.1.dict.tar.gz
+2. Extract the 'dict' folder here so the structure looks like:
+   
+   assets/wordnet/
+   └── dict/
+	   ├── data.adj
+	   ├── data.adv  
+	   ├── data.noun
+	   ├── data.verb
+	   ├── index.adj
+	   ├── index.adv
+	   ├── index.noun
+	   ├── index.verb
+	   └── (other files...)
+
+MACOS USERS:
+If you have Homebrew:
+   brew install wordnet
+   
+   # Apple Silicon (M1/M2/M3):
+   cp -r /opt/homebrew/opt/wordnet/dict ./dict
+   
+   # Intel Mac:
+   cp -r /usr/local/opt/wordnet/dict ./dict
+
+The game will still run without WordNet, but word validation will be disabled.

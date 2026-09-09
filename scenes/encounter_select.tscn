@@ -1,0 +1,46 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/encounter_select.gd" id="1_select"]
+[ext_resource type="Script" path="res://scripts/combat/enemy_factory.gd" id="2_factory"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
+
+[node name="EncounterSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_select")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.08, 0.11, 1)
+
+[node name="EnemyFactory" type="Node" parent="."]
+script = ExtResource("2_factory")
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Menu" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
+theme_override_fonts/font = ExtResource("3_title")
+theme_override_font_sizes/font_size = 56
+text = "Choose your next foe"
+horizontal_alignment = 1
+
+[node name="ChoicesBox" type="HBoxContainer" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 32
+alignment = 1

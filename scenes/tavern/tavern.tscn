@@ -1,0 +1,218 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" uid="uid://doq6a0soi6170" path="res://scripts/tavern/tavern_controller.gd" id="1_tavern"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
+[ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="4_economy"]
+
+[node name="Tavern" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_tavern")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.14, 0.09, 0.05, 1)
+
+[node name="Systems" type="Node" parent="."]
+
+[node name="EconomySystem" type="Node" parent="Systems"]
+script = ExtResource("4_economy")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 12.0
+offset_right = -24.0
+offset_bottom = 72.0
+theme_override_constants/separation = 32
+
+[node name="TitleLabel" type="Label" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
+theme_override_fonts/font = ExtResource("2_title")
+theme_override_font_sizes/font_size = 44
+text = "The Inkwell Tavern"
+
+[node name="HealthLabel" type="Label" parent="TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.5, 0.45, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 24
+text = "Health: 50 / 50"
+
+[node name="GoldLabel" type="Label" parent="TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 24
+text = "Gold: 0"
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 84.0
+offset_right = -24.0
+offset_bottom = -84.0
+theme_override_constants/separation = 24
+
+[node name="ShopPanel" type="PanelContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.6
+
+[node name="ShopMargin" type="MarginContainer" parent="Layout/ShopPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="ShopBox" type="VBoxContainer" parent="Layout/ShopPanel/ShopMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DeckLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "Your Party — +1 level per drawn use"
+
+[node name="DeckScroll" type="ScrollContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DeckGroups" type="VBoxContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="VowelsLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.9, 0.65, 1)
+theme_override_font_sizes/font_size = 18
+text = "Vowels · Healers restore health"
+
+[node name="VowelGrid" type="GridContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 9
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="CommonLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.65, 0.5, 1)
+theme_override_font_sizes/font_size = 18
+text = "Common consonants · Warriors boost damage"
+
+[node name="CommonGrid" type="GridContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 9
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="UncommonLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+text = "Uncommon consonants · Rogues earn gold"
+
+[node name="UncommonGrid" type="GridContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox/DeckScroll/DeckGroups"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 9
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="SelectedLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Select a letter to view its role or dismiss it."
+autowrap_mode = 2
+
+[node name="ActionRow" type="HBoxContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DropButton" type="Button" parent="Layout/ShopPanel/ShopMargin/ShopBox/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Dismiss (10g)"
+
+[node name="MealButton" type="Button" parent="Layout/ShopPanel/ShopMargin/ShopBox/ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Hot Meal (15g): heal 10"
+
+[node name="RecruitLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "Recruit Letters — new offers after each fight"
+
+[node name="RecruitGrid" type="GridContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 6
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="FeedbackLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+autowrap_mode = 2
+
+[node name="StoryPanel" type="PanelContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StoryMargin" type="MarginContainer" parent="Layout/StoryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="StoryLabel" type="RichTextLabel" parent="Layout/StoryPanel/StoryMargin"]
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("3_body")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 22
+bbcode_enabled = true
+text = ""
+
+[node name="ContinueButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -264.0
+offset_top = -72.0
+offset_right = -24.0
+offset_bottom = -20.0
+theme_override_font_sizes/font_size = 22
+text = "Set Out"

@@ -1,0 +1,101 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/debug_tools.gd" id="1_debug"]
+
+[sub_resource type="StyleBoxFlat" id="1_panel_style"]
+bg_color = Color(0.07, 0.07, 0.1, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.4, 0.25, 1)
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+
+[node name="DebugTools" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_debug")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -420.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 560.0
+theme_override_styles/panel = SubResource("1_panel_style")
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="Panel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "DEBUG (F12)"
+horizontal_alignment = 1
+
+[node name="BreakdownLabel" type="RichTextLabel" parent="Panel/Box"]
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 16
+bbcode_enabled = true
+text = "play a word to see its breakdown"
+
+[node name="SimRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SimWordInput" type="LineEdit" parent="Panel/Box/SimRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "word"
+
+[node name="SimTagInput" type="LineEdit" parent="Panel/Box/SimRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "tag"
+
+[node name="ScoreButton" type="Button" parent="Panel/Box/SimRow"]
+layout_mode = 2
+text = "Score"
+
+[node name="SimResultLabel" type="Label" parent="Panel/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "-"
+
+[node name="CheatRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GoldButton" type="Button" parent="Panel/Box/CheatRow"]
+layout_mode = 2
+text = "+100 Gold"
+
+[node name="HealButton" type="Button" parent="Panel/Box/CheatRow"]
+layout_mode = 2
+text = "Full Heal"
+
+[node name="TavernButton" type="Button" parent="Panel/Box/CheatRow"]
+layout_mode = 2
+text = "To Tavern"
+
+[node name="ForceRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TagsInput" type="LineEdit" parent="Panel/Box/ForceRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "force tags (a,b)"
+
+[node name="LettersInput" type="LineEdit" parent="Panel/Box/ForceRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "force letters"

@@ -1,0 +1,249 @@
+[gd_scene format=3 uid="uid://dj6n5sbhsws67"]
+
+[ext_resource type="Script" uid="uid://ce3e4vfgwfu4o" path="res://scripts/combat/combat_controller.gd" id="1_combat"]
+[ext_resource type="Texture2D" uid="uid://bks1mldabeufn" path="res://art/backgrounds/forest.png" id="2_background"]
+[ext_resource type="PackedScene" path="res://scenes/combat/enemy_display.tscn" id="3_enemy"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="Script" uid="uid://dmbnp8acd7eq5" path="res://scripts/word/deck_manager.gd" id="5_deck"]
+[ext_resource type="Script" uid="uid://cfunpsyp0ltqg" path="res://scripts/word/word_validator.gd" id="6_validator"]
+[ext_resource type="Script" uid="uid://drup80ilj554t" path="res://scripts/combat/damage_calculator.gd" id="7_calculator"]
+[ext_resource type="Script" uid="uid://claoqyy4st1j5" path="res://scripts/combat/enemy_factory.gd" id="8_factory"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_huop7"]
+bg_color = Color(0.14901961, 0.14901961, 0.14901961, 0.89411765)
+
+[node name="Combat" type="Control" unique_id=1426086097]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_combat")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1401335569]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="ColorRect" parent="." unique_id=1559310331]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Systems" type="Node" parent="." unique_id=188667100]
+
+[node name="DeckManager" type="Node" parent="Systems" unique_id=1194744127]
+script = ExtResource("5_deck")
+
+[node name="WordValidator" type="Node" parent="Systems" unique_id=1316706797]
+script = ExtResource("6_validator")
+
+[node name="DamageCalculator" type="Node" parent="Systems" unique_id=807751241]
+script = ExtResource("7_calculator")
+
+[node name="EnemyFactory" type="Node" parent="Systems" unique_id=947830028]
+script = ExtResource("8_factory")
+
+[node name="Layout" type="Control" parent="." unique_id=17297371]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StatusArea" type="VBoxContainer" parent="Layout" unique_id=471600501]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 280.0
+offset_bottom = 140.0
+theme_override_constants/separation = 8
+
+[node name="StageLabel" type="Label" parent="Layout/StatusArea" unique_id=347878440]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+text = "Encounter 1 of 6"
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="Layout/StatusArea" unique_id=532476551]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+max_value = 50.0
+value = 50.0
+show_percentage = false
+
+[node name="PlayerHealthLabel" type="Label" parent="Layout/StatusArea/PlayerHealthBar" unique_id=892103473]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 16
+text = "50 / 50"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldLabel" type="Label" parent="Layout/StatusArea" unique_id=727228984]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+text = "Gold: 0"
+
+[node name="EnemyArea" type="CenterContainer" parent="Layout" unique_id=1732673650]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.02
+anchor_right = 0.75
+anchor_bottom = 0.56
+
+[node name="Enemy" parent="Layout/EnemyArea" unique_id=121372541 instance=ExtResource("3_enemy")]
+layout_mode = 2
+
+[node name="SidePanel" type="PanelContainer" parent="Layout" unique_id=693606851]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.02
+anchor_right = 0.99
+anchor_bottom = 0.72
+
+[node name="LogLabel" type="RichTextLabel" parent="Layout/SidePanel" unique_id=678540740]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 17
+bbcode_enabled = true
+scroll_following = true
+
+[node name="InputArea" type="VBoxContainer" parent="Layout" unique_id=783400940]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.25
+anchor_top = 0.6
+anchor_right = 0.75
+anchor_bottom = 0.72
+theme_override_constants/separation = 6
+
+[node name="InputRow" type="HBoxContainer" parent="Layout/InputArea" unique_id=1432806170]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="WordInput" type="LineEdit" parent="Layout/InputArea/InputRow" unique_id=2135745102]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+placeholder_text = "spell a word..."
+max_length = 24
+
+[node name="SubmitButton" type="Button" parent="Layout/InputArea/InputRow" unique_id=757434732]
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Cast"
+
+[node name="FeedbackLabel" type="Label" parent="Layout/InputArea" unique_id=1846545061]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="PromptLabel" type="Label" parent="Layout/InputArea" unique_id=99701348]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+text = "Write a noun to shape your tale"
+horizontal_alignment = 1
+
+[node name="HandArea" type="CenterContainer" parent="Layout" unique_id=1963770266]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.74
+anchor_right = 0.95
+anchor_bottom = 0.99
+
+[node name="HandBox" type="HBoxContainer" parent="Layout/HandArea" unique_id=1243554175]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="VictoryPanel" type="PanelContainer" parent="." unique_id=1123424298]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -120.0
+offset_right = 220.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_huop7")
+
+[node name="VictoryBox" type="VBoxContainer" parent="VictoryPanel" unique_id=1529264429]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="VictoryStory" type="RichTextLabel" parent="VictoryPanel/VictoryBox" unique_id=1793927876]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+
+[node name="RelicStatusLabel" type="Label" parent="VictoryPanel/VictoryBox" unique_id=232187351]
+layout_mode = 2
+text = "Choose one free relic. Additional copies stack."
+horizontal_alignment = 1
+
+[node name="RelicChoices" type="HBoxContainer" parent="VictoryPanel/VictoryBox" unique_id=2076085132]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="QuillButton" type="Button" parent="VictoryPanel/VictoryBox/RelicChoices" unique_id=212884259]
+custom_minimum_size = Vector2(125, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Quill of Fortune"
+
+[node name="TomeButton" type="Button" parent="VictoryPanel/VictoryBox/RelicChoices" unique_id=1061014324]
+custom_minimum_size = Vector2(125, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tome of Echoes"
+
+[node name="BookmarkButton" type="Button" parent="VictoryPanel/VictoryBox/RelicChoices" unique_id=1242232167]
+custom_minimum_size = Vector2(125, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Iron Bookmark"
+
+[node name="VictoryLabel" type="Label" parent="VictoryPanel/VictoryBox" unique_id=337586694]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 30
+text = "Victory!"
+horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="VictoryPanel/VictoryBox" unique_id=1579126543]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 22
+text = "To the Tavern"

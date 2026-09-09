@@ -1,0 +1,68 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.101961, 0.0666667, 0.054902, 1)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Menu" type="VBoxContainer" parent="CenterBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.898039, 0.784314, 0.572549, 1)
+theme_override_fonts/font = ExtResource("2_title")
+theme_override_font_sizes/font_size = 96
+text = "Lexical Rogue"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 24
+text = "Spell your way to the final boss"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="CenterBox/Menu"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 28
+text = "Begin the Tale"
+
+[node name="QuitButton" type="Button" parent="CenterBox/Menu"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "Quit"
+
+[node name="StatusLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 1
