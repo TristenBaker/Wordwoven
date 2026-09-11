@@ -1,2 +1,12 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Keep this rule file itself consistent, too.
+.gitattributes text eol=lf
+
+# Godot scene, script, and importer metadata are text. Keep one canonical
+# line ending so Windows checkouts do not create noisy .import-only changes.
+*.gd text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.json text eol=lf
+*.tres text eol=lf
+*.tscn text eol=lf
+*.uid text eol=lf
