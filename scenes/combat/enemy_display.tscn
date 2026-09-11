@@ -45,6 +45,16 @@ max_value = 1.0
 value = 1.0
 show_percentage = false
 
+[node name="DamagePreview" type="ColorRect" parent="InfoBox/HealthBar"]
+layout_mode = 1
+anchor_top = 0.18
+anchor_bottom = 0.82
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.2, 0.15, 0.48)
+show_behind_parent = false
+visible = false
+
 [node name="HealthLabel" type="Label" parent="InfoBox/HealthBar"]
 layout_mode = 1
 anchors_preset = 15

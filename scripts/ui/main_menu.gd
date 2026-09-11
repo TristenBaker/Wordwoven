@@ -5,14 +5,18 @@ extends Control
 const FIRST_SCENE_PATH: String = "res://scenes/combat/combat.tscn"
 
 @onready var start_button: Button = $CenterBox/Menu/StartButton
+@onready var settings_button: Button = $CenterBox/Menu/SettingsButton
 @onready var quit_button: Button = $CenterBox/Menu/QuitButton
 @onready var status_label: Label = $CenterBox/Menu/StatusLabel
+@onready var settings_screen: SettingsScreen = $SettingsScreen
 
 
 func _ready() -> void:
 	start_button.disabled = true
 	start_button.pressed.connect(_on_start_pressed)
+	settings_button.pressed.connect(_on_settings_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
+	settings_screen.closed.connect(_on_settings_closed)
 	if WordNet.is_ready:
 		_on_loading_finished(true)
 	else:
@@ -31,6 +35,15 @@ func _on_loading_finished(success: bool) -> void:
 func _on_start_pressed() -> void:
 	RunState.start_new_run()
 	get_tree().change_scene_to_file(FIRST_SCENE_PATH)
+
+
+func _on_settings_pressed() -> void:
+	$CenterBox.hide()
+	settings_screen.open()
+
+
+func _on_settings_closed() -> void:
+	$CenterBox.show()
 
 
 func _on_quit_pressed() -> void:

@@ -36,6 +36,7 @@ func refill_hand() -> void:
 		_hand = []
 		for character: String in DebugTools.forced_letters:
 			_hand.append(LetterStats.create(character))
+		_sort_hand_alphabetically()
 		EventBus.emit_hand_drawn(_hand)
 		return
 	while _hand.size() < hand_size:
@@ -46,7 +47,14 @@ func refill_hand() -> void:
 			_draw_pile.shuffle()
 			_discard_pile = []
 		_hand.append(_draw_pile.pop_back())
+	_sort_hand_alphabetically()
 	EventBus.emit_hand_drawn(_hand)
+
+
+func _sort_hand_alphabetically() -> void:
+	_hand.sort_custom(func(left: LetterStats, right: LetterStats) -> bool:
+		return left.letter < right.letter
+	)
 
 
 ## Splits a word into the hand letters that cover it (drawn) and

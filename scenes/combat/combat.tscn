@@ -8,9 +8,47 @@
 [ext_resource type="Script" uid="uid://cfunpsyp0ltqg" path="res://scripts/word/word_validator.gd" id="6_validator"]
 [ext_resource type="Script" uid="uid://drup80ilj554t" path="res://scripts/combat/damage_calculator.gd" id="7_calculator"]
 [ext_resource type="Script" uid="uid://claoqyy4st1j5" path="res://scripts/combat/enemy_factory.gd" id="8_factory"]
+[ext_resource type="Script" path="res://scripts/ui/word_tile_board.gd" id="9_word_board"]
+[ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="10_pause"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_huop7"]
 bg_color = Color(0.14901961, 0.14901961, 0.14901961, 0.89411765)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_damage"]
+bg_color = Color(0.72, 0.16, 0.13, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.52, 0.42, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heal"]
+bg_color = Color(0.18, 0.58, 0.31, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 1, 0.66, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gold"]
+bg_color = Color(0.78, 0.57, 0.09, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.9, 0.4, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
 
 [node name="Combat" type="Control" unique_id=1426086097]
 layout_mode = 3
@@ -40,6 +78,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
+
+[node name="PauseMenu" parent="." instance=ExtResource("10_pause")]
 
 [node name="Systems" type="Node" parent="." unique_id=188667100]
 
@@ -84,6 +124,16 @@ max_value = 50.0
 value = 50.0
 show_percentage = false
 
+[node name="HealPreview" type="ColorRect" parent="Layout/StatusArea/PlayerHealthBar"]
+layout_mode = 1
+anchor_top = 0.18
+anchor_bottom = 0.82
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.25, 1, 0.45, 0.42)
+show_behind_parent = false
+visible = false
+
 [node name="PlayerHealthLabel" type="Label" parent="Layout/StatusArea/PlayerHealthBar" unique_id=892103473]
 layout_mode = 1
 anchors_preset = 15
@@ -114,6 +164,25 @@ anchor_bottom = 0.56
 [node name="Enemy" parent="Layout/EnemyArea" unique_id=121372541 instance=ExtResource("3_enemy")]
 layout_mode = 2
 
+[node name="DamagePopup" type="Label" parent="Layout"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.12
+anchor_right = 0.75
+anchor_bottom = 0.3
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.25, 0.18, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 58
+text = "-0"
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+z_index = 10
+
 [node name="SidePanel" type="PanelContainer" parent="Layout" unique_id=693606851]
 layout_mode = 1
 anchors_preset = -1
@@ -133,19 +202,74 @@ scroll_following = true
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.25
-anchor_top = 0.6
+anchor_top = 0.52
 anchor_right = 0.75
-anchor_bottom = 0.72
+anchor_bottom = 0.8
 theme_override_constants/separation = 6
+
+[node name="WordComposerRow" type="HBoxContainer" parent="Layout/InputArea"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="WordTileBoard" type="Control" parent="Layout/InputArea/WordComposerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("9_word_board")
+
+[node name="OutputCounters" type="HBoxContainer" parent="Layout/InputArea/WordComposerRow"]
+custom_minimum_size = Vector2(186, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Damage" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_damage")
+
+[node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Damage"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Heal" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_heal")
+
+[node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Heal"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Gold" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gold")
+
+[node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Gold"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="InputRow" type="HBoxContainer" parent="Layout/InputArea" unique_id=1432806170]
 layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="WordInput" type="LineEdit" parent="Layout/InputArea/InputRow" unique_id=2135745102]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 size_flags_horizontal = 3
+modulate = Color(1, 1, 1, 0)
 theme_override_font_sizes/font_size = 28
 placeholder_text = "spell a word..."
 max_length = 24
@@ -173,7 +297,7 @@ horizontal_alignment = 1
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.05
-anchor_top = 0.74
+anchor_top = 0.81
 anchor_right = 0.95
 anchor_bottom = 0.99
 

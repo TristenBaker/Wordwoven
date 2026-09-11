@@ -1,33 +1,26 @@
 class_name LetterTile
 extends PanelContainer
-## One letter card in the combat hand. Shows the letter art, its
-## power, and its level; brightens when the typed word would use it.
+## One letter tile in the combat hand. Its fill signals class and its
+## border signals rank; detailed mechanics remain available by tooltip.
 
-# Tint states for the tile while the player types.
+# Used letters fade from the hand while their visual copy travels to the board.
 const COLOR_IDLE: Color = Color(1.0, 1.0, 1.0, 1.0)
-const COLOR_USED: Color = Color(1.0, 0.95, 0.5, 1.0)
-const COLOR_DIMMED: Color = Color(0.55, 0.55, 0.55, 1.0)
-
-# Letter art tiles are looked up by name; there is one per letter,
-# so a UID table would just restate the alphabet.
-const LETTER_ART_PATH: String = \
-		"res://assets/Art/LetterArt/Letter_%s.png"
+const COLOR_USED: Color = Color(0.45, 0.45, 0.45, 0.35)
 
 var stats: LetterStats = null
 
-@onready var art: TextureRect = $Layout/Art
-@onready var power_label: Label = $Layout/PowerLabel
+@export var tile_theme: LetterTileTheme = preload(
+		"res://assets/Themes/letter_tiles/default_letter_tile_theme.tres"
+)
+
+@onready var letter_label: Label = $Layout/LetterLabel
 
 
 func setup(new_stats: LetterStats) -> void:
 	stats = new_stats
-	var art_path: String = LETTER_ART_PATH % \
-			stats.letter.to_upper()
-	if ResourceLoader.exists(art_path):
-		art.texture = load(art_path)
-	power_label.text = "%s  Lv%d\n%s" % [
-		str(int(stats.power())), stats.level, stats.class_name_text(),
-	]
+	letter_label.text = stats.letter.to_upper()
+	letter_label.add_theme_color_override("font_color", tile_theme.letter_color)
+	add_theme_stylebox_override("panel", _tile_style())
 	tooltip_text = "%s\n%s" % [stats.describe(), stats.effect_text()]
 
 
@@ -38,4 +31,16 @@ func set_used(used: bool, typing: bool) -> void:
 	elif used:
 		modulate = COLOR_USED
 	else:
-		modulate = COLOR_DIMMED
+		modulate = COLOR_IDLE
+
+
+func _tile_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = tile_theme.fill_for(stats.letter_class)
+	style.border_color = tile_theme.border_for(stats.level)
+	style.set_border_width_all(6)
+	style.set_corner_radius_all(10)
+	style.shadow_color = tile_theme.shadow_color
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(2, 3)
+	return style

@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
+[ext_resource type="PackedScene" path="res://scenes/settings_screen.tscn" id="4_settings"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -52,6 +53,13 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 28
 text = "Begin the Tale"
 
+[node name="SettingsButton" type="Button" parent="CenterBox/Menu"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "Settings"
+
 [node name="QuitButton" type="Button" parent="CenterBox/Menu"]
 custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
@@ -66,3 +74,5 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 18
 text = ""
 horizontal_alignment = 1
+
+[node name="SettingsScreen" parent="." instance=ExtResource("4_settings")]

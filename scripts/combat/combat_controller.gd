@@ -28,6 +28,8 @@ var _offered_relic_ids: Array[String] = []
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
 var _continuing: bool = false
+var _previous_drawn: Array[LetterStats] = []
+var _damage_popup_tween: Tween = null
 
 @onready var deck_manager: DeckManager = $Systems/DeckManager
 @onready var validator: WordValidator = $Systems/WordValidator
@@ -41,6 +43,16 @@ var _continuing: bool = false
 		$Layout/InputArea/InputRow/WordInput
 @onready var submit_button: Button = \
 		$Layout/InputArea/InputRow/SubmitButton
+@onready var word_tile_board: WordTileBoard = \
+		$Layout/InputArea/WordComposerRow/WordTileBoard
+@onready var damage_output: Label = \
+		$Layout/InputArea/WordComposerRow/OutputCounters/Damage/Value
+@onready var heal_output: Label = \
+		$Layout/InputArea/WordComposerRow/OutputCounters/Heal/Value
+@onready var gold_output: Label = \
+		$Layout/InputArea/WordComposerRow/OutputCounters/Gold/Value
+@onready var damage_popup: Label = $Layout/DamagePopup
+@onready var pause_menu: PauseMenu = $PauseMenu
 @onready var feedback_label: Label = \
 		$Layout/InputArea/FeedbackLabel
 @onready var prompt_label: Label = $Layout/InputArea/PromptLabel
@@ -50,6 +62,8 @@ var _continuing: bool = false
 		$Layout/StatusArea/PlayerHealthBar
 @onready var player_health_label: Label = \
 		$Layout/StatusArea/PlayerHealthBar/PlayerHealthLabel
+@onready var player_heal_preview: ColorRect = \
+		$Layout/StatusArea/PlayerHealthBar/HealPreview
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
 @onready var victory_panel: PanelContainer = $VictoryPanel
@@ -64,9 +78,15 @@ var _continuing: bool = false
 
 
 func _ready() -> void:
+	# Enter normally makes a LineEdit release editing focus. The field is the
+	# invisible keyboard source for the tile board, so retain that focus and
+	# let the combat state machine decide when input is unavailable instead.
+	word_input.keep_editing_on_text_submit = true
 	submit_button.pressed.connect(_on_submit)
 	word_input.text_submitted.connect(_on_text_submitted)
 	word_input.text_changed.connect(_on_text_changed)
+	word_tile_board.focus_requested.connect(_focus_word_input)
+	pause_menu.resumed.connect(_restore_composer_after_pause)
 	continue_button.pressed.connect(_on_continue_pressed)
 	relic_choice_buttons = [
 		$VictoryPanel/VictoryBox/RelicChoices/QuillButton,
@@ -93,6 +113,7 @@ func _start_encounter() -> void:
 	EventBus.emit_encounter_started(spawn_data)
 	_rebuild_hand_tiles()
 	_refresh_status()
+	_refresh_word_composer("")
 	_log("A %s appears! Its nature: %s" % [
 		spawn_data["name"], " • ".join(spawn_data["tags"])
 	])
@@ -120,7 +141,16 @@ func _enter_player_input() -> void:
 	_state = State.PLAYER_INPUT
 	word_input.editable = true
 	submit_button.disabled = false
+	_focus_word_input()
+
+
+func _focus_word_input() -> void:
 	word_input.grab_focus()
+
+
+func _restore_composer_after_pause() -> void:
+	if _state == State.PLAYER_INPUT:
+		call_deferred("_focus_word_input")
 
 
 func _on_text_submitted(_text: String) -> void:
@@ -135,6 +165,12 @@ func _on_submit() -> void:
 	if not verdict["valid"]:
 		feedback_label.text = verdict["reason"]
 		EventBus.emit_word_rejected(word, verdict["reason"])
+		# A rejected word never starts a turn. Reset the composer immediately,
+		# then defer focus restoration so Enter/button submission cannot leave
+		# the visually hidden LineEdit unfocused.
+		word_input.clear()
+		_enter_player_input()
+		call_deferred("_focus_word_input")
 		return
 	_state = State.RESOLVING
 	word_input.editable = false
@@ -171,6 +207,7 @@ func _resolve_word(word: String) -> void:
 	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
+	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
 		_enemy_turn()
@@ -191,7 +228,9 @@ func _enemy_turn() -> void:
 		return
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
-		_enter_player_input()
+		# Defer once so a just-finished animation or button event cannot claim
+		# focus from the hidden LineEdit after the next player turn opens.
+		call_deferred("_enter_player_input")
 
 
 func _on_enemy_died() -> void:
@@ -314,8 +353,108 @@ func _on_text_changed(new_text: String) -> void:
 		new_text.strip_edges().to_lower()
 	)
 	var drawn: Array[LetterStats] = split["drawn"]
+	_refresh_word_composer(new_text, split)
+	_animate_new_tile_selections(drawn)
+	_previous_drawn = drawn.duplicate()
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_used(drawn.has(tile.stats), typing)
+
+
+func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
+	var word := raw_word.strip_edges().to_lower()
+	if split.is_empty():
+		split = deck_manager.split_word(word)
+	var drawn: Array[LetterStats] = split["drawn"]
+	var undrawn: Array[String] = split["undrawn"]
+	word_tile_board.set_word(word, drawn)
+	if word.is_empty() or enemy == null or not enemy.is_alive():
+		_set_output_counters(0, 0, 0)
+		_set_health_previews(0, 0)
+		return
+	var result := calculator.calculate(
+		word, drawn, undrawn, enemy.tags, required_pos
+	)
+	_set_output_counters(
+		int(round(float(result["damage"]))),
+		int(result["heal_amount"]), int(result["gold_bonus"])
+	)
+	_set_health_previews(
+		int(round(float(result["damage"]))), int(result["heal_amount"])
+	)
+
+
+func _set_output_counters(damage: int, healing: int, gold: int) -> void:
+	damage_output.text = str(damage)
+	heal_output.text = str(healing)
+	gold_output.text = str(gold)
+
+
+func _set_health_previews(damage: int, healing: int) -> void:
+	enemy.set_projected_damage(damage)
+	var current_health := RunState.player_health
+	var projected_health := mini(
+		current_health + healing, RunState.player_max_health
+	)
+	player_heal_preview.anchor_left = float(current_health) \
+		/ float(RunState.player_max_health)
+	player_heal_preview.anchor_right = float(projected_health) \
+		/ float(RunState.player_max_health)
+	player_heal_preview.visible = projected_health > current_health
+
+
+func _animate_new_tile_selections(drawn: Array[LetterStats]) -> void:
+	if _state != State.PLAYER_INPUT:
+		return
+	for stats: LetterStats in drawn:
+		if _previous_drawn.has(stats):
+			continue
+		var source: LetterTile = _hand_tile_for(stats)
+		var target: Rect2 = word_tile_board.tile_global_rect_for(stats)
+		if source != null and target.size != Vector2.ZERO:
+			_fly_tile_to_board(source, stats, target)
+
+
+func _hand_tile_for(stats: LetterStats) -> LetterTile:
+	for tile: LetterTile in hand_box.get_children():
+		if tile.stats == stats:
+			return tile
+	return null
+
+
+func _fly_tile_to_board(
+	source: LetterTile, stats: LetterStats, target: Rect2
+) -> void:
+	var flying: LetterTile = LETTER_TILE_SCENE.instantiate()
+	add_child(flying)
+	flying.setup(stats)
+	flying.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flying.z_index = 20
+	flying.global_position = source.global_position
+	flying.size = source.size
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(flying, "global_position", target.position, 0.24)
+	tween.tween_property(flying, "size", target.size, 0.24)
+	tween.chain().tween_callback(flying.queue_free)
+
+
+func _show_damage_popup(amount: float) -> void:
+	if _damage_popup_tween != null and _damage_popup_tween.is_valid():
+		_damage_popup_tween.kill()
+	damage_popup.text = "-%d" % int(round(amount))
+	damage_popup.show()
+	damage_popup.modulate = Color(1.0, 0.25, 0.18, 1.0)
+	damage_popup.pivot_offset = damage_popup.size * 0.5
+	damage_popup.scale = Vector2(0.6, 0.6)
+	_damage_popup_tween = create_tween().set_parallel(true)
+	_damage_popup_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_damage_popup_tween.tween_property(
+		damage_popup, "scale", Vector2(1.25, 1.25), 0.18
+	)
+	_damage_popup_tween.tween_property(
+		damage_popup, "modulate", Color(1.0, 0.2, 0.12, 0.0), 1.25
+	).set_delay(0.25)
+	_damage_popup_tween.chain().tween_callback(damage_popup.hide)
 
 
 func _rebuild_hand_tiles() -> void:
