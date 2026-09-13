@@ -16,6 +16,8 @@ var _health: int = 1
 @onready var sprite: TextureRect = $Sprite
 @onready var name_label: Label = $InfoBox/NameLabel
 @onready var health_bar: ProgressBar = $InfoBox/HealthBar
+@onready var health_preview: ColorRect = \
+		$InfoBox/HealthBar/DamagePreview
 @onready var health_label: Label = $InfoBox/HealthBar/HealthLabel
 @onready var tags_label: Label = $InfoBox/TagsLabel
 
@@ -41,11 +43,27 @@ func is_alive() -> bool:
 
 
 func take_damage(amount: float) -> void:
+	clear_damage_preview()
 	_health = maxi(_health - int(round(amount)), 0)
 	_refresh_health()
 	EventBus.emit_enemy_damaged(amount)
 	if _health <= 0:
 		died.emit()
+
+
+func set_projected_damage(amount: float) -> void:
+	var projected_health: int = maxi(
+		_health - int(round(amount)), 0
+	)
+	var current_ratio := float(_health) / float(_max_health)
+	var projected_ratio := float(projected_health) / float(_max_health)
+	health_preview.anchor_left = projected_ratio
+	health_preview.anchor_right = current_ratio
+	health_preview.visible = projected_health < _health
+
+
+func clear_damage_preview() -> void:
+	health_preview.hide()
 
 
 # Sprite sheets from the monster pack hold idle frames in a strip;

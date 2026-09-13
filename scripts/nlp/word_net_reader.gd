@@ -58,17 +58,24 @@ var _synset_cache: Dictionary = {}
 # Open FileAccess handles for the data.* files, keyed by POS.
 var _data_files: Dictionary = {}
 
+# WordNet index offsets are byte positions in the original dictionary files.
+# A checkout whose line endings differ from the source shifts those positions,
+# so this lazily maps logical WordNet offsets to the local file positions.
+var _data_positions: Dictionary = {}
+
 
 ## Loads the database from the given dict folder, preferring the
 ## binary cache when it is present and current.
 func load_from_dict(dict_path: String) -> bool:
 	_dict_path = dict_path
-	if _load_cache():
-		is_loaded = true
-		return true
-	if not _parse_all_indexes():
-		return false
-	_save_cache()
+	if not _load_cache():
+		if not _parse_all_indexes():
+			return false
+		_save_cache()
+	# These maps are needed when the local data files use different line
+	# endings from WordNet's original byte offsets. Prepare them while the
+	# autoload is still on its background thread, never on a player's keypress.
+	_prepare_data_offsets()
 	is_loaded = true
 	return true
 
@@ -155,7 +162,13 @@ func get_synset(pos: String, offset: int) -> Synset:
 	file.seek(offset)
 	var line: String = file.get_line()
 	var synset: Synset = _parse_data_line(line)
-	if synset == null:
+	if synset == null or synset.offset != offset:
+		var local_offset: int = _local_data_offset(pos, offset)
+		if local_offset < 0:
+			return null
+		file.seek(local_offset)
+		synset = _parse_data_line(file.get_line())
+	if synset == null or synset.offset != offset:
 		return null
 	_synset_cache[cache_key] = synset
 	return synset
@@ -244,6 +257,32 @@ func _data_file_for(pos: String) -> FileAccess:
 	return file
 
 
+func _local_data_offset(pos: String, wordnet_offset: int) -> int:
+	if not _data_positions.has(pos):
+		_data_positions[pos] = _build_data_position_index(pos)
+	var positions: Dictionary = _data_positions[pos]
+	return int(positions.get(wordnet_offset, -1))
+
+
+func _prepare_data_offsets() -> void:
+	for pos: String in POS_LIST:
+		_local_data_offset(pos, -1)
+
+
+func _build_data_position_index(pos: String) -> Dictionary:
+	var positions: Dictionary = {}
+	var file: FileAccess = _data_file_for(pos)
+	if file == null:
+		return positions
+	file.seek(0)
+	while file.get_position() < file.get_length():
+		var local_offset: int = file.get_position()
+		var parts: PackedStringArray = file.get_line().split(" ", false)
+		if parts.size() >= 4 and _is_decimal(parts[0]):
+			positions[parts[0].to_int()] = local_offset
+	return positions
+
+
 # Data line format:
 # offset lex_filenum ss_type w_cnt word lex_id [word lex_id...]
 # p_cnt [ptr...] [frames...] | gloss
@@ -256,7 +295,8 @@ func _parse_data_line(line: String) -> Synset:
 		left = line.substr(0, bar_index).strip_edges(false, true)
 		gloss = line.substr(bar_index + 1).strip_edges()
 	var parts: PackedStringArray = left.split(" ", false)
-	if parts.size() < 5:
+	if parts.size() < 5 or not _is_decimal(parts[0]) \
+			or not _is_hexadecimal(parts[3]):
 		return null
 	var synset: Synset = Synset.new()
 	synset.offset = parts[0].to_int()
@@ -287,6 +327,25 @@ func _parse_data_line(line: String) -> Synset:
 		})
 		cursor += 4
 	return synset
+
+
+func _is_decimal(value: String) -> bool:
+	if value.is_empty():
+		return false
+	for character: String in value:
+		if character < "0" or character > "9":
+			return false
+	return true
+
+
+func _is_hexadecimal(value: String) -> bool:
+	if value.is_empty():
+		return false
+	const HEX_DIGITS := "0123456789abcdefABCDEF"
+	for character: String in value:
+		if not HEX_DIGITS.contains(character):
+			return false
+	return true
 
 
 # --- Lemmatization rules -------------------------------------------
