@@ -1,36 +1,43 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://c5jmo4syhshj1"]
 
-[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://mkkgy7djjx0v" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="PackedScene" path="res://scenes/settings_screen.tscn" id="4_settings"]
+[ext_resource type="AudioStream" uid="uid://h5bb5k7e8tgo" path="res://assets/Art/TitleMusic.mp3" id="5_8ln24"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1733250631]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=334097872]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.101961, 0.0666667, 0.054902, 1)
 
-[node name="CenterBox" type="CenterContainer" parent="."]
+[node name="CenterBox" type="CenterContainer" parent="." unique_id=1480718528]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Menu" type="VBoxContainer" parent="CenterBox"]
+[node name="Menu" type="VBoxContainer" parent="CenterBox" unique_id=970838822]
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
+[node name="TitleLabel" type="Label" parent="CenterBox/Menu" unique_id=976601386]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.898039, 0.784314, 0.572549, 1)
 theme_override_fonts/font = ExtResource("2_title")
@@ -38,7 +45,7 @@ theme_override_font_sizes/font_size = 96
 text = "Lexical Rogue"
 horizontal_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="CenterBox/Menu"]
+[node name="SubtitleLabel" type="Label" parent="CenterBox/Menu" unique_id=1464814257]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
 theme_override_fonts/font = ExtResource("3_body")
@@ -46,33 +53,37 @@ theme_override_font_sizes/font_size = 24
 text = "Spell your way to the final boss"
 horizontal_alignment = 1
 
-[node name="StartButton" type="Button" parent="CenterBox/Menu"]
+[node name="StartButton" type="Button" parent="CenterBox/Menu" unique_id=1580727401]
 custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 28
 text = "Begin the Tale"
 
-[node name="SettingsButton" type="Button" parent="CenterBox/Menu"]
+[node name="SettingsButton" type="Button" parent="CenterBox/Menu" unique_id=1888307953]
 custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Settings"
 
-[node name="QuitButton" type="Button" parent="CenterBox/Menu"]
+[node name="QuitButton" type="Button" parent="CenterBox/Menu" unique_id=889077800]
 custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Quit"
 
-[node name="StatusLabel" type="Label" parent="CenterBox/Menu"]
+[node name="StatusLabel" type="Label" parent="CenterBox/Menu" unique_id=2009227656]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 18
-text = ""
 horizontal_alignment = 1
 
-[node name="SettingsScreen" parent="." instance=ExtResource("4_settings")]
+[node name="SettingsScreen" parent="." unique_id=1433382559 instance=ExtResource("4_settings")]
+layout_mode = 1
+
+[node name="TitleMusic" type="AudioStreamPlayer" parent="." unique_id=1568006341]
+stream = ExtResource("5_8ln24")
+autoplay = true

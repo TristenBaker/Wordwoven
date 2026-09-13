@@ -21,6 +21,17 @@ const ENEMY_TURN_DELAY: float = 0.7
 
 const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
 
+# Adding background array
+var backgrounds: Array[Texture2D] = [
+	preload("res://art/backgrounds/desert.png"),
+	preload("res://art/backgrounds/new_forest.png"),
+	preload("res://art/backgrounds/rocky_mountains.png"),
+	preload("res://art/backgrounds/sea.png"),
+	preload("res://art/backgrounds/sky.png"),
+	preload("res://art/backgrounds/tundra.png"),
+	preload("res://art/backgrounds/volcano.png")
+]
+
 var required_pos: String = "n"
 var relic_choice_buttons: Array[Button] = []
 var _offered_relic_ids: Array[String] = []
@@ -30,6 +41,9 @@ var _relic_system: RelicSystem = RelicSystem.new()
 var _continuing: bool = false
 var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
+
+# Adding background variable
+@onready var background: TextureRect = $Background
 
 @onready var deck_manager: DeckManager = $Systems/DeckManager
 @onready var validator: WordValidator = $Systems/WordValidator
@@ -102,6 +116,10 @@ func _ready() -> void:
 func _start_encounter() -> void:
 	if not RunState.is_run_active:
 		RunState.start_new_run()
+		
+	# Randomize the environment
+	_randomize_background()
+		
 	required_pos = PROMPT_ORDER[
 		(RunState.encounter_index - 1) % PROMPT_ORDER.size()
 	]
@@ -120,6 +138,9 @@ func _start_encounter() -> void:
 	_enter_player_input()
 	_log("Opposites and thematic counters deal extra damage.")
 
+# Adding function for randomizing backgrounds
+func _randomize_background() -> void:
+	background.texture = backgrounds.pick_random()
 
 func _pick_spawn_data() -> Dictionary:
 	var enemy_id: String = RunState.next_enemy_id
