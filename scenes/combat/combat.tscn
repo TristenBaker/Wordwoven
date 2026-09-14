@@ -164,6 +164,16 @@ anchor_bottom = 0.56
 [node name="Enemy" parent="Layout/EnemyArea" unique_id=121372541 instance=ExtResource("3_enemy")]
 layout_mode = 2
 
+[node name="DevKillButton" type="Button" parent="Layout"]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 150.0
+offset_right = 280.0
+offset_bottom = 190.0
+theme_override_font_sizes/font_size = 16
+tooltip_text = "Development only: immediately defeat the current enemy."
+text = "DEV: Auto Kill"
+
 [node name="DamagePopup" type="Label" parent="Layout"]
 layout_mode = 1
 anchors_preset = -1

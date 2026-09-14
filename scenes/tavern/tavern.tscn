@@ -40,7 +40,7 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
 theme_override_fonts/font = ExtResource("2_title")
 theme_override_font_sizes/font_size = 44
-text = "The Inkwell Tavern"
+text = "Tavern Page"
 
 [node name="HealthLabel" type="Label" parent="TopBar"]
 layout_mode = 2
@@ -216,3 +216,16 @@ offset_right = -24.0
 offset_bottom = -20.0
 theme_override_font_sizes/font_size = 22
 text = "Set Out"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -64.0
+offset_top = 14.0
+offset_right = -18.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 30
+tooltip_text = "Return to the tavern"
+text = "×"

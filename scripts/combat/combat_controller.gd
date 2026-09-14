@@ -53,6 +53,7 @@ var _damage_popup_tween: Tween = null
 		$Layout/InputArea/WordComposerRow/OutputCounters/Gold/Value
 @onready var damage_popup: Label = $Layout/DamagePopup
 @onready var pause_menu: PauseMenu = $PauseMenu
+@onready var dev_kill_button: Button = $Layout/DevKillButton
 @onready var feedback_label: Label = \
 		$Layout/InputArea/FeedbackLabel
 @onready var prompt_label: Label = $Layout/InputArea/PromptLabel
@@ -87,6 +88,7 @@ func _ready() -> void:
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
+	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
 	relic_choice_buttons = [
 		$VictoryPanel/VictoryBox/RelicChoices/QuillButton,
@@ -177,6 +179,15 @@ func _on_submit() -> void:
 	submit_button.disabled = true
 	feedback_label.text = ""
 	_resolve_word(word)
+
+
+func _on_dev_kill_pressed() -> void:
+	if _state in [State.WON, State.LOST] or enemy == null \
+			or not enemy.is_alive():
+		return
+	word_input.editable = false
+	submit_button.disabled = true
+	enemy.take_damage(999999.0)
 
 
 func _resolve_word(word: String) -> void:

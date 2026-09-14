@@ -19,10 +19,12 @@ var _letter_group: ButtonGroup = ButtonGroup.new()
 @onready var meal_button: Button = %MealButton
 @onready var feedback_label: Label = %FeedbackLabel
 @onready var continue_button: Button = $ContinueButton
+@onready var close_button: Button = $CloseButton
 
 
 func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
+	close_button.pressed.connect(_on_close_pressed)
 	drop_button.pressed.connect(_on_drop_pressed)
 	meal_button.pressed.connect(_on_meal_pressed)
 	EventBus.gold_changed.connect(_on_gold_changed)
@@ -34,6 +36,13 @@ func _ready() -> void:
 	_refresh_actions()
 	var bard: Storyteller = Storyteller.new()
 	story_label.text = bard.generate()
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo \
+			and event.keycode == KEY_B:
+		get_viewport().set_input_as_handled()
+		_on_close_pressed()
 
 
 # Purchases and dismissals delegate all state changes to the economy.
@@ -67,6 +76,10 @@ func _on_meal_pressed() -> void:
 
 func _on_continue_pressed() -> void:
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+
+
+func _on_close_pressed() -> void:
+	get_tree().change_scene_to_file(ScenePaths.TAVERN)
 
 
 # Refresh the existing layout after transactions without rerolling stock.
