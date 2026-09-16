@@ -339,6 +339,17 @@ theme_override_font_sizes/font_size = 22
 disabled = true
 text = "Redraw"
 
+[node name="AutocorrectButton" type="Button" parent="Layout/InputArea/InputRow"]
+custom_minimum_size = Vector2(170, 48)
+layout_mode = 2
+tooltip_text = "Suggest dictionary spellings one edit away from your word. An accepted correction costs 5g and replaces your input without casting it. No suggestions or cancelling costs nothing."
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "Fix (5g)"
+
+[node name="SuggestionMenu" type="PopupMenu" parent="Layout/InputArea/InputRow/AutocorrectButton"]
+theme_override_font_sizes/font_size = 20
+
 [node name="FeedbackLabel" type="Label" parent="Layout/InputArea" unique_id=1846545061]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)

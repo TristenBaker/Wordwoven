@@ -123,6 +123,22 @@ func headwords(pos: String) -> PackedStringArray:
 	return words
 
 
+## Dictionary words one edit away, alphabetically: an insertion,
+## deletion, substitution, or adjacent transposition of letters.
+func spelling_candidates(word: String) -> Array[String]:
+	var source: String = word.strip_edges().to_lower()
+	var found: Array[String] = []
+	if not _is_plain_word(source):
+		return found
+	for candidate: String in _single_edits(source):
+		if candidate == source or found.has(candidate):
+			continue
+		if word_exists(candidate):
+			found.append(candidate)
+	found.sort()
+	return found
+
+
 ## Returns candidate base forms for a word under the given POS.
 ## Combines the irregular-form exception lists with the standard
 ## WordNet detachment rules for regular inflections.
@@ -352,6 +368,27 @@ func _is_plain_word(value: String) -> bool:
 		if character < "a" or character > "z":
 			return false
 	return true
+
+
+# Every string one insertion, deletion, substitution, or adjacent
+# transposition away from the word, possibly with repeats.
+func _single_edits(word: String) -> Array[String]:
+	const ALPHABET: String = "abcdefghijklmnopqrstuvwxyz"
+	var edits: Array[String] = []
+	for index: int in range(word.length() + 1):
+		var head: String = word.substr(0, index)
+		var tail: String = word.substr(index)
+		for letter: String in ALPHABET:
+			edits.append(head + letter + tail)
+		if tail.is_empty():
+			continue
+		edits.append(head + tail.substr(1))
+		for letter: String in ALPHABET:
+			if letter != tail[0]:
+				edits.append(head + letter + tail.substr(1))
+		if tail.length() >= 2:
+			edits.append(head + tail[1] + tail[0] + tail.substr(2))
+	return edits
 
 
 func _is_decimal(value: String) -> bool:

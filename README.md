@@ -72,6 +72,12 @@ letters and hear the bard at the tavern → set up the next encounter
   turn. Redrawing never triggers an attack, class effects, or leveling.
   The same tiles cannot come straight back, and nothing is charged if
   there are not enough replacement tiles.
+- **Fix (5g)** offers up to five dictionary spellings one insertion,
+  deletion, substitution, or adjacent swap away from the current input.
+  Suggestions must fit the prompt (base-form verbs included) and skip
+  words already played, listed alphabetically. Confirming a choice
+  charges 5g and replaces the input without casting it. No suggestions
+  or cancelling costs nothing, and the swift timer keeps running.
 - Each recruit offer allows one free 15-second haggle: type a
   dictionary word of the shown part of speech (base-form verbs)
   containing the offered letter to cut its price by 20% (10g → 8g,
@@ -129,9 +135,11 @@ godot --headless --path . res://tools/tavern_sim_test.tscn
 
 Import first after pulling new scripts to refresh Godot's class
 and resource caches. The suites cover generic WordNet similarity,
-all enemy-tag counters, and POS validation. The combat suite uses
+all enemy-tag counters, POS validation, and one-edit spelling
+candidates. The combat suite uses
 fixed enemies, decks, seeded generators, and a manual clock to cover
-letter conditions, abilities, the swift timer, redraws, encounter
+letter conditions, abilities, the swift timer, redraws, autocorrect,
+encounter
 setup, relic catalog stacking, and confirmations. The tavern suite
 covers recruitment, dismissal, meals, stories, haggling, and purchase
 confirmations.

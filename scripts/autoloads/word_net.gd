@@ -107,6 +107,30 @@ func words_containing(
 	return found
 
 
+## Up to limit playable corrections one edit away from the word.
+## Candidates must pass the same checks as a submission for the POS,
+## including base-form verbs, and skip excluded (already played)
+## words. Every candidate is one edit away, so order is alphabetical.
+func spelling_suggestions(
+	word: String,
+	required_pos: String = "",
+	excluded_words: Array[String] = [],
+	limit: int = 5
+) -> Array[String]:
+	var suggestions: Array[String] = []
+	if not _check_ready():
+		return suggestions
+	for candidate: String in _reader.spelling_candidates(word):
+		var verdict: Dictionary = WordValidator.check_word(
+			candidate, required_pos, excluded_words
+		)
+		if verdict["valid"]:
+			suggestions.append(candidate)
+			if suggestions.size() >= limit:
+				break
+	return suggestions
+
+
 ## Synonyms of the word across its senses, for the storyteller.
 func synonyms_of(word: String, limit: int = 8) -> Array[String]:
 	var synonyms: Array[String] = []
