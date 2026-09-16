@@ -1,7 +1,7 @@
 class_name EnemyFactory
 extends Node
 ## Loads enemy definitions from data and builds the spawn data for
-## an encounter: stats plus randomly rolled word tags. Tiers gate
+## an encounter: stats, abilities, and word tags. Tiers gate
 ## which enemies appear at which stage of the run; the highest tier
 ## is reserved for the final boss.
 
@@ -34,10 +34,34 @@ func boss_id() -> String:
 	return ""
 
 
+func has_enemy(enemy_id: String) -> bool:
+	return _definitions.has(enemy_id)
+
+
+## The raw definition of an enemy, or an empty dictionary.
+func enemy_info(enemy_id: String) -> Dictionary:
+	return _definitions.get(enemy_id, {})
+
+
+## Enemy description followed by its ability summaries.
+func describe(enemy_id: String) -> String:
+	var definition: Dictionary = enemy_info(enemy_id)
+	var lines: Array[String] = [
+		"%s: %s" % [
+			definition.get("name", enemy_id),
+			definition.get("description", ""),
+		]
+	]
+	lines.append_array(EncounterAbilities.describe_entries(
+		definition.get("abilities", [])
+	))
+	return "\n".join(lines)
+
+
 ## Builds spawn data for one encounter: the definition's stats with
 ## tags rolled randomly from its pool.
-## Returns {"id", "name", "health", "attack", "gold", "texture",
-## "frame_width", "tags"}.
+## Returns {"id", "name", "description", "health", "attack", "gold",
+## "texture", "frame_width", "tags", "abilities"}.
 func build_spawn_data(enemy_id: String) -> Dictionary:
 	if not _definitions.has(enemy_id):
 		push_error("EnemyFactory: unknown enemy " + enemy_id)
@@ -55,13 +79,27 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 	return {
 		"id": enemy_id,
 		"name": definition["name"],
+		"description": definition.get("description", ""),
 		"health": int(definition["health"]),
 		"attack": int(definition["attack"]),
 		"gold": int(definition["gold"]),
 		"texture": definition["texture"],
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,
+		"abilities": definition.get("abilities", []).duplicate(true),
 	}
+
+
+## Spawn data for a confirmed encounter setup: the chosen adjective
+## is the enemy's sole counterable tag.
+func build_configured_spawn_data(
+	enemy_id: String, tag: String
+) -> Dictionary:
+	var data: Dictionary = build_spawn_data(enemy_id)
+	if not data.is_empty():
+		var tags: Array[String] = [tag]
+		data["tags"] = tags
+	return data
 
 
 ## Builds spawn data with forced tags, for the debug tools.

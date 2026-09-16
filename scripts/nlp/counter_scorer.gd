@@ -84,11 +84,30 @@ func _shares_synset(word: String, target: String, pos: String) -> bool:
 	return false
 
 
-func _load_counters() -> void:
+## Tags that have counter definitions, sorted alphabetically.
+func supported_tags() -> Array[String]:
+	return CounterScorer.tags_in(_counters)
+
+
+static func tags_in(counters: Dictionary) -> Array[String]:
+	var tags: Array[String] = []
+	for tag: String in counters:
+		tags.append(tag)
+	tags.sort()
+	return tags
+
+
+## Parsed counter definitions, or an empty dictionary.
+static func read_counter_data() -> Dictionary:
 	var file: FileAccess = FileAccess.open(DATA_PATH, FileAccess.READ)
 	if file == null:
-		return
+		return {}
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(parsed) == TYPE_DICTIONARY:
-		_counters = parsed
+		return parsed
+	return {}
+
+
+func _load_counters() -> void:
+	_counters = CounterScorer.read_counter_data()

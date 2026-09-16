@@ -33,6 +33,15 @@ var encounter_index: int = 1
 # combat scene should roll one for the current stage.
 var next_enemy_id: String = ""
 
+# Previewed encounter options, kept stable for one encounter index:
+# entries of {"enemy_id": String, "environment": String}.
+var encounter_options_index: int = -1
+var encounter_options: Array[Dictionary] = []
+
+# Confirmed setup consumed by combat without rerolling:
+# {"encounter", "enemy_id", "tag", "environment"}.
+var pending_encounter: Dictionary = {}
+
 # History entries for the storyteller:
 # Word, enemy, tags, damage, requested part of speech, and encounter.
 var word_history: Array[Dictionary] = []
@@ -52,6 +61,9 @@ func start_new_run() -> void:
 	recruitment_stock = []
 	encounter_index = 1
 	next_enemy_id = ""
+	encounter_options_index = -1
+	encounter_options = []
+	pending_encounter = {}
 	word_history = []
 	deck = []
 	var starters: String = (
@@ -71,6 +83,16 @@ func is_boss_next() -> bool:
 
 func advance_encounter() -> void:
 	encounter_index += 1
+
+
+## Returns and clears the confirmed setup for the current encounter;
+## empty when none was confirmed for this encounter.
+func take_pending_encounter() -> Dictionary:
+	var setup: Dictionary = pending_encounter
+	pending_encounter = {}
+	if int(setup.get("encounter", -1)) != encounter_index:
+		return {}
+	return setup
 
 
 ## Records a victory once before its relic can be claimed.

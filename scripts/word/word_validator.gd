@@ -17,13 +17,36 @@ func start_encounter() -> void:
 
 ## Returns {"valid": bool, "reason": String}.
 func validate(text: String, required_pos: String = "") -> Dictionary:
+	return WordValidator.check_word(text, required_pos, _played_words)
+
+
+## Records an accepted word so it cannot be replayed this fight.
+func mark_played(word: String) -> void:
+	_played_words.append(word.strip_edges().to_lower())
+
+
+func is_played(word: String) -> bool:
+	return _played_words.has(word.strip_edges().to_lower())
+
+
+func played_words() -> Array[String]:
+	return _played_words.duplicate()
+
+
+## Shared dictionary, spelling, repeat, and POS rules. Other typing
+## prompts use this without recording anything as played.
+static func check_word(
+	text: String,
+	required_pos: String = "",
+	excluded_words: Array[String] = []
+) -> Dictionary:
 	var word: String = text.strip_edges().to_lower()
 	if word.length() < MINIMUM_LENGTH:
 		return _verdict(false, "Too short")
 	for character: String in word:
 		if character < "a" or character > "z":
 			return _verdict(false, "Letters only")
-	if _played_words.has(word):
+	if excluded_words.has(word):
 		return _verdict(false, "Already played this fight")
 	if not WordNet.word_exists(word):
 		return _verdict(false, "Not in the lexicon")
@@ -37,10 +60,5 @@ func validate(text: String, required_pos: String = "") -> Dictionary:
 	return _verdict(true, "")
 
 
-## Records an accepted word so it cannot be replayed this fight.
-func mark_played(word: String) -> void:
-	_played_words.append(word.strip_edges().to_lower())
-
-
-func _verdict(valid: bool, reason: String) -> Dictionary:
+static func _verdict(valid: bool, reason: String) -> Dictionary:
 	return {"valid": valid, "reason": reason}

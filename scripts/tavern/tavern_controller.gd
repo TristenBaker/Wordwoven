@@ -1,9 +1,11 @@
 extends Control
-## The tavern offers new recruits, paid dismissals, a meal, and the bard's
-## story. Letters grow in combat and relics are chosen after victories.
+## The tavern offers new recruits, haggling, paid dismissals, a meal,
+## and the bard's story. Letters grow in combat and relics are chosen
+## after victories. Every gold purchase is confirmed first.
 
 var _selected: LetterStats = null
 var _letter_group: ButtonGroup = ButtonGroup.new()
+var _haggle_offer: int = -1
 
 @onready var economy: EconomySystem = $Systems/EconomySystem
 @onready var gold_label: Label = $TopBar/GoldLabel
@@ -19,12 +21,15 @@ var _letter_group: ButtonGroup = ButtonGroup.new()
 @onready var meal_button: Button = %MealButton
 @onready var feedback_label: Label = %FeedbackLabel
 @onready var continue_button: Button = $ContinueButton
+@onready var confirmer: ActionConfirmer = $ActionConfirmer
+@onready var haggle_challenge: TypingChallenge = $HaggleChallenge
 
 
 func _ready() -> void:
 	continue_button.pressed.connect(_on_continue_pressed)
 	drop_button.pressed.connect(_on_drop_pressed)
 	meal_button.pressed.connect(_on_meal_pressed)
+	haggle_challenge.finished.connect(_on_haggle_finished)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.deck_changed.connect(_on_deck_changed)
 	economy.ensure_recruitment_offers()
@@ -36,12 +41,59 @@ func _ready() -> void:
 	story_label.text = bard.generate()
 
 
-# Purchases and dismissals delegate all state changes to the economy.
+# Purchases ask first, then delegate every state change to the economy,
+# which revalidates availability and gold when the player confirms.
 func _on_recruit_pressed(offer_index: int) -> void:
+	var offers: Array[Dictionary] = economy.recruitment_offers()
+	if offer_index < 0 or offer_index >= offers.size():
+		return
+	var stats: LetterStats = LetterStats.create(
+		offers[offer_index]["letter"]
+	)
+	confirmer.request(
+		"Recruit a letter",
+		"Recruit %s (%s) for %dg?" % [
+			stats.letter.to_upper(), stats.class_name_text(),
+			economy.offer_price(offer_index),
+		],
+		_confirm_recruit.bind(offer_index)
+	)
+
+
+func _confirm_recruit(offer_index: int) -> void:
 	if economy.buy_recruit(offer_index):
 		_note("A new letter joins your party!")
 	else:
 		_note("Recruit unavailable, or not enough gold.")
+
+
+func _on_haggle_pressed(offer_index: int) -> void:
+	if confirmer.is_pending() or haggle_challenge.is_active():
+		return
+	var prompt: Dictionary = economy.begin_haggle(offer_index)
+	if prompt.is_empty():
+		_note("You have already haggled over this recruit.")
+		_rebuild_recruit_buttons()
+		return
+	_haggle_offer = offer_index
+	_rebuild_recruit_buttons()
+	haggle_challenge.open(
+		"%s for 20%% off.\nOne attempt; leaving forfeits it." % \
+				HaggleChallenge.prompt_text(prompt),
+		economy.check_haggle_answer.bind(offer_index),
+		HaggleChallenge.DURATION_MSEC
+	)
+
+
+func _on_haggle_finished(success: bool) -> void:
+	var offer_index: int = _haggle_offer
+	_haggle_offer = -1
+	if economy.finish_haggle(offer_index, success):
+		_note("Deal! This recruit now costs %dg." % \
+				economy.offer_price(offer_index))
+	else:
+		_note("No deal. The price stands.")
+	_rebuild_recruit_buttons()
 
 
 func _on_drop_pressed() -> void:
@@ -50,13 +102,33 @@ func _on_drop_pressed() -> void:
 	if RunState.deck.size() <= EconomySystem.MIN_DECK_SIZE:
 		_note("The party must keep at least ten letters.")
 		return
-	if economy.drop_letter(_selected):
+	confirmer.request(
+		"Dismiss a letter",
+		"Dismiss %s for %dg? It leaves your party for good." % [
+			_selected.describe(), EconomySystem.DROP_PRICE,
+		],
+		_confirm_drop.bind(_selected)
+	)
+
+
+func _confirm_drop(stats: LetterStats) -> void:
+	if economy.drop_letter(stats):
 		_note("The letter departs. -%dg." % EconomySystem.DROP_PRICE)
 	else:
-		_note("Not enough gold to dismiss this letter.")
+		_note("That letter can no longer be dismissed for gold.")
 
 
 func _on_meal_pressed() -> void:
+	confirmer.request(
+		"Hot meal",
+		"Buy a hot meal for %dg? It heals up to %d health." % [
+			EconomySystem.MEAL_PRICE, EconomySystem.MEAL_HEAL,
+		],
+		_confirm_meal
+	)
+
+
+func _confirm_meal() -> void:
 	if economy.buy_meal():
 		_note("Warm stew. +%d health." % EconomySystem.MEAL_HEAL)
 		_refresh_top_bar()
@@ -66,6 +138,8 @@ func _on_meal_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
+	if haggle_challenge.is_active():
+		return
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
 
 
@@ -90,19 +164,52 @@ func _rebuild_recruit_buttons() -> void:
 	for index: int in range(offers.size()):
 		var offer: Dictionary = offers[index]
 		var stats: LetterStats = LetterStats.create(offer["letter"])
-		var price: int = economy.recruit_price(stats.letter)
-		var button: Button = Button.new()
-		button.size_flags_horizontal = SIZE_EXPAND_FILL
-		button.custom_minimum_size = Vector2(0, 52)
-		button.text = "%s — %s\n%s" % [
-			stats.letter.to_upper(),
-			stats.class_name_text(),
-			"Recruited" if offer["purchased"] else "%dg" % price,
-		]
-		button.disabled = offer["purchased"] or RunState.gold < price
-		button.tooltip_text = stats.effect_text()
-		button.pressed.connect(_on_recruit_pressed.bind(index))
-		recruit_grid.add_child(button)
+		var price: int = economy.offer_price(index)
+		var column: VBoxContainer = VBoxContainer.new()
+		column.size_flags_horizontal = SIZE_EXPAND_FILL
+		column.add_child(_recruit_button(index, offer, stats, price))
+		column.add_child(_haggle_button(index, offer))
+		recruit_grid.add_child(column)
+
+
+func _recruit_button(
+	index: int, offer: Dictionary, stats: LetterStats, price: int
+) -> Button:
+	var button: Button = Button.new()
+	button.custom_minimum_size = Vector2(0, 52)
+	var price_text: String = "%dg" % price
+	if offer.get("discounted", false):
+		price_text = "%dg (haggled)" % price
+	button.text = "%s — %s\n%s" % [
+		stats.letter.to_upper(),
+		stats.class_name_text(),
+		"Recruited" if offer["purchased"] else price_text,
+	]
+	button.disabled = offer["purchased"] or RunState.gold < price
+	button.tooltip_text = stats.effect_text()
+	button.pressed.connect(_on_recruit_pressed.bind(index))
+	return button
+
+
+func _haggle_button(index: int, offer: Dictionary) -> Button:
+	var button: Button = Button.new()
+	button.custom_minimum_size = Vector2(0, 30)
+	var prompt: Dictionary = offer.get("haggle_prompt", {})
+	button.disabled = not economy.can_haggle(index) \
+			or economy.is_haggling()
+	if offer.get("discounted", false):
+		button.text = "Haggled −20%"
+	elif offer.get("haggle_attempted", false):
+		button.text = "Haggle used"
+	else:
+		button.text = "Haggle"
+	if not prompt.is_empty():
+		button.tooltip_text = (
+			"%s within 15 seconds for 20%% off.\n"
+			+ "One free attempt; buying stays a separate choice."
+		) % HaggleChallenge.prompt_text(prompt)
+	button.pressed.connect(_on_haggle_pressed.bind(index))
+	return button
 
 
 func _rebuild_deck_grids() -> void:

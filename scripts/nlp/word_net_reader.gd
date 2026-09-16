@@ -63,6 +63,9 @@ var _data_files: Dictionary = {}
 # so this lazily maps logical WordNet offsets to the local file positions.
 var _data_positions: Dictionary = {}
 
+# Per-POS lists of plain lowercase headwords, built on first use.
+var _headword_lists: Dictionary = {}
+
 
 ## Loads the database from the given dict folder, preferring the
 ## binary cache when it is present and current.
@@ -105,6 +108,19 @@ func is_base_form(word: String, pos: String) -> bool:
 	var normalized: String = word.strip_edges().to_lower()
 	var index: Dictionary = _indexes.get(pos, {})
 	return index.has(normalized.replace(" ", "_"))
+
+
+## Single-word dictionary headwords of one POS, in index order.
+func headwords(pos: String) -> PackedStringArray:
+	if _headword_lists.has(pos):
+		return _headword_lists[pos]
+	var words: PackedStringArray = PackedStringArray()
+	var index: Dictionary = _indexes.get(pos, {})
+	for lemma: String in index:
+		if _is_plain_word(lemma):
+			words.append(lemma)
+	_headword_lists[pos] = words
+	return words
 
 
 ## Returns candidate base forms for a word under the given POS.
@@ -329,6 +345,15 @@ func _parse_data_line(line: String) -> Synset:
 	return synset
 
 
+func _is_plain_word(value: String) -> bool:
+	if value.is_empty():
+		return false
+	for character: String in value:
+		if character < "a" or character > "z":
+			return false
+	return true
+
+
 func _is_decimal(value: String) -> bool:
 	if value.is_empty():
 		return false
@@ -341,7 +366,7 @@ func _is_decimal(value: String) -> bool:
 func _is_hexadecimal(value: String) -> bool:
 	if value.is_empty():
 		return false
-	const HEX_DIGITS := "0123456789abcdefABCDEF"
+	const HEX_DIGITS: String = "0123456789abcdefABCDEF"
 	for character: String in value:
 		if not HEX_DIGITS.contains(character):
 			return false
