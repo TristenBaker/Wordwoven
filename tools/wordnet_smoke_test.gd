@@ -24,6 +24,7 @@ func _initialize() -> void:
 	_test_validation(reader)
 	_test_parts_of_speech(reader)
 	_test_similarity(reader)
+	_test_spelling_candidates(reader)
 	print("=== %d failure(s) ===" % _failures)
 	quit(1 if _failures > 0 else 0)
 
@@ -92,6 +93,27 @@ func _test_similarity(reader: WordNetReader) -> void:
 		cross_pos > 0.5,
 		"fiery~fire crosses POS (%.3f)" % cross_pos
 	)
+
+
+func _test_spelling_candidates(reader: WordNetReader) -> void:
+	_expect(reader.spelling_candidates("drgon").has("dragon"),
+			"insertion: drgon -> dragon")
+	_expect(reader.spelling_candidates("dragoon").has("dragon"),
+			"deletion: dragoon -> dragon")
+	_expect(reader.spelling_candidates("dragin").has("dragon"),
+			"substitution: dragin -> dragon")
+	_expect(reader.spelling_candidates("dargon").has("dragon"),
+			"transposition: dargon -> dragon")
+	_expect(not reader.spelling_candidates("dragon").has("dragon"),
+			"the word itself is not a candidate")
+	_expect(not reader.spelling_candidates("drgn").has("dragon"),
+			"two edits away is not a candidate")
+	var candidates: Array[String] = reader.spelling_candidates("cat")
+	var sorted: Array[String] = candidates.duplicate()
+	sorted.sort()
+	_expect(candidates == sorted, "candidates are alphabetical")
+	_expect(reader.spelling_candidates("r2d2").is_empty(),
+			"non-letter input has no candidates")
 
 
 func _expect(condition: bool, label: String) -> void:

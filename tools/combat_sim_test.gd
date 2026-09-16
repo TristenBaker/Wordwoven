@@ -26,6 +26,7 @@ func _run_test() -> void:
 	_test_deck_redraw_and_theft()
 	_test_abilities()
 	_test_relic_catalog()
+	_test_spelling_suggestions()
 	await _test_encounter_setup()
 	await _test_goblin_combat()
 	await _test_icy_rat_combat()
@@ -268,6 +269,27 @@ func _test_relic_catalog() -> void:
 			"second relic for one encounter refused")
 
 
+func _test_spelling_suggestions() -> void:
+	print("-- spelling suggestions --")
+	var verbs: Array[String] = WordNet.spelling_suggestions("jumpp", "v")
+	_expect(verbs.has("jump"), "deletion finds jump")
+	_expect(not verbs.has("jumps"), "verb prompts skip inflected forms")
+	var nouns: Array[String] = WordNet.spelling_suggestions("jumpp", "n")
+	_expect(nouns.has("jumps") or nouns.has("jump"),
+			"noun prompts accept noun candidates")
+	var played: Array[String] = ["jump"]
+	_expect(not WordNet.spelling_suggestions("jumpp", "v", played).has(
+		"jump"
+	), "already played words are skipped")
+	var many: Array[String] = WordNet.spelling_suggestions("cat", "n")
+	var sorted: Array[String] = many.duplicate()
+	sorted.sort()
+	_expect(many.size() == 5 and many == sorted,
+			"at most five suggestions, alphabetical")
+	_expect(WordNet.spelling_suggestions("fomr", "n").has("form"),
+			"adjacent transposition is one edit")
+
+
 func _test_encounter_setup() -> void:
 	print("-- encounter setup --")
 	RunState.start_new_run()
@@ -440,6 +462,41 @@ func _test_goblin_combat() -> void:
 	combat.toggle_tile_selection(combat.deck_manager.hand()[0])
 	_expect(combat.selected_tiles().is_empty(),
 			"no second redraw selection this turn")
+
+	# Paid autocorrect for the current verb prompt.
+	var remaining_before: int = combat.speed_timer.remaining_msec()
+	combat.word_input.text = "zzzzqx"
+	combat.request_autocorrect()
+	_expect(combat.current_suggestions().is_empty()
+			and not combat.confirmer.is_pending() and RunState.gold == 16,
+			"no suggestions costs nothing")
+	combat.word_input.text = "listn"
+	combat.request_autocorrect()
+	var listen_index: int = combat.current_suggestions().find("listen")
+	_expect(listen_index >= 0, "autocorrect suggests listen for listn")
+	combat.choose_suggestion(listen_index)
+	_expect(combat.confirmer.is_pending(), "correction asks to confirm")
+	combat.confirmer.decline()
+	_expect(RunState.gold == 16 and combat.word_input.text == "listn",
+			"cancelled correction is free and keeps the input")
+	combat.choose_suggestion(listen_index)
+	combat.word_input.text = "listnn"
+	combat.confirmer.approve()
+	_expect(RunState.gold == 16 and combat.word_input.text == "listnn",
+			"stale correction after editing charges nothing")
+	combat.word_input.text = "listn"
+	combat.request_autocorrect()
+	combat.choose_suggestion(combat.current_suggestions().find("listen"))
+	combat.confirmer.approve()
+	combat.confirmer.approve()
+	_expect(RunState.gold == 11 and combat.word_input.text == "listen",
+			"accepted correction charges 5g once and replaces input")
+	_expect(RunState.word_history.size() == 1
+			and combat.word_input.editable,
+			"correction does not submit the word")
+	_expect(combat.speed_timer.remaining_msec() == remaining_before,
+			"autocorrect leaves the swift timer running")
+	combat.word_input.clear()
 
 	# Victory returns stolen tiles and confirms the relic choice.
 	var stolen: LetterStats = combat.conditions.stolen_letters()[0]

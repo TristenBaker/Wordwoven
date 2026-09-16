@@ -22,6 +22,7 @@ const ENEMY_TURN_DELAY: float = 0.7
 const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
 
 const REDRAW_COST_PER_TILE: int = 2
+const AUTOCORRECT_COST: int = 5
 
 # Log panel anchors while expanded and while showing only its header.
 const LOG_EXPANDED_BOTTOM: float = 0.72
@@ -49,6 +50,8 @@ var _turn_number: int = 0
 var _redraw_used: bool = false
 var _selected_tiles: Array[LetterStats] = []
 var _bonus_was_active: bool = false
+var _suggestions: Array[String] = []
+var _suggestion_source: String = ""
 
 @onready var background: TextureRect = $Background
 @onready var deck_manager: DeckManager = $Systems/DeckManager
@@ -65,6 +68,10 @@ var _bonus_was_active: bool = false
 		$Layout/InputArea/InputRow/SubmitButton
 @onready var redraw_button: Button = \
 		$Layout/InputArea/InputRow/RedrawButton
+@onready var autocorrect_button: Button = \
+		$Layout/InputArea/InputRow/AutocorrectButton
+@onready var suggestion_menu: PopupMenu = \
+		$Layout/InputArea/InputRow/AutocorrectButton/SuggestionMenu
 @onready var word_tile_board: WordTileBoard = \
 		$Layout/InputArea/WordComposerRow/WordTileBoard
 @onready var damage_output: Label = \
@@ -120,6 +127,8 @@ func _ready() -> void:
 	word_input.keep_editing_on_text_submit = true
 	submit_button.pressed.connect(_on_submit)
 	redraw_button.pressed.connect(request_redraw)
+	autocorrect_button.pressed.connect(request_autocorrect)
+	suggestion_menu.id_pressed.connect(choose_suggestion)
 	word_input.text_submitted.connect(_on_text_submitted)
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
@@ -227,6 +236,7 @@ func _enter_player_input() -> void:
 	_state = State.PLAYER_INPUT
 	word_input.editable = true
 	submit_button.disabled = false
+	autocorrect_button.disabled = false
 	_refresh_redraw_button()
 	_focus_word_input()
 
@@ -268,6 +278,8 @@ func _on_submit() -> void:
 	word_input.editable = false
 	submit_button.disabled = true
 	redraw_button.disabled = true
+	autocorrect_button.disabled = true
+	suggestion_menu.hide()
 	feedback_label.text = ""
 	_resolve_word(word, swift)
 
@@ -338,6 +350,8 @@ func _on_enemy_died() -> void:
 	_state = State.WON
 	speed_timer.stop()
 	confirmer.decline()
+	suggestion_menu.hide()
+	autocorrect_button.disabled = true
 	_selected_tiles = []
 	_return_stolen_letters()
 	_rebuild_hand_tiles()
@@ -493,6 +507,86 @@ func _refresh_redraw_button() -> void:
 			or _redraw_used or count == 0
 	if _redraw_used:
 		redraw_button.text = "Redrawn"
+
+
+# --- Autocorrect ---------------------------------------------------
+
+## Offers paid spelling corrections for the current input. Finding
+## no suggestions costs nothing, and the swift timer keeps running.
+func request_autocorrect() -> void:
+	var word: String = word_input.text.strip_edges().to_lower()
+	if _state != State.PLAYER_INPUT or word.is_empty():
+		feedback_label.text = "Type a word to autocorrect."
+		return
+	if confirmer.is_pending():
+		return
+	_suggestions = WordNet.spelling_suggestions(
+		word, required_pos, validator.played_words()
+	)
+	_suggestion_source = word
+	if _suggestions.is_empty():
+		feedback_label.text = "No spelling suggestions for '%s'." % word
+		return
+	if RunState.gold < AUTOCORRECT_COST:
+		feedback_label.text = "Autocorrect costs %dg." % AUTOCORRECT_COST
+		return
+	suggestion_menu.clear()
+	for index: int in _suggestions.size():
+		suggestion_menu.add_item(_suggestions[index], index)
+	var anchor: Vector2 = autocorrect_button.get_screen_position()
+	suggestion_menu.popup(Rect2i(
+		Vector2i(anchor) + Vector2i(0, int(autocorrect_button.size.y)),
+		Vector2i.ZERO
+	))
+
+
+func current_suggestions() -> Array[String]:
+	return _suggestions.duplicate()
+
+
+## Asks to confirm replacing the input with one suggestion.
+func choose_suggestion(index: int) -> void:
+	if index < 0 or index >= _suggestions.size():
+		return
+	var suggestion: String = _suggestions[index]
+	confirmer.request(
+		"Autocorrect",
+		"Replace '%s' with '%s' for %dg? The word is not cast." % [
+			_suggestion_source, suggestion, AUTOCORRECT_COST,
+		],
+		_confirm_autocorrect.bind(
+			_turn_number, _suggestion_source, suggestion
+		)
+	)
+
+
+func _confirm_autocorrect(
+	turn: int, original: String, suggestion: String
+) -> void:
+	var current: String = word_input.text.strip_edges().to_lower()
+	if _state != State.PLAYER_INPUT or turn != _turn_number \
+			or current != original:
+		feedback_label.text = "That correction no longer applies."
+		return
+	var still_valid: Dictionary = WordValidator.check_word(
+		suggestion, required_pos, validator.played_words()
+	)
+	if not still_valid["valid"]:
+		feedback_label.text = "That correction no longer applies."
+		return
+	if not RunState.spend_gold(AUTOCORRECT_COST):
+		feedback_label.text = "Autocorrect costs %dg." % AUTOCORRECT_COST
+		return
+	_suggestions = []
+	word_input.text = suggestion
+	word_input.caret_column = suggestion.length()
+	_on_text_changed(suggestion)
+	feedback_label.text = ""
+	_log("You pay %dg to correct '%s' to '%s'." % [
+		AUTOCORRECT_COST, original, suggestion
+	])
+	_refresh_status()
+	call_deferred("_focus_word_input")
 
 
 # --- Screen updates ------------------------------------------------
