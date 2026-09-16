@@ -297,10 +297,24 @@ func _test_encounter_setup() -> void:
 			"tag input normalizes case and whitespace")
 	_expect(not EncounterPlanner.normalize_tag("very fiery")["valid"],
 			"multiword tag rejected")
-	_expect(not EncounterPlanner.normalize_tag("purple")["valid"],
-			"unsupported tag rejected")
+	_expect(EncounterPlanner.normalize_tag("Purple")["tag"] == "purple",
+			"any dictionary adjective is accepted")
+	_expect(not EncounterPlanner.normalize_tag("quickly")["valid"],
+			"non-adjective tag rejected")
+	_expect(not EncounterPlanner.normalize_tag("zzqxv")["valid"],
+			"non-word tag rejected")
 	_expect(not EncounterPlanner.normalize_tag("")["valid"],
 			"empty tag rejected")
+	_expect(WordNet.counter_detailed("cold", "hot", "a")["score"] == 1.0,
+			"uncurated adjective is countered by its antonym")
+	_expect(WordNet.counter_targets("wet", "a").has("dry"),
+			"antonyms become counter targets for new tags")
+	_expect(WordNet.counter_targets("scorching", "a").has("cold"),
+			"satellite adjectives borrow their head's antonyms")
+	_expect(WordNet.counter_detailed("cold", "wet", "a")["score"] == 0.0,
+			"unrelated words do not counter a new tag")
+	_expect(WordNet.counter_targets("fiery", "n").has("water"),
+			"curated tags keep their thematic counters")
 
 	var factory: EnemyFactory = EnemyFactory.new()
 	add_child(factory)
@@ -354,13 +368,15 @@ func _test_encounter_setup() -> void:
 	_expect(screen.choices_box.get_child_count() == 2,
 			"setup screen shows first-encounter choices")
 	screen.select_option(0)
-	screen.tag_input.text = "purple"
+	screen.tag_input.text = "quickly"
 	screen._on_enter_pressed()
 	_expect(not screen.confirmer.is_pending(),
-			"unsupported adjective cannot be confirmed")
-	screen.tag_input.text = "Angry"
+			"a non-adjective cannot be confirmed")
+	screen.tag_input.text = "Hot"
 	screen._on_enter_pressed()
 	_expect(screen.confirmer.is_pending(), "entry asks for confirmation")
+	_expect(screen.confirmer.dialog_text.contains("cold"),
+			"confirmation names the tag's opposites")
 	screen.confirmer.decline()
 	_expect(RunState.pending_encounter.is_empty(),
 			"cancelled entry stores nothing")

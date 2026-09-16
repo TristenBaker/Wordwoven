@@ -78,12 +78,11 @@ func counter_detailed(
 	return _counter_scorer.score_detailed(word, tag, required_pos)
 
 
-## Enemy tags with counter definitions, sorted alphabetically.
-## Reads the counter data directly when the lexicon is still loading.
-func counter_tags() -> Array[String]:
-	if _counter_scorer != null:
-		return _counter_scorer.supported_tags()
-	return CounterScorer.tags_in(CounterScorer.read_counter_data())
+## Words that directly counter an adjective tag when played as the POS.
+func counter_targets(tag: String, pos: String = "a") -> Array[String]:
+	if not _check_ready():
+		return []
+	return _counter_scorer.counter_targets(tag, pos)
 
 
 ## Plain dictionary headwords of one POS containing a letter, scanning

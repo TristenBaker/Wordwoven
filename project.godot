@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Lexical Rogue"
+config/name="Wordwoven"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="uid://bg2ivw416ifpk"
@@ -39,6 +39,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [gui]
 
+theme/custom="res://assets/Themes/project_theme.tres"
 timers/tooltip_delay_sec=0.1
 
 [input]

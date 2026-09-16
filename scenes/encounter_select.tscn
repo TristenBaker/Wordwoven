@@ -59,15 +59,7 @@ autowrap_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_font_sizes/font_size = 20
-text = "Name its nature with one adjective. That word becomes its only counterable tag."
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="VocabularyLabel" type="Label" parent="CenterBox/Menu"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.75, 0.65, 1)
-theme_override_font_sizes/font_size = 15
-text = "Supported adjectives:"
+text = "Describe it with any adjective. That word becomes its only counterable tag, and its opposites hit hardest."
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -80,7 +72,7 @@ alignment = 1
 custom_minimum_size = Vector2(320, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-placeholder_text = "e.g. fiery"
+placeholder_text = "any adjective, e.g. gloomy"
 max_length = 24
 
 [node name="EnterButton" type="Button" parent="CenterBox/Menu/TagRow"]

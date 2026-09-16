@@ -52,7 +52,7 @@ func build_options(
 	return options
 
 
-## Normalizes typed text into one supported adjective tag.
+## Normalizes typed text into one dictionary adjective tag.
 ## Returns {"valid": bool, "tag": String, "reason": String}.
 static func normalize_tag(text: String) -> Dictionary:
 	var tag: String = text.strip_edges().to_lower()
@@ -60,9 +60,10 @@ static func normalize_tag(text: String) -> Dictionary:
 		return _tag_verdict(false, "", "Type one adjective.")
 	if tag.split(" ", false).size() > 1 or tag.contains("\t"):
 		return _tag_verdict(false, "", "Use a single adjective.")
-	if not WordNet.counter_tags().has(tag):
+	var verdict: Dictionary = WordValidator.check_word(tag, "a")
+	if not verdict["valid"]:
 		return _tag_verdict(
-			false, "", "'%s' is not a supported adjective." % tag
+			false, "", "'%s' is not a dictionary adjective." % tag
 		)
 	return _tag_verdict(true, tag, "")
 

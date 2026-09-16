@@ -16,7 +16,6 @@ var _entering: bool = false
 @onready var choices_box: HBoxContainer = \
 		$CenterBox/Menu/ChoicesBox
 @onready var selection_label: Label = $CenterBox/Menu/SelectionLabel
-@onready var vocabulary_label: Label = $CenterBox/Menu/VocabularyLabel
 @onready var tag_input: LineEdit = $CenterBox/Menu/TagRow/TagInput
 @onready var enter_button: Button = $CenterBox/Menu/TagRow/EnterButton
 @onready var feedback_label: Label = $CenterBox/Menu/FeedbackLabel
@@ -29,9 +28,6 @@ func _ready() -> void:
 	title_label.text = "Choose your next foe"
 	if RunState.is_boss_next():
 		title_label.text = "The end of the road"
-	vocabulary_label.text = "Supported adjectives: " + ", ".join(
-		WordNet.counter_tags()
-	)
 	enter_button.pressed.connect(_on_enter_pressed)
 	tag_input.text_submitted.connect(_on_tag_submitted)
 	_options = planner.options_for_current(factory)
@@ -78,6 +74,17 @@ func _add_choice(index: int) -> void:
 	choices_box.add_child(button)
 
 
+# Names the tag's direct opposites so the player knows what counters it.
+func _counter_hint(tag: String) -> String:
+	var opposites: Array[String] = WordNet.counter_targets(tag, "a")
+	if opposites.is_empty():
+		return "No direct opposite of '%s' is known; counters will be rare." \
+				% tag
+	return "Opposites of '%s' deal extra damage, such as %s." % [
+		tag, ", ".join(opposites.slice(0, 3)),
+	]
+
+
 func _on_tag_submitted(_text: String) -> void:
 	_on_enter_pressed()
 
@@ -97,12 +104,13 @@ func _on_enter_pressed() -> void:
 	var info: Dictionary = factory.enemy_info(option["enemy_id"])
 	confirmer.request(
 		"Enter encounter",
-		"Face the %s %s on %s?\n\n%s\n%s" % [
+		"Face the %s %s on %s?\n\n%s\n%s\n%s" % [
 			verdict["tag"],
 			info.get("name", option["enemy_id"]),
 			EnvironmentCatalog.display_name(option["environment"]),
 			factory.describe(option["enemy_id"]),
 			EnvironmentCatalog.describe(option["environment"]),
+			_counter_hint(verdict["tag"]),
 		],
 		_confirm_entry.bind(_selected_index, verdict["tag"])
 	)
