@@ -50,9 +50,10 @@ letters and hear the bard at the tavern → set up the next encounter
   synonyms to direct-counter strength; and Red Thread draws one extra
   letter into every combat hand. Additional copies stack where applicable.
 - Every encounter, including the first and the boss, starts with
-  setup: pick one of the stage's foes, type one supported adjective
-  (listed on screen) as its only counterable tag, and confirm. Each
-  option previews its environment, rolled once: normal, or icy with a
+  setup: pick one of the stage's foes, describe it with any single
+  dictionary adjective (its only counterable tag), and confirm. The
+  confirmation names a few of the adjective's opposites. Each option
+  previews its environment, rolled once: normal, or icy with a
   one-in-three chance.
 - The Giant Rat poisons one random unpoisoned hand tile after each
   attack you survive; poison lasts until combat ends and halves that
@@ -78,14 +79,18 @@ letters and hear the bard at the tavern → set up the next encounter
   words already played, listed alphabetically. Confirming a choice
   charges 5g and replaces the input without casting it. No suggestions
   or cancelling costs nothing, and the swift timer keeps running.
-- Each recruit offer allows one free 15-second haggle: type a
+- Buying a recruit always starts with a 15-second haggle: type a
   dictionary word of the shown part of speech (base-form verbs)
   containing the offered letter to cut its price by 20% (10g → 8g,
-  20g → 16g). Timing out or leaving uses up the attempt. Buying is
-  still a separate confirmed purchase.
+  20g → 16g). Win or time out, you then confirm the purchase at the
+  resulting price; walking away buys nothing. Each offer is haggled
+  only once, so later purchases go straight to confirmation.
 - Gold purchases, relic choices, and encounter entry ask for
   confirmation, show the exact cost or consequence, and are checked
   again when confirmed. The battle log can be collapsed.
+- Adjectives with curated counters keep them; any other adjective is
+  countered by its WordNet antonyms (satellite adjectives such as
+  **scorching** borrow the antonyms of **hot**).
 - Counters such as **water** against **fiery** score 1.0; their
   synonyms score 0.9. Matching-tag and unrelated words score zero.
   The semantic multiplier is `0.5 + 1.5 * counter_score`, plus

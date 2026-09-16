@@ -1,6 +1,6 @@
 extends Control
-## The tavern offers new recruits, haggling, paid dismissals, a meal,
-## and the bard's story. Letters grow in combat and relics are chosen
+## The tavern offers haggled recruits, paid dismissals, a meal, and
+## the bard's story. Letters grow in combat and relics are chosen
 ## after victories. Every gold purchase is confirmed first.
 
 var _selected: LetterStats = null
@@ -41,9 +41,49 @@ func _ready() -> void:
 	story_label.text = bard.generate()
 
 
-# Purchases ask first, then delegate every state change to the economy,
-# which revalidates availability and gold when the player confirms.
+# Buying a recruit always starts with its one haggle. Once the haggle
+# is settled, the purchase is confirmed at the resulting price; the
+# economy revalidates availability and gold when the player confirms.
 func _on_recruit_pressed(offer_index: int) -> void:
+	if confirmer.is_pending() or haggle_challenge.is_active():
+		return
+	var prompt: Dictionary = economy.begin_haggle(offer_index)
+	if prompt.is_empty():
+		_request_purchase(offer_index)
+		return
+	_haggle_offer = offer_index
+	_rebuild_recruit_buttons()
+	haggle_challenge.open(
+		"%s to talk the price down from %dg to %dg." % [
+			HaggleChallenge.prompt_text(prompt),
+			economy.offer_price(offer_index),
+			HaggleChallenge.discounted_price(
+				economy.offer_price(offer_index)
+			),
+		],
+		economy.check_haggle_answer.bind(offer_index),
+		HaggleChallenge.DURATION_MSEC
+	)
+
+
+func _on_haggle_finished(success: bool) -> void:
+	var offer_index: int = _haggle_offer
+	_haggle_offer = -1
+	var discounted: bool = economy.finish_haggle(offer_index, success)
+	_rebuild_recruit_buttons()
+	if haggle_challenge.walked_away:
+		_note("You walk away. The price stays at %dg." % \
+				economy.offer_price(offer_index))
+		return
+	if discounted:
+		_note("Deal! This recruit now costs %dg." % \
+				economy.offer_price(offer_index))
+	else:
+		_note("No deal. The price stands.")
+	_request_purchase(offer_index)
+
+
+func _request_purchase(offer_index: int) -> void:
 	var offers: Array[Dictionary] = economy.recruitment_offers()
 	if offer_index < 0 or offer_index >= offers.size():
 		return
@@ -65,35 +105,6 @@ func _confirm_recruit(offer_index: int) -> void:
 		_note("A new letter joins your party!")
 	else:
 		_note("Recruit unavailable, or not enough gold.")
-
-
-func _on_haggle_pressed(offer_index: int) -> void:
-	if confirmer.is_pending() or haggle_challenge.is_active():
-		return
-	var prompt: Dictionary = economy.begin_haggle(offer_index)
-	if prompt.is_empty():
-		_note("You have already haggled over this recruit.")
-		_rebuild_recruit_buttons()
-		return
-	_haggle_offer = offer_index
-	_rebuild_recruit_buttons()
-	haggle_challenge.open(
-		"%s for 20%% off.\nOne attempt; leaving forfeits it." % \
-				HaggleChallenge.prompt_text(prompt),
-		economy.check_haggle_answer.bind(offer_index),
-		HaggleChallenge.DURATION_MSEC
-	)
-
-
-func _on_haggle_finished(success: bool) -> void:
-	var offer_index: int = _haggle_offer
-	_haggle_offer = -1
-	if economy.finish_haggle(offer_index, success):
-		_note("Deal! This recruit now costs %dg." % \
-				economy.offer_price(offer_index))
-	else:
-		_note("No deal. The price stands.")
-	_rebuild_recruit_buttons()
 
 
 func _on_drop_pressed() -> void:
@@ -165,18 +176,19 @@ func _rebuild_recruit_buttons() -> void:
 		var offer: Dictionary = offers[index]
 		var stats: LetterStats = LetterStats.create(offer["letter"])
 		var price: int = economy.offer_price(index)
-		var column: VBoxContainer = VBoxContainer.new()
-		column.size_flags_horizontal = SIZE_EXPAND_FILL
-		column.add_child(_recruit_button(index, offer, stats, price))
-		column.add_child(_haggle_button(index, offer))
-		recruit_grid.add_child(column)
+		recruit_grid.add_child(_recruit_button(index, offer, stats, price))
 
 
 func _recruit_button(
 	index: int, offer: Dictionary, stats: LetterStats, price: int
 ) -> Button:
 	var button: Button = Button.new()
+	button.size_flags_horizontal = SIZE_EXPAND_FILL
 	button.custom_minimum_size = Vector2(0, 52)
+	var can_haggle: bool = economy.can_haggle(index)
+	# An unhaggled recruit is affordable if a won haggle would cover it.
+	var lowest_price: int = HaggleChallenge.discounted_price(price) \
+			if can_haggle else price
 	var price_text: String = "%dg" % price
 	if offer.get("discounted", false):
 		price_text = "%dg (haggled)" % price
@@ -185,30 +197,18 @@ func _recruit_button(
 		stats.class_name_text(),
 		"Recruited" if offer["purchased"] else price_text,
 	]
-	button.disabled = offer["purchased"] or RunState.gold < price
-	button.tooltip_text = stats.effect_text()
+	button.disabled = offer["purchased"] or economy.is_haggling() \
+			or RunState.gold < lowest_price
+	var lines: Array[String] = [stats.effect_text()]
+	if can_haggle:
+		lines.append(
+			"Buying starts a 15-second haggle: win it to pay %dg." \
+					% lowest_price
+		)
+	elif not offer["purchased"]:
+		lines.append("Already haggled; the price is final.")
+	button.tooltip_text = "\n".join(lines)
 	button.pressed.connect(_on_recruit_pressed.bind(index))
-	return button
-
-
-func _haggle_button(index: int, offer: Dictionary) -> Button:
-	var button: Button = Button.new()
-	button.custom_minimum_size = Vector2(0, 30)
-	var prompt: Dictionary = offer.get("haggle_prompt", {})
-	button.disabled = not economy.can_haggle(index) \
-			or economy.is_haggling()
-	if offer.get("discounted", false):
-		button.text = "Haggled −20%"
-	elif offer.get("haggle_attempted", false):
-		button.text = "Haggle used"
-	else:
-		button.text = "Haggle"
-	if not prompt.is_empty():
-		button.tooltip_text = (
-			"%s within 15 seconds for 20%% off.\n"
-			+ "One free attempt; buying stays a separate choice."
-		) % HaggleChallenge.prompt_text(prompt)
-	button.pressed.connect(_on_haggle_pressed.bind(index))
 	return button
 
 

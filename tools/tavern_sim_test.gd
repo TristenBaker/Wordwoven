@@ -159,12 +159,19 @@ func _test_haggling() -> void:
 		common_index += 1
 	var rare_prompt: Dictionary = offers[rare_index]["haggle_prompt"]
 
-	# Win the rare offer's haggle through the tavern screen.
-	tavern._on_haggle_pressed(rare_index)
-	_expect(tavern.haggle_challenge.is_active(), "haggle opens a challenge")
+	var confirmer: ActionConfirmer = tavern.confirmer
+	_expect(tavern.recruit_grid.get_child_count() == offers.size()
+			and tavern.recruit_grid.get_child(0) is Button,
+			"each offer is a single recruit button, no haggle button")
+
+	# Buying the rare offer starts its haggle; winning leads to purchase.
+	tavern._on_recruit_pressed(rare_index)
+	_expect(tavern.haggle_challenge.is_active()
+			and not confirmer.is_pending(),
+			"buying a recruit always starts with a haggle")
 	_expect(not economy.can_haggle(rare_index),
 			"starting a haggle consumes the attempt")
-	tavern._on_haggle_pressed(common_index)
+	tavern._on_recruit_pressed(common_index)
 	_expect(economy.can_haggle(common_index),
 			"a second haggle cannot start while one is open")
 	tavern.haggle_challenge.submit("zzzz")
@@ -173,21 +180,47 @@ func _test_haggling() -> void:
 	tavern.haggle_challenge.submit(rare_prompt["solution"])
 	_expect(economy.offer_price(rare_index) == 16,
 			"winning the haggle discounts 20g to 16g")
+	_expect(confirmer.is_pending()
+			and confirmer.dialog_text.contains("16g"),
+			"won haggle asks to confirm at the discounted price")
+	confirmer.decline()
 	_expect(not RunState.recruitment_stock[rare_index]["purchased"]
 			and RunState.gold == 100,
-			"winning the haggle does not buy the recruit")
+			"declining after the haggle buys nothing")
 
-	# Lose the common offer's haggle by leaving.
-	tavern._on_haggle_pressed(common_index)
+	# Walking away keeps the full price and skips the purchase prompt.
+	tavern._on_recruit_pressed(common_index)
 	tavern.haggle_challenge.cancel()
-	_expect(economy.offer_price(common_index) == 10,
-			"leaving the haggle keeps the original price")
+	_expect(economy.offer_price(common_index) == 10
+			and not confirmer.is_pending(),
+			"walking away keeps the price and buys nothing")
 	_expect(economy.begin_haggle(common_index).is_empty(),
 			"only one attempt per offer")
+	tavern._on_recruit_pressed(common_index)
+	_expect(not tavern.haggle_challenge.is_active()
+			and confirmer.dialog_text.contains("10g"),
+			"after the haggle, buying goes straight to confirmation")
+	confirmer.decline()
+
+	# A timed-out haggle still offers the purchase at full price.
+	var timeout_index: int = 0
+	while timeout_index == rare_index or timeout_index == common_index:
+		timeout_index += 1
+	var clock: ManualClock = ManualClock.new()
+	tavern.haggle_challenge.clock = clock
+	tavern._on_recruit_pressed(timeout_index)
+	clock.advance(HaggleChallenge.DURATION_MSEC + 1)
+	tavern.haggle_challenge.tick()
+	var full_price: int = economy.offer_price(timeout_index)
+	_expect(confirmer.is_pending() and full_price == economy.recruit_price(
+		offers[timeout_index]["letter"]
+	) and confirmer.dialog_text.contains("%dg" % full_price),
+			"timed-out haggle confirms at the full price")
+	confirmer.decline()
 
 	# An interrupted haggle cannot be won after reopening the tavern.
 	var third_index: int = 0
-	while third_index == rare_index or third_index == common_index:
+	while third_index in [rare_index, common_index, timeout_index]:
 		third_index += 1
 	var third_prompt: Dictionary = economy.begin_haggle(third_index)
 	await _close(tavern)
@@ -219,6 +252,10 @@ func _test_confirmations() -> void:
 	var tavern: Control = await _open_tavern()
 	var economy: EconomySystem = tavern.economy
 	var confirmer: ActionConfirmer = tavern.confirmer
+	# Settle these offers' haggles so purchases go straight to confirming.
+	for index: int in 2:
+		economy.begin_haggle(index)
+		economy.finish_haggle(index, false)
 	var price: int = economy.offer_price(0)
 
 	tavern._on_recruit_pressed(0)

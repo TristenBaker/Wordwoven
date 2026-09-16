@@ -10,6 +10,9 @@ const DEFAULT_DURATION_MSEC: int = 15000
 
 var clock: GameClock = GameClock.new()
 
+# True when the last challenge ended because the player left it.
+var walked_away: bool = false
+
 var _validator: Callable = Callable()
 var _started_msec: int = -1
 var _duration_msec: int = DEFAULT_DURATION_MSEC
@@ -49,6 +52,7 @@ func open(
 ) -> void:
 	_validator = validator
 	_duration_msec = duration_msec
+	walked_away = false
 	_started_msec = clock.now_msec()
 	prompt_label.text = prompt_text
 	feedback_label.text = ""
@@ -95,6 +99,7 @@ func submit(text: String) -> bool:
 ## Leaves the challenge; this counts as a failed attempt.
 func cancel() -> void:
 	if is_active():
+		walked_away = true
 		_finish(false)
 
 
