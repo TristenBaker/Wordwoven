@@ -61,6 +61,17 @@ func _rebuild_offers() -> void:
 		var price := economy.recruit_price(stats.letter)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(142, 70)
+		button.add_theme_color_override("font_color", Color(0.2, 0.09, 0.03, 1))
+		button.add_theme_color_override("font_hover_color", Color(0.2, 0.09, 0.03, 1))
+		button.add_theme_stylebox_override("normal", _offer_style(
+			Color(0.76, 0.61, 0.38, 1), Color(0.27, 0.11, 0.06, 1)
+		))
+		button.add_theme_stylebox_override("hover", _offer_style(
+			Color(0.96, 0.79, 0.48, 1), Color(0.63, 0.32, 0.09, 1)
+		))
+		button.add_theme_stylebox_override("disabled", _offer_style(
+			Color(0.34, 0.25, 0.16, 0.9), Color(0.2, 0.12, 0.07, 1)
+		))
 		button.text = "%s\n%s · %dg" % [
 			stats.letter.to_upper(), stats.class_name_text(), price
 		]
@@ -70,6 +81,21 @@ func _rebuild_offers() -> void:
 		button.tooltip_text = stats.effect_text()
 		button.pressed.connect(_on_offer_pressed.bind(index))
 		offers_grid.add_child(button)
+
+
+func _offer_style(background: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = background
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = border
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	return style
 
 
 func _refresh_status() -> void:
