@@ -1,0 +1,21 @@
+{
+	"normal": {
+		"name": "Clear Ground",
+		"description": "No hazards underfoot.",
+		"backgrounds": [
+			"uid://cp0f2utb33501",
+			"uid://cbrh0sa02pjyy",
+			"uid://cwb3qpbknboj1",
+			"uid://do67sb2f61ad6",
+			"uid://kl2wmog4aelh",
+			"uid://ddu4iw847l0b7"
+		],
+		"abilities": []
+	},
+	"icy": {
+		"name": "Icy Ground",
+		"description": "Frost creeps over your hand each turn.",
+		"backgrounds": ["uid://cb62uylgt4tdc"],
+		"abilities": [{"id": "freeze_tiles", "count": 2}]
+	}
+}

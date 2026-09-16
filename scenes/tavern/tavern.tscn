@@ -5,6 +5,8 @@
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="4_economy"]
 [ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/Music/BasicMusic.mp3" id="5_nnv1s"]
+[ext_resource type="Script" uid="uid://bqpqmiir3r5g" path="res://scripts/ui/action_confirmer.gd" id="6_confirmer"]
+[ext_resource type="PackedScene" path="res://scenes/ui/typing_challenge.tscn" id="7_challenge"]
 
 [node name="Tavern" type="Control" unique_id=286457882]
 layout_mode = 3
@@ -241,3 +243,11 @@ text = "×"
 [node name="TavernMusic" type="AudioStreamPlayer" parent="." unique_id=602779641]
 stream = ExtResource("5_nnv1s")
 autoplay = true
+
+[node name="HaggleChallenge" parent="." instance=ExtResource("7_challenge")]
+layout_mode = 1
+
+[node name="ActionConfirmer" type="ConfirmationDialog" parent="."]
+title = "Confirm"
+ok_button_text = "Confirm"
+script = ExtResource("6_confirmer")

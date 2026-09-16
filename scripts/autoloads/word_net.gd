@@ -78,6 +78,35 @@ func counter_detailed(
 	return _counter_scorer.score_detailed(word, tag, required_pos)
 
 
+## Enemy tags with counter definitions, sorted alphabetically.
+## Reads the counter data directly when the lexicon is still loading.
+func counter_tags() -> Array[String]:
+	if _counter_scorer != null:
+		return _counter_scorer.supported_tags()
+	return CounterScorer.tags_in(CounterScorer.read_counter_data())
+
+
+## Plain dictionary headwords of one POS containing a letter, scanning
+## from a starting position and wrapping, up to limit results.
+func words_containing(
+	letter: String, pos: String, limit: int = 20, start: int = 0
+) -> Array[String]:
+	var found: Array[String] = []
+	if not _check_ready() or letter.length() != 1:
+		return found
+	var words: PackedStringArray = _reader.headwords(pos)
+	if words.is_empty():
+		return found
+	var needle: String = letter.to_lower()
+	for step: int in words.size():
+		var word: String = words[(start + step) % words.size()]
+		if word.length() >= 3 and word.contains(needle):
+			found.append(word)
+			if found.size() >= limit:
+				break
+	return found
+
+
 ## Synonyms of the word across its senses, for the storyteller.
 func synonyms_of(word: String, limit: int = 8) -> Array[String]:
 	var synonyms: Array[String] = []

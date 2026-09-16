@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/encounter_select.gd" id="1_select"]
-[ext_resource type="Script" path="res://scripts/combat/enemy_factory.gd" id="2_factory"]
+[ext_resource type="Script" uid="uid://dv4a838lhunp1" path="res://scripts/ui/encounter_select.gd" id="1_select"]
+[ext_resource type="Script" uid="uid://claoqyy4st1j5" path="res://scripts/combat/enemy_factory.gd" id="2_factory"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
+[ext_resource type="Script" uid="uid://bqpqmiir3r5g" path="res://scripts/ui/action_confirmer.gd" id="4_confirmer"]
 
 [node name="EncounterSelect" type="Control"]
 layout_mode = 3
@@ -28,19 +29,74 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Menu" type="VBoxContainer" parent="CenterBox"]
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
-theme_override_constants/separation = 40
+theme_override_constants/separation = 18
 alignment = 1
 
 [node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
 theme_override_fonts/font = ExtResource("3_title")
-theme_override_font_sizes/font_size = 56
+theme_override_font_sizes/font_size = 48
 text = "Choose your next foe"
 horizontal_alignment = 1
 
 [node name="ChoicesBox" type="HBoxContainer" parent="CenterBox/Menu"]
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 24
 alignment = 1
+
+[node name="SelectionLabel" type="Label" parent="CenterBox/Menu"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "Pick a foe to see its nature and the ground you will fight on."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="TagPrompt" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 20
+text = "Name its nature with one adjective. That word becomes its only counterable tag."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="VocabularyLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.65, 1)
+theme_override_font_sizes/font_size = 15
+text = "Supported adjectives:"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="TagRow" type="HBoxContainer" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="TagInput" type="LineEdit" parent="CenterBox/Menu/TagRow"]
+custom_minimum_size = Vector2(320, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+placeholder_text = "e.g. fiery"
+max_length = 24
+
+[node name="EnterButton" type="Button" parent="CenterBox/Menu/TagRow"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+disabled = true
+text = "Enter Encounter"
+
+[node name="FeedbackLabel" type="Label" parent="CenterBox/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+
+[node name="ActionConfirmer" type="ConfirmationDialog" parent="."]
+title = "Enter encounter"
+ok_button_text = "Fight"
+script = ExtResource("4_confirmer")

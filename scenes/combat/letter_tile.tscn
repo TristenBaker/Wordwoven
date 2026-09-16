@@ -1,15 +1,17 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/letter_tile.gd" id="1_tile"]
+[ext_resource type="Script" uid="uid://co4ej3ckrjar7" path="res://scripts/ui/letter_tile.gd" id="1_tile"]
 [ext_resource type="Resource" path="res://assets/Themes/letter_tiles/default_letter_tile_theme.tres" id="2_theme"]
 
 [node name="LetterTile" type="PanelContainer"]
 custom_minimum_size = Vector2(80, 100)
+mouse_default_cursor_shape = 2
 script = ExtResource("1_tile")
 tile_theme = ExtResource("2_theme")
 
 [node name="Layout" type="VBoxContainer" parent="."]
 layout_mode = 2
+mouse_filter = 2
 alignment = 1
 
 [node name="LetterLabel" type="Label" parent="Layout"]
@@ -21,3 +23,56 @@ theme_override_constants/shadow_offset_y = 3
 text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Badges" type="Control" parent="."]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="FrozenBadge" type="Label" parent="Badges"]
+visible = false
+layout_mode = 1
+offset_left = -2.0
+offset_top = -4.0
+offset_right = 30.0
+offset_bottom = 14.0
+theme_override_colors/font_color = Color(0.75, 0.93, 1, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.15, 0.3, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "ICE"
+
+[node name="PoisonedBadge" type="Label" parent="Badges"]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -30.0
+offset_top = -4.0
+offset_right = 2.0
+offset_bottom = 14.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.7, 1, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.05, 0.25, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 13
+text = "PSN"
+horizontal_alignment = 2
+
+[node name="SelectedBadge" type="Label" parent="Badges"]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -12.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.92, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.12, 0.02, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 12
+text = "REDRAW"
+horizontal_alignment = 1

@@ -1,6 +1,7 @@
 {
 	"rat": {
 		"name": "Giant Rat",
+		"description": "A plague-bitten scavenger.",
 		"health": 18,
 		"attack": 4,
 		"gold": 24,
@@ -8,10 +9,12 @@
 		"frame_width": 0,
 		"tag_pool": ["filthy", "quick", "hungry", "small"],
 		"tag_count": 1,
-		"tier": 1
+		"tier": 1,
+		"abilities": [{"id": "poison_tile", "count": 1}]
 	},
 	"goblin": {
 		"name": "Goblin",
+		"description": "A sticky-fingered raider.",
 		"health": 24,
 		"attack": 5,
 		"gold": 32,
@@ -19,10 +22,12 @@
 		"frame_width": 150,
 		"tag_pool": ["greedy", "sneaky", "angry", "crafty"],
 		"tag_count": 1,
-		"tier": 1
+		"tier": 1,
+		"abilities": [{"id": "steal_tile", "count": 1}]
 	},
 	"mushroom": {
 		"name": "Myconid",
+		"description": "A patient fungus that hits harder than it looks.",
 		"health": 32,
 		"attack": 6,
 		"gold": 40,
@@ -30,10 +35,12 @@
 		"frame_width": 150,
 		"tag_pool": ["poisonous", "damp", "dark", "rooted"],
 		"tag_count": 1,
-		"tier": 2
+		"tier": 2,
+		"abilities": []
 	},
 	"skeleton": {
 		"name": "Skeleton",
+		"description": "Old bones bound to an older grudge.",
 		"health": 38,
 		"attack": 7,
 		"gold": 48,
@@ -41,10 +48,12 @@
 		"frame_width": 150,
 		"tag_pool": ["dead", "brittle", "cold", "armed"],
 		"tag_count": 2,
-		"tier": 2
+		"tier": 2,
+		"abilities": []
 	},
 	"flying_eye": {
 		"name": "Flying Eye",
+		"description": "It sees every word before you spell it.",
 		"health": 44,
 		"attack": 8,
 		"gold": 56,
@@ -52,10 +61,12 @@
 		"frame_width": 150,
 		"tag_pool": ["watchful", "flying", "strange", "round"],
 		"tag_count": 2,
-		"tier": 3
+		"tier": 3,
+		"abilities": []
 	},
 	"dragon": {
 		"name": "Red Dragon",
+		"description": "The final chapter, coiled around its hoard.",
 		"health": 70,
 		"attack": 10,
 		"gold": 120,
@@ -63,6 +74,7 @@
 		"frame_width": 0,
 		"tag_pool": ["fiery", "huge", "ancient", "greedy"],
 		"tag_count": 2,
-		"tier": 4
+		"tier": 4,
+		"abilities": []
 	}
 }

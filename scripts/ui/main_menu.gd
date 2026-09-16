@@ -2,6 +2,9 @@ extends Control
 ## Title screen. Waits for the WordNet database to finish loading,
 ## then lets the player start a run or quit.
 
+# Every encounter, including the first, begins with encounter setup.
+const FIRST_SCENE_PATH: String = ScenePaths.ENCOUNTER_SELECT
+
 @onready var start_button: Button = $CenterBox/Menu/StartButton
 @onready var settings_button: Button = $CenterBox/Menu/SettingsButton
 @onready var quit_button: Button = $CenterBox/Menu/QuitButton

@@ -1,0 +1,113 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://cl7gii4a0dyyi" path="res://scripts/ui/typing_challenge.gd" id="1_challenge"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="2_body"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.16, 0.1, 0.06, 0.97)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.71, 0.52, 0.23, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="TypingChallenge" type="Control"]
+visible = false
+z_index = 50
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_challenge")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -270.0
+offset_top = -150.0
+offset_right = 270.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 26
+text = "Haggle"
+horizontal_alignment = 1
+
+[node name="PromptLabel" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Type a word."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CountdownBar" type="ProgressBar" parent="Panel/Margin/Box"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+max_value = 15000.0
+value = 15000.0
+show_percentage = false
+
+[node name="AnswerRow" type="HBoxContainer" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AnswerInput" type="LineEdit" parent="Panel/Margin/Box/AnswerRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+placeholder_text = "your word..."
+max_length = 24
+keep_editing_on_text_submit = true
+
+[node name="SubmitButton" type="Button" parent="Panel/Margin/Box/AnswerRow"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+text = "Submit"
+
+[node name="FeedbackLabel" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="LeaveButton" type="Button" parent="Panel/Margin/Box"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Leave (forfeits this attempt)"

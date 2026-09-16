@@ -31,18 +31,44 @@ const LANTERN_MULTIPLIER_BONUS: float = 0.08
 
 ## Scores a word against the enemy's tags.
 ## drawn holds the hand letters covering the word; undrawn holds
-## the remaining characters. Returns the breakdown dictionary.
+## the remaining characters. The optional context may carry
+## "conditions" (EncounterConditions) and "speed_bonus" (bool).
+## Returns the breakdown dictionary.
 func calculate(
 	word: String,
 	drawn: Array[LetterStats],
 	undrawn: Array[String],
 	enemy_tags: Array[String],
-	required_pos: String = ""
+	required_pos: String = "",
+	context: Dictionary = {}
 ) -> Dictionary:
+	var conditions: EncounterConditions = context.get("conditions")
 	var letter_rows: Array[Dictionary] = []
+	var level_eligible: Array[LetterStats] = []
 	var base_power: float = 0.0
+	var healing: float = 0.0
+	var gold: float = 0.0
+	var frozen_count: int = 0
+	var poisoned_count: int = 0
 	for stats: LetterStats in drawn:
-		var contribution: float = stats.power()
+		var frozen: bool = conditions != null \
+				and conditions.is_frozen(stats)
+		var poisoned: bool = conditions != null \
+				and conditions.is_poisoned(stats)
+		var factor: float = EncounterConditions.POISON_FACTOR \
+				if poisoned else 1.0
+		var contribution: float = 0.0
+		if frozen:
+			# Frozen tiles fall back to the default-letter contribution.
+			contribution = _default_letter_power(stats.letter) * factor
+			frozen_count += 1
+		else:
+			contribution = stats.power() * factor
+			healing += _healer_health(stats) * factor
+			gold += _rogue_gold(stats) * factor
+			level_eligible.append(stats)
+		if poisoned:
+			poisoned_count += 1
 		base_power += contribution
 		letter_rows.append({
 			"letter": stats.letter,
@@ -50,13 +76,11 @@ func calculate(
 			"power": contribution,
 			"level": stats.level,
 			"stats": stats,
+			"frozen": frozen,
+			"poisoned": poisoned,
 		})
 	for character: String in undrawn:
-		var fallback: int = LetterStats.BASE_POWER.get(
-			character, 1
-		)
-		var contribution: float = \
-				float(fallback) * UNDRAWN_POWER_FACTOR
+		var contribution: float = _default_letter_power(character)
 		base_power += contribution
 		letter_rows.append({
 			"letter": character,
@@ -81,8 +105,12 @@ func calculate(
 		effectiveness
 	)
 	semantic_multiplier += relic_system.total_effect("damage_multiplier")
+	var speed_bonus: bool = bool(context.get("speed_bonus", false))
+	var speed_multiplier: float = SpeedTimer.DAMAGE_MULTIPLIER \
+			if speed_bonus else 1.0
 	var damage: float = base_power * length_multiplier \
-			* pos_data["multiplier"] * semantic_multiplier
+			* pos_data["multiplier"] * semantic_multiplier \
+			* speed_multiplier
 	return {
 		"word": word,
 		"damage": damage,
@@ -98,8 +126,15 @@ func calculate(
 		"similarity": counter,
 		"effectiveness": effectiveness,
 		"semantic_multiplier": semantic_multiplier,
-		"gold_bonus": _rogue_gold(drawn),
-		"heal_amount": _healer_health(drawn),
+		# Fractional poisoned contributions round down once per word.
+		"gold_bonus": int(floor(gold)),
+		"heal_amount": int(floor(healing)),
+		"speed_bonus": speed_bonus,
+		"speed_multiplier": speed_multiplier,
+		"frozen_count": frozen_count,
+		"poisoned_count": poisoned_count,
+		# Only these instances gain a level once the word resolves.
+		"level_eligible": level_eligible,
 	}
 
 
@@ -142,17 +177,18 @@ func _best_tag_counter(
 	return best
 
 
-func _rogue_gold(drawn: Array[LetterStats]) -> int:
-	var total: int = 0
-	for stats: LetterStats in drawn:
-		if stats.letter_class == LetterStats.LetterClass.ROGUE:
-			total += 2 * stats.level
-	return total
+func _default_letter_power(character: String) -> float:
+	var base: int = LetterStats.BASE_POWER.get(character, 1)
+	return float(base) * UNDRAWN_POWER_FACTOR
 
 
-func _healer_health(drawn: Array[LetterStats]) -> int:
-	var total: int = 0
-	for stats: LetterStats in drawn:
-		if stats.letter_class == LetterStats.LetterClass.HEALER:
-			total += stats.level
-	return total
+func _rogue_gold(stats: LetterStats) -> float:
+	if stats.letter_class == LetterStats.LetterClass.ROGUE:
+		return 2.0 * float(stats.level)
+	return 0.0
+
+
+func _healer_health(stats: LetterStats) -> float:
+	if stats.letter_class == LetterStats.LetterClass.HEALER:
+		return float(stats.level)
+	return 0.0
