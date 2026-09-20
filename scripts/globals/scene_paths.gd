@@ -4,6 +4,7 @@ extends RefCounted
 ## changes never require hunting through scripts for path strings.
 
 const MAIN_MENU: String = "res://scenes/main_menu.tscn"
+const BIOME_SELECT: String = "res://scenes/biome_select.tscn"
 const COMBAT: String = "res://scenes/combat/combat.tscn"
 const TAVERN: String = "res://scenes/tavern/tavern.tscn"
 const ENCOUNTER_SELECT: String = \

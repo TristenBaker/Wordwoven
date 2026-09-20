@@ -4,7 +4,7 @@
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="4_economy"]
-[ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/BasicMusic.mp3" id="5_nnv1s"]
+[ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/Music/BasicMusic.mp3" id="5_nnv1s"]
 
 [node name="Tavern" type="Control" unique_id=286457882]
 layout_mode = 3

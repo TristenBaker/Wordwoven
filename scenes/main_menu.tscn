@@ -4,7 +4,8 @@
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="PackedScene" path="res://scenes/settings_screen.tscn" id="4_settings"]
-[ext_resource type="AudioStream" uid="uid://h5bb5k7e8tgo" path="res://assets/Art/TitleMusic.mp3" id="5_8ln24"]
+[ext_resource type="Texture2D" uid="uid://csopulerv0ktq" path="res://art/backgrounds/Title Background/Title Background Updated.png" id="6_background"]
+[ext_resource type="AudioStream" uid="uid://c7b8ckewcca6v" path="res://assets/Art/Music/1 - Whispers of the Eldertree (Loop).mp3" id="6_rtw2f"]
 
 [node name="MainMenu" type="Control" unique_id=1733250631]
 layout_mode = 3
@@ -15,14 +16,17 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="." unique_id=334097872]
+[node name="Background" type="TextureRect" parent="." unique_id=334097872]
+self_modulate = Color(0.8, 0.8, 0.8, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.101961, 0.0666667, 0.054902, 1)
+texture = ExtResource("6_background")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="CenterBox" type="CenterContainer" parent="." unique_id=1480718528]
 layout_mode = 1
@@ -42,7 +46,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.898039, 0.784314, 0.572549, 1)
 theme_override_fonts/font = ExtResource("2_title")
 theme_override_font_sizes/font_size = 96
-text = "Lexical Rogue"
+text = "Word Woven"
 horizontal_alignment = 1
 
 [node name="SubtitleLabel" type="Label" parent="CenterBox/Menu" unique_id=1464814257]
@@ -85,5 +89,5 @@ horizontal_alignment = 1
 layout_mode = 1
 
 [node name="TitleMusic" type="AudioStreamPlayer" parent="." unique_id=1568006341]
-stream = ExtResource("5_8ln24")
+stream = ExtResource("6_rtw2f")
 autoplay = true

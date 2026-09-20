@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dwv378je3u0ec"
+path="res://.godot/imported/4 - Realm of Emberlight (Loop).mp3-2a5d8444d067d1522a146c7347211269.mp3str"
+
+[deps]
+
+source_file="res://assets/Art/Music/4 - Realm of Emberlight (Loop).mp3"
+dest_files=["res://.godot/imported/4 - Realm of Emberlight (Loop).mp3-2a5d8444d067d1522a146c7347211269.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
