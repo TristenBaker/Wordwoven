@@ -140,7 +140,12 @@ func _start_encounter() -> void:
 
 # Adding function for randomizing backgrounds
 func _randomize_background() -> void:
+	# Keep the existing random draw so other randomized systems are unaffected.
 	background.texture = backgrounds.pick_random()
+	if RunState.selected_biome == "tundra":
+		background.texture = load(
+			"res://art/backgrounds/Tundra Biome/T%d.png" % RunState.encounter_index
+		)
 
 func _pick_spawn_data() -> Dictionary:
 	var enemy_id: String = RunState.next_enemy_id

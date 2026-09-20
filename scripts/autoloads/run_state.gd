@@ -33,6 +33,9 @@ var encounter_index: int = 1
 # combat scene should roll one for the current stage.
 var next_enemy_id: String = ""
 
+# Menu selection only; gameplay does not consume this yet.
+var selected_biome: String = ""
+
 # History entries for the storyteller:
 # Word, enemy, tags, damage, requested part of speech, and encounter.
 var word_history: Array[Dictionary] = []
@@ -52,6 +55,7 @@ func start_new_run() -> void:
 	recruitment_stock = []
 	encounter_index = 1
 	next_enemy_id = ""
+	selected_biome = ""
 	word_history = []
 	deck = []
 	var starters: String = (
