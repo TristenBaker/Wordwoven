@@ -11,6 +11,7 @@ const RETALIATION_WAIT: float = 2.0
 
 var _failures: int = 0
 var _last_result: Dictionary = {}
+var _navigated: Array[String] = []
 
 
 func _ready() -> void:
@@ -514,26 +515,23 @@ func _test_goblin_combat() -> void:
 			"autocorrect leaves the swift timer running")
 	combat.word_input.clear()
 
-	# Victory returns stolen tiles and confirms the relic choice.
+	# Victory returns stolen tiles and hands off to the reward screens.
 	var stolen: LetterStats = combat.conditions.stolen_letters()[0]
+	var gold_before_win: int = RunState.gold
 	enemy.take_damage(99999.0)
 	await get_tree().process_frame
 	_expect(combat.conditions.stolen_letters().is_empty()
 			and combat.deck_manager.discard_pile().has(stolen),
 			"stolen tile returns when the goblin dies")
-	_expect(combat.victory_panel.visible, "victory panel shown")
-	combat._on_relic_button_pressed(0)
-	_expect(combat.confirmer.is_pending() and RunState.relics.is_empty(),
-			"relic choice waits for confirmation")
-	combat.confirmer.decline()
-	_expect(RunState.relics.is_empty(), "cancelled relic choice grants none")
-	combat._on_relic_button_pressed(0)
-	combat.confirmer.approve()
-	combat.confirmer.approve()
-	combat._on_relic_button_pressed(1)
-	combat.confirmer.approve()
-	_expect(RunState.relics.size() == 1,
-			"exactly one relic claimed despite repeated confirms")
+	_expect(_navigated == [ScenePaths.FIGHT_COMPLETION],
+			"victory opens the fight completion screen once")
+	_expect(RunState.gold == gold_before_win + 32
+			and RunState.pending_victory_gold == 32,
+			"victory pays the goblin's gold once")
+	enemy.take_damage(99999.0)
+	await get_tree().process_frame
+	_expect(_navigated.size() == 1 and RunState.gold == gold_before_win + 32,
+			"a second death signal pays nothing")
 
 	var log_text: String = combat.log_label.get_parsed_text()
 	combat.set_log_expanded(false)
@@ -609,6 +607,8 @@ func _spawn_combat(
 	var combat: Control = load(ScenePaths.COMBAT).instantiate()
 	combat.clock = clock
 	combat.rng = _rng()
+	_navigated = []
+	combat.navigate = _on_navigate
 	add_child(combat)
 	return combat
 
@@ -630,6 +630,10 @@ func _rng() -> RandomNumberGenerator:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = SEED
 	return rng
+
+
+func _on_navigate(scene_path: String) -> void:
+	_navigated.append(scene_path)
 
 
 func _on_word_resolved(result: Dictionary) -> void:

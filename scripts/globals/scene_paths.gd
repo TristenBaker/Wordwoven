@@ -10,6 +10,7 @@ const FIGHT_COMPLETION: String = "res://scenes/post_fight/fight_completion.tscn"
 const POWER_SELECT: String = "res://scenes/post_fight/power_select.tscn"
 const LOOT_DROP: String = "res://scenes/post_fight/loot_drop.tscn"
 const TAVERN: String = "res://scenes/tavern/tavern_hub.tscn"
+const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 const TAVERN_LEFT: String = "res://scenes/tavern/tavern_left.tscn"
 const TAVERN_RIGHT: String = "res://scenes/tavern/tavern_right.tscn"
 const ENCOUNTER_SELECT: String = \

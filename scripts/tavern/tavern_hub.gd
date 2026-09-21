@@ -2,8 +2,6 @@ extends Control
 ## The atmospheric tavern hub. The existing management screen remains the
 ## Tavern Page, opened from here by the room interaction or the B shortcut.
 
-const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
-
 @onready var tavern_page_button: Button = $TavernPageButton
 @onready var leave_button: Button = $LeaveButton
 @onready var left_arrow: Button = $GoLeftButton
@@ -29,7 +27,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _open_tavern_page() -> void:
-	get_tree().change_scene_to_file(TAVERN_PAGE)
+	get_tree().change_scene_to_file(ScenePaths.TAVERN_PAGE)
 
 
 func _leave_tavern() -> void:

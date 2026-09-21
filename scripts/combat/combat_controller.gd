@@ -34,6 +34,8 @@ var relic_choice_buttons: Array[Button] = []
 # Injected before the scene enters the tree for deterministic tests.
 var clock: GameClock = null
 var rng: RandomNumberGenerator = null
+# Receives the next scene path; tests capture it instead of leaving.
+var navigate: Callable = Callable()
 
 var conditions: EncounterConditions = null
 var abilities: EncounterAbilities = EncounterAbilities.new()
@@ -356,7 +358,7 @@ func _on_enemy_died() -> void:
 	RunState.is_run_active = true
 	RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)
-	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
+	_go(ScenePaths.FIGHT_COMPLETION)
 
 
 func _return_stolen_letters() -> void:
@@ -373,9 +375,36 @@ func _return_stolen_letters() -> void:
 func _on_player_died() -> void:
 	_state = State.LOST
 	speed_timer.stop()
-	get_tree().change_scene_to_file(ScenePaths.RUN_LOST)
+	_go(ScenePaths.RUN_LOST)
 
 
+# --- Redraw --------------------------------------------------------
+
+## Selects or deselects a hand tile for this turn's paid redraw.
+func toggle_tile_selection(stats: LetterStats) -> void:
+	if _state != State.PLAYER_INPUT or _redraw_used:
+		return
+	if not deck_manager.hand().has(stats):
+		return
+	if _selected_tiles.has(stats):
+		_selected_tiles.erase(stats)
+	else:
+		_selected_tiles.append(stats)
+	for tile: LetterTile in hand_box.get_children():
+		tile.set_selected(_selected_tiles.has(tile.stats))
+	_refresh_redraw_button()
+	call_deferred("_focus_word_input")
+
+
+func selected_tiles() -> Array[LetterStats]:
+	return _selected_tiles.duplicate()
+
+
+func redraw_cost(count: int) -> int:
+	return count * REDRAW_COST_PER_TILE
+
+
+## Asks the player to confirm redrawing the selected tiles.
 func request_redraw() -> void:
 	var problem: String = _redraw_problem(_selected_tiles)
 	if not problem.is_empty():
@@ -773,6 +802,13 @@ func _describe_result(result: Dictionary) -> String:
 	if result["gold_bonus"] > 0:
 		lines.append("  Rogues collect %d gold." % result["gold_bonus"])
 	return "\n".join(lines)
+
+
+func _go(scene_path: String) -> void:
+	if navigate.is_valid():
+		navigate.call(scene_path)
+	else:
+		get_tree().change_scene_to_file(scene_path)
 
 
 func _log(message: String) -> void:

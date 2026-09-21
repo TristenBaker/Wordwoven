@@ -306,7 +306,7 @@ func _test_confirmations() -> void:
 
 
 func _open_tavern() -> Control:
-	var tavern: Control = load(ScenePaths.TAVERN).instantiate()
+	var tavern: Control = load(ScenePaths.TAVERN_PAGE).instantiate()
 	add_child(tavern)
 	await get_tree().process_frame
 	await get_tree().process_frame
