@@ -25,6 +25,10 @@ var _entering: bool = false
 func _ready() -> void:
 	if not RunState.is_run_active:
 		RunState.start_new_run()
+	# Both of the stage's noncombat events come before combat setup.
+	if EventProgress.has_pending():
+		get_tree().change_scene_to_file.call_deferred(ScenePaths.EVENT)
+		return
 	title_label.text = "Choose your next foe"
 	if RunState.is_boss_next():
 		title_label.text = "The end of the road"

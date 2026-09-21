@@ -15,5 +15,6 @@ const TAVERN_LEFT: String = "res://scenes/tavern/tavern_left.tscn"
 const TAVERN_RIGHT: String = "res://scenes/tavern/tavern_right.tscn"
 const ENCOUNTER_SELECT: String = \
 		"res://scenes/encounter_select.tscn"
+const EVENT: String = "res://scenes/events/event_screen.tscn"
 const RUN_WON: String = "res://scenes/run_won.tscn"
 const RUN_LOST: String = "res://scenes/run_lost.tscn"

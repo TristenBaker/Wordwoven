@@ -163,7 +163,7 @@ func _confirm_meal() -> void:
 func _on_continue_pressed() -> void:
 	if haggle_challenge.is_active():
 		return
-	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+	get_tree().change_scene_to_file(RunFlow.after_tavern())
 
 
 func _on_close_pressed() -> void:

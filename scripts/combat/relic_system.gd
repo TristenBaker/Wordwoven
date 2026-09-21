@@ -38,6 +38,14 @@ func grant_reward(relic_id: String, encounter: int) -> bool:
 	if RunState.relic_rewards.has(encounter):
 		return false
 	RunState.relic_rewards[encounter] = relic_id
+	return grant_relic(relic_id)
+
+
+## Adds one relic copy and applies its one-time effects. Callers own
+## the guard against granting the same reward twice.
+func grant_relic(relic_id: String) -> bool:
+	if not RelicCatalog.relics().has(relic_id):
+		return false
 	RunState.relics.append(relic_id)
 	for params: Dictionary in RelicCatalog.effects_of(
 		relic_info(relic_id)

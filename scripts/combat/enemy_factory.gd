@@ -43,7 +43,7 @@ func enemy_info(enemy_id: String) -> Dictionary:
 	return _definitions.get(enemy_id, {})
 
 
-## Enemy description followed by its ability summaries.
+## Enemy description followed by its ability and rule summaries.
 func describe(enemy_id: String) -> String:
 	var definition: Dictionary = enemy_info(enemy_id)
 	var lines: Array[String] = [
@@ -55,6 +55,12 @@ func describe(enemy_id: String) -> String:
 	lines.append_array(EncounterAbilities.describe_entries(
 		definition.get("abilities", [])
 	))
+	var rule_names: Array[String] = []
+	for rule_type: Variant in definition.get("rules", []):
+		var info: Dictionary = WordRules.definition(String(rule_type))
+		rule_names.append(String(info.get("name", rule_type)))
+	if not rule_names.is_empty():
+		lines.append("Word rules: %s." % ", ".join(rule_names))
 	return "\n".join(lines)
 
 
@@ -87,6 +93,7 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,
 		"abilities": definition.get("abilities", []).duplicate(true),
+		"rules": definition.get("rules", []).duplicate(),
 	}
 
 

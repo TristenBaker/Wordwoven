@@ -1,0 +1,46 @@
+{
+	"min_length": {
+		"name": "Long-Winded",
+		"text": "Use a word of at least {length} letters.",
+		"lengths": [5, 6]
+	},
+	"max_length": {
+		"name": "Terse",
+		"text": "Use a word of at most {length} letters.",
+		"lengths": [4, 5]
+	},
+	"required_letter": {
+		"name": "Keystone",
+		"text": "Include the letter {letter}.",
+		"letters": "abcdeghilmnoprstu"
+	},
+	"starts_with": {
+		"name": "Opening Rune",
+		"text": "Begin the word with {letter}.",
+		"letters": "abcdefghilmnoprst"
+	},
+	"ends_with": {
+		"name": "Closing Rune",
+		"text": "End the word with {letter}.",
+		"letters": "adeghklnrsty"
+	},
+	"repeated_letter": {
+		"name": "Echo",
+		"text": "Use one letter at least twice."
+	},
+	"also_pos": {
+		"name": "Double Meaning",
+		"text": "Choose a word that can also be a {pos_name}.",
+		"positions": ["n", "v", "a"]
+	},
+	"counter": {
+		"name": "Know Thy Foe",
+		"text": "Counter its nature: {tag}."
+	},
+	"amnesia": {
+		"name": "Amnesia",
+		"text": "Amnesia: {letter} is forgotten. Words using it are refused.",
+		"letters": "bcdfghlmnprst",
+		"forbids": true
+	}
+}

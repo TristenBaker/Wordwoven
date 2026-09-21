@@ -362,6 +362,10 @@ func _test_encounter_setup() -> void:
 	factory.queue_free()
 
 	RunState.start_new_run()
+	# Setup opens only after the stage's two events are finished.
+	RunState.event_stages[RunState.encounter_index] = {
+		"types": [], "events": [], "slot": 0,
+	}
 	var screen: Control = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 	add_child(screen)
 	await get_tree().process_frame
@@ -431,6 +435,13 @@ func _test_goblin_combat() -> void:
 	_expect(RunState.word_history.size() == 1, "word recorded")
 	_expect(not combat.speed_timer.is_running(),
 			"timer stops during enemy resolution")
+	_expect(combat.thread_candidates().size()
+			== int(_last_result["drawn_count"]),
+			"every drawn lemon tile can be threaded")
+	await get_tree().create_timer(RETALIATION_WAIT).timeout
+	_expect(RunState.player_health == player_before,
+			"the enemy waits while a thread is chosen")
+	combat.skip_thread()
 	await get_tree().create_timer(RETALIATION_WAIT).timeout
 	_expect(RunState.player_health < player_before, "enemy retaliated")
 	_expect(combat.conditions.stolen_letters().size() == 1,
@@ -579,6 +590,7 @@ func _test_icy_rat_combat() -> void:
 	_expect(RunState.word_history.size() == 1
 			and not _last_result.get("speed_bonus", true),
 			"late word still resolves without the swift bonus")
+	combat.skip_thread()
 	await get_tree().create_timer(RETALIATION_WAIT).timeout
 	var poisoned: Array[LetterStats] = combat.conditions.poisoned_letters()
 	_expect(poisoned.size() == 1, "rat poisons one tile after attacking")
@@ -610,6 +622,8 @@ func _spawn_combat(
 	_navigated = []
 	combat.navigate = _on_navigate
 	add_child(combat)
+	# These fights check other mechanics; word rules have their own suite.
+	combat.rule_tracker.clear()
 	return combat
 
 

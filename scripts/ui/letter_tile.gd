@@ -1,8 +1,9 @@
 class_name LetterTile
 extends PanelContainer
 ## One letter tile in the combat hand. Its fill signals class and its
-## border signals rank; badges mark redraw selection and temporary
-## conditions, with detailed mechanics available by tooltip.
+## border signals rank; badges mark redraw selection, temporary
+## conditions, attached modifiers, and the Threaded Letter, with
+## exact mechanics available by tooltip.
 
 signal pressed(stats: LetterStats)
 
@@ -20,6 +21,7 @@ const SELECTED_LIFT: float = 12.0
 var stats: LetterStats = null
 
 var _selected: bool = false
+var _threaded: bool = false
 var _frozen: bool = false
 var _poisoned: bool = false
 var _condition_text: String = ""
@@ -28,6 +30,8 @@ var _condition_text: String = ""
 @onready var frozen_badge: Label = $Badges/FrozenBadge
 @onready var poisoned_badge: Label = $Badges/PoisonedBadge
 @onready var selected_badge: Label = $Badges/SelectedBadge
+@onready var modifier_badge: Label = $Badges/ModifierBadge
+@onready var thread_badge: Label = $Badges/ThreadBadge
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -43,6 +47,13 @@ func setup(new_stats: LetterStats) -> void:
 	letter_label.add_theme_color_override(
 		"font_color", tile_theme.letter_color
 	)
+	var initials: Array[String] = []
+	for modifier_id: String in stats.modifier_ids():
+		initials.append(
+			ModifierCatalog.display_name(modifier_id).left(2).to_upper()
+		)
+	modifier_badge.text = " ".join(initials)
+	modifier_badge.visible = not initials.is_empty()
 	_refresh_style()
 
 
@@ -83,13 +94,27 @@ func is_selected() -> bool:
 	return _selected
 
 
+## Marks the tile as this encounter's Threaded Letter.
+func set_threaded(threaded: bool) -> void:
+	_threaded = threaded
+	thread_badge.visible = threaded
+	_refresh_style()
+
+
 func _refresh_style() -> void:
 	if stats == null:
 		return
 	add_theme_stylebox_override("panel", _tile_style())
-	var lines: Array[String] = [stats.describe(), stats.effect_text()]
+	var lines: Array[String] = [
+		"%s  (%s)" % [stats.describe(), stats.tag_text()],
+		stats.full_effect_text(),
+	]
 	if not _condition_text.is_empty():
 		lines.append(_condition_text)
+	if _threaded:
+		lines.append(
+			"Threaded Letter: reuse it this turn for +1 Inspiration."
+		)
 	lines.append(
 		"Selected for redraw. Click to deselect." if _selected
 		else "Click to select for a paid redraw."

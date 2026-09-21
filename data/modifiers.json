@@ -1,0 +1,93 @@
+{
+	"resonant": {
+		"name": "Resonant",
+		"description": "+{amount} power for each other drawn {class} in the word.",
+		"effect": "power_per_class_ally",
+		"amount": 2,
+		"order": 10,
+		"doubles": true,
+		"price": 6,
+		"offered": true
+	},
+	"patient": {
+		"name": "Patient",
+		"description": "+{amount} power for each turn it waited in hand (up to {cap}).",
+		"effect": "power_per_wait",
+		"amount": 2,
+		"cap": 4,
+		"order": 10,
+		"doubles": true,
+		"price": 6,
+		"offered": true
+	},
+	"threadbound": {
+		"name": "Threadbound",
+		"description": "+{amount} power when used as the Threaded Letter.",
+		"effect": "power_when_threaded",
+		"amount": 6,
+		"order": 10,
+		"doubles": true,
+		"price": 6,
+		"offered": true
+	},
+	"heavy": {
+		"name": "Heavy",
+		"description": "+{amount} power on every use.",
+		"effect": "flat_power",
+		"amount": 4,
+		"order": 10,
+		"doubles": true,
+		"price": 6,
+		"offered": false
+	},
+	"keen": {
+		"name": "Keen",
+		"description": "+{percent}% of this letter's power, after other power bonuses.",
+		"effect": "power_percent",
+		"amount": 1.0,
+		"order": 20,
+		"doubles": true,
+		"price": 8,
+		"offered": true
+	},
+	"echoing": {
+		"name": "Echoing",
+		"description": "Repeats this letter's class effect once more.",
+		"effect": "echo_class",
+		"amount": 1,
+		"order": 30,
+		"doubles": false,
+		"price": 8,
+		"offered": true
+	},
+	"gilded": {
+		"name": "Gilded",
+		"description": "+{amount} gold when used in an accepted word.",
+		"effect": "gold",
+		"amount": 2,
+		"order": 40,
+		"doubles": true,
+		"price": 5,
+		"offered": true
+	},
+	"illuminated": {
+		"name": "Illuminated",
+		"description": "+{amount} counter score for the word (up to 1.0).",
+		"effect": "counter_bonus",
+		"amount": 0.15,
+		"order": 50,
+		"doubles": true,
+		"price": 7,
+		"offered": true
+	},
+	"inspired": {
+		"name": "Inspired",
+		"description": "+{amount} Inspiration when used in an accepted word.",
+		"effect": "inspiration",
+		"amount": 1,
+		"order": 60,
+		"doubles": false,
+		"price": 7,
+		"offered": true
+	}
+}

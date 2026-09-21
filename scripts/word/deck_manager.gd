@@ -1,8 +1,10 @@
 class_name DeckManager
 extends Node
-## Runs the letter economy inside one encounter: shuffles the run
-## deck into a draw pile, deals the hand, and recycles letters the
-## player spends on words. The run's deck itself is never modified.
+## Runs the letter economy inside one encounter: shuffles the run's
+## circulating letters into a draw pile, deals the hand, and recycles
+## letters the player spends on words. Forgotten letters and letters
+## on pilgrimage stay owned but never enter the piles. The run's deck
+## itself is never modified.
 
 const HAND_SIZE: int = 8
 
@@ -12,16 +14,37 @@ var rng: RandomNumberGenerator = null
 var _draw_pile: Array[LetterStats] = []
 var _discard_pile: Array[LetterStats] = []
 var _hand: Array[LetterStats] = []
+# Turn starts each hand instance has waited through without being used.
+var _waited_turns: Dictionary = {}
 
 
-## Copies the run deck into a fresh shuffled draw pile and deals
-## a full hand.
+## Copies the circulating run deck into a fresh shuffled draw pile
+## and deals a full hand.
 func start_encounter() -> void:
-	_draw_pile = RunState.deck.duplicate()
+	RunState.ensure_letter_ids()
+	_draw_pile = RunState.circulating_deck()
 	_shuffle(_draw_pile)
 	_discard_pile = []
 	_hand = []
+	_waited_turns = {}
 	refill_hand()
+
+
+## Called as each player turn opens: letters already in hand count
+## one more turn of waiting, and newly dealt letters start at zero.
+func begin_turn() -> void:
+	var waited: Dictionary = {}
+	for stats: LetterStats in _hand:
+		if _waited_turns.has(stats):
+			waited[stats] = int(_waited_turns[stats]) + 1
+		else:
+			waited[stats] = 0
+	_waited_turns = waited
+
+
+## Turns this hand instance has waited before the current one.
+func waited_turns(stats: LetterStats) -> int:
+	return int(_waited_turns.get(stats, 0))
 
 
 func hand() -> Array[LetterStats]:
@@ -45,6 +68,7 @@ func set_piles(
 	_hand = new_hand.duplicate()
 	_draw_pile = new_draw_pile.duplicate()
 	_discard_pile = new_discard_pile.duplicate()
+	_waited_turns = {}
 	_sort_hand_alphabetically()
 
 
@@ -73,11 +97,13 @@ func refill_hand() -> void:
 
 ## Splits a word into the hand letters that cover it (drawn) and
 ## the characters that had to come from outside the hand (undrawn).
-## With conditions, unaffected copies are chosen before poisoned or
-## frozen copies of the same letter.
+## Among duplicate copies of a letter, the preferred (Threaded)
+## instance is used first, then unaffected copies before poisoned or
+## frozen ones, then more modifiers, higher level, and lower id.
 ## Returns {"drawn": Array[LetterStats], "undrawn": Array[String]}.
 func split_word(
-	word: String, conditions: EncounterConditions = null
+	word: String, conditions: EncounterConditions = null,
+	preferred: LetterStats = null
 ) -> Dictionary:
 	var drawn: Array[LetterStats] = []
 	var undrawn: Array[String] = []
@@ -87,8 +113,9 @@ func split_word(
 		for stats: LetterStats in remaining:
 			if stats.letter != character:
 				continue
-			if found == null or _penalty(stats, conditions) \
-					< _penalty(found, conditions):
+			if found == null or _better_copy(
+				stats, found, conditions, preferred
+			):
 				found = stats
 		if found != null:
 			remaining.erase(found)
@@ -99,9 +126,15 @@ func split_word(
 
 
 ## Moves the word's drawn letters to the discard pile and deals
-## replacements.
-func spend_letters(drawn: Array[LetterStats]) -> void:
+## replacements. A kept (Threaded) instance stays in hand instead.
+func spend_letters(
+	drawn: Array[LetterStats], keep: LetterStats = null
+) -> void:
 	for stats: LetterStats in drawn:
+		# A threaded letter stays and starts waiting afresh.
+		_waited_turns.erase(stats)
+		if stats == keep:
+			continue
 		_hand.erase(stats)
 		_discard_pile.append(stats)
 	refill_hand()
@@ -112,6 +145,7 @@ func remove_from_hand(stats: LetterStats) -> bool:
 	if not _hand.has(stats):
 		return false
 	_hand.erase(stats)
+	_waited_turns.erase(stats)
 	EventBus.emit_hand_drawn(_hand)
 	return true
 
@@ -145,6 +179,7 @@ func redraw(selected: Array[LetterStats]) -> bool:
 		replacements.append(_draw_one())
 	for stats: LetterStats in unique:
 		_hand.erase(stats)
+		_waited_turns.erase(stats)
 		_discard_pile.append(stats)
 	_hand.append_array(replacements)
 	_sort_hand_alphabetically()
@@ -177,6 +212,28 @@ func _sort_hand_alphabetically() -> void:
 	_hand.sort_custom(func(left: LetterStats, right: LetterStats) -> bool:
 		return left.letter < right.letter
 	)
+
+
+# True when candidate should spell the letter instead of current.
+func _better_copy(
+	candidate: LetterStats, current: LetterStats,
+	conditions: EncounterConditions, preferred: LetterStats
+) -> bool:
+	var candidate_preferred: bool = candidate == preferred
+	var current_preferred: bool = current == preferred
+	if preferred != null and candidate_preferred != current_preferred:
+		return candidate_preferred
+	var candidate_penalty: int = _penalty(candidate, conditions)
+	var current_penalty: int = _penalty(current, conditions)
+	if candidate_penalty != current_penalty:
+		return candidate_penalty < current_penalty
+	var candidate_mods: int = candidate.modifier_ids().size()
+	var current_mods: int = current.modifier_ids().size()
+	if candidate_mods != current_mods:
+		return candidate_mods > current_mods
+	if candidate.level != current.level:
+		return candidate.level > current.level
+	return candidate.instance_id < current.instance_id
 
 
 # Lower values are better choices for spelling a word.

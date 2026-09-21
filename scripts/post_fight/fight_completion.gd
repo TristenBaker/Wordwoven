@@ -15,6 +15,9 @@ func _ready() -> void:
 	var bard := Storyteller.new()
 	story_label.text = bard.generate_for_encounter(RunState.encounter_index)
 	reward_label.text = "The tale earns you %d gold." % RunState.pending_victory_gold
+	for note: String in RunState.pending_victory_notes:
+		reward_label.text += "\n" + note
+	continue_button.text = "Choose a Reward"
 	continue_button.pressed.connect(_open_power_select)
 	continue_button.grab_focus()
 

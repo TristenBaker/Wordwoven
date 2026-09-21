@@ -22,7 +22,4 @@ func _finish_rewards() -> void:
 	var defeated_boss := RunState.is_boss_next()
 	RunState.advance_encounter()
 	RunState.clear_pending_victory()
-	if defeated_boss:
-		get_tree().change_scene_to_file(ScenePaths.RUN_WON)
-	else:
-		get_tree().change_scene_to_file(ScenePaths.TAVERN)
+	get_tree().change_scene_to_file(RunFlow.after_rewards(defeated_boss))

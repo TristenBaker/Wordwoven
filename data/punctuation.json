@@ -1,0 +1,7 @@
+{
+	"!": {
+		"name": "Exclamation Mark",
+		"description": "Carried consumable. Arm it before a cast to double that word's final damage. Used only when the word is accepted; it never misses and leaves no penalty.",
+		"damage_multiplier": 2.0
+	}
+}

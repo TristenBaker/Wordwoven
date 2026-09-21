@@ -1,0 +1,162 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/events/event_screen.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bkrq8ekxejoqs" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="Script" uid="uid://bqpqmiir3r5g" path="res://scripts/ui/action_confirmer.gd" id="5_confirmer"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.1, 0.07, 0.04, 0.95)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.55, 0.42, 0.78, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+content_margin_left = 40.0
+content_margin_top = 26.0
+content_margin_right = 40.0
+content_margin_bottom = 26.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
+bg_color = Color(0.82, 0.61, 0.28, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="EventScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.03, 0.02, 0.05, 0.62)
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EventPanel" type="PanelContainer" parent="CenterBox"]
+custom_minimum_size = Vector2(900, 460)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Content" type="VBoxContainer" parent="CenterBox/EventPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Eyebrow" type="Label" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.72, 1, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 18
+text = "ON THE ROAD · EVENT 1 OF 2"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.64, 1)
+theme_override_fonts/font = ExtResource("3_title")
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
+
+[node name="Body" type="RichTextLabel" parent="CenterBox/EventPanel/Content"]
+custom_minimum_size = Vector2(820, 120)
+layout_mode = 2
+theme_override_colors/default_color = Color(0.97, 0.9, 0.75, 1)
+theme_override_fonts/normal_font = ExtResource("4_body")
+theme_override_font_sizes/normal_font_size = 19
+fit_content = true
+
+[node name="PickerGrid" type="GridContainer" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 6
+
+[node name="PromptLabel" type="Label" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="AnswerRow" type="HBoxContainer" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="AnswerInput" type="LineEdit" parent="CenterBox/EventPanel/Content/AnswerRow"]
+custom_minimum_size = Vector2(360, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+placeholder_text = "write a word..."
+max_length = 24
+
+[node name="SubmitButton" type="Button" parent="CenterBox/EventPanel/Content/AnswerRow"]
+custom_minimum_size = Vector2(130, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Answer"
+
+[node name="FeedbackLabel" type="Label" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.6, 0.45, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ActionsRow" type="HBoxContainer" parent="CenterBox/EventPanel/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="ContinueButton" type="Button" parent="CenterBox/EventPanel/Content"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.18, 0.07, 0.02, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+text = "Continue"
+
+[node name="ActionConfirmer" type="ConfirmationDialog" parent="."]
+title = "Confirm"
+ok_button_text = "Confirm"
+script = ExtResource("5_confirmer")

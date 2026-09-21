@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/post_fight/power_select.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/Victory.png" id="2_background"]
 [ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="Script" uid="uid://bqpqmiir3r5g" path="res://scripts/ui/action_confirmer.gd" id="5_confirmer"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.11, 0.05, 0.12, 0.96)
@@ -91,7 +92,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.8, 1, 1)
 theme_override_fonts/font = ExtResource("3_title")
 theme_override_font_sizes/font_size = 48
-text = "Choose a Power"
+text = "Choose a Reward"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="CenterBox/PowerPanel/Content"]
@@ -131,6 +132,34 @@ theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
 autowrap_mode = 2
 
+[node name="TargetPanel" type="VBoxContainer" parent="CenterBox/PowerPanel/Content"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TargetLabel" type="Label" parent="CenterBox/PowerPanel/Content/TargetPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.8, 1, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 19
+text = "Choose the letter to receive it:"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="TargetGrid" type="GridContainer" parent="CenterBox/PowerPanel/Content/TargetPanel"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 12
+
+[node name="CancelTargetButton" type="Button" parent="CenterBox/PowerPanel/Content/TargetPanel"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "Choose another reward"
+
 [node name="Status" type="Label" parent="CenterBox/PowerPanel/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
@@ -144,3 +173,8 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "View Loot"
+
+[node name="ActionConfirmer" type="ConfirmationDialog" parent="."]
+title = "Confirm"
+ok_button_text = "Confirm"
+script = ExtResource("5_confirmer")

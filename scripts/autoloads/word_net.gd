@@ -106,6 +106,28 @@ func words_containing(
 	return found
 
 
+## Up to limit plain headwords of one POS accepted by the predicate,
+## scanning from a starting position and wrapping. Word challenges use
+## this to prove a combination of rules has at least one solution.
+func find_words(
+	pos: String, predicate: Callable, limit: int = 1, start: int = 0
+) -> Array[String]:
+	var found: Array[String] = []
+	if not _check_ready():
+		return found
+	var words: PackedStringArray = _reader.headwords(pos)
+	if words.is_empty():
+		return found
+	for step: int in words.size():
+		var word: String = words[(start + step) % words.size()]
+		if word.length() >= WordValidator.MINIMUM_LENGTH \
+				and predicate.call(word):
+			found.append(word)
+			if found.size() >= limit:
+				break
+	return found
+
+
 ## Up to limit playable corrections one edit away from the word.
 ## Candidates must pass the same checks as a submission for the POS,
 ## including base-form verbs, and skip excluded (already played)

@@ -1,0 +1,10 @@
+{
+	"choice_count": 3,
+	"weights": {
+		"regular": {"modifier": 4, "upgrade": 4, "punctuation": 2, "relic": 2},
+		"boss": {"modifier": 2, "upgrade": 2, "punctuation": 2, "relic": 4}
+	},
+	"letter_building": ["modifier", "upgrade"],
+	"upgrade": {"levels": 2},
+	"punctuation": {"mark": "!", "count": 1}
+}

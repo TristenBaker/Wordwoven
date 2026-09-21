@@ -1,13 +1,16 @@
 extends Control
 ## Runs one combat encounter as a turn state machine: the player
-## drafts a word, the enemy takes the damage, then retaliates.
+## drafts a word, the enemy takes the damage, the player may thread
+## one used letter into the next turn, then the enemy retaliates.
 ## Delegates the rules to DeckManager, WordValidator,
 ## DamageCalculator, EnemyFactory, EncounterConditions, encounter
-## abilities, and SpeedTimer, keeping only the flow and screen here.
+## abilities, EnemyRuleTracker, LetterThread, and SpeedTimer,
+## keeping only the flow and screen here.
 
 enum State {
 	PLAYER_INPUT,
 	RESOLVING,
+	THREAD_CHOICE,
 	ENEMY_TURN,
 	WON,
 	LOST,
@@ -29,7 +32,6 @@ const LOG_EXPANDED_BOTTOM: float = 0.72
 const LOG_COLLAPSED_BOTTOM: float = 0.08
 
 var required_pos: String = "n"
-var relic_choice_buttons: Array[Button] = []
 
 # Injected before the scene enters the tree for deterministic tests.
 var clock: GameClock = null
@@ -41,8 +43,9 @@ var conditions: EncounterConditions = null
 var abilities: EncounterAbilities = EncounterAbilities.new()
 var speed_timer: SpeedTimer = null
 var environment_id: String = EnvironmentCatalog.NORMAL
+var rule_tracker: EnemyRuleTracker = null
+var thread: LetterThread = LetterThread.new()
 
-var _offered_relic_ids: Array[String] = []
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
 var _previous_drawn: Array[LetterStats] = []
@@ -53,6 +56,10 @@ var _selected_tiles: Array[LetterStats] = []
 var _bonus_was_active: bool = false
 var _suggestions: Array[String] = []
 var _suggestion_source: String = ""
+var _inspire_armed: bool = false
+var _exclaim_armed: bool = false
+# The accepted word's drawn instances while a thread is being chosen.
+var _thread_drawn: Array[LetterStats] = []
 
 @onready var background: TextureRect = $Background
 @onready var deck_manager: DeckManager = $Systems/DeckManager
@@ -71,6 +78,21 @@ var _suggestion_source: String = ""
 		$Layout/InputArea/InputRow/RedrawButton
 @onready var autocorrect_button: Button = \
 		$Layout/InputArea/InputRow/AutocorrectButton
+@onready var inspire_button: Button = \
+		$Layout/InputArea/BoostRow/InspireButton
+@onready var exclaim_button: Button = \
+		$Layout/InputArea/BoostRow/ExclaimButton
+@onready var thread_bar: HBoxContainer = $Layout/InputArea/ThreadBar
+@onready var thread_choices: HBoxContainer = \
+		$Layout/InputArea/ThreadBar/ThreadChoices
+@onready var let_go_button: Button = \
+		$Layout/InputArea/ThreadBar/LetGoButton
+@onready var preview_label: Label = $Layout/InputArea/PreviewLabel
+@onready var inspiration_label: Label = \
+		$Layout/GuidanceArea/InspirationLabel
+@onready var inspiration_bar: ProgressBar = \
+		$Layout/GuidanceArea/InspirationBar
+@onready var rules_label: Label = $Layout/GuidanceArea/RulesLabel
 @onready var suggestion_menu: PopupMenu = \
 		$Layout/InputArea/InputRow/AutocorrectButton/SuggestionMenu
 @onready var word_tile_board: WordTileBoard = \
@@ -122,6 +144,9 @@ func _ready() -> void:
 	redraw_button.pressed.connect(request_redraw)
 	autocorrect_button.pressed.connect(request_autocorrect)
 	suggestion_menu.id_pressed.connect(choose_suggestion)
+	inspire_button.toggled.connect(set_inspire_armed)
+	exclaim_button.toggled.connect(set_exclaim_armed)
+	let_go_button.pressed.connect(skip_thread)
 	word_input.text_submitted.connect(_on_text_submitted)
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
@@ -150,6 +175,7 @@ func _start_encounter() -> void:
 	abilities.add_entries(spawn_data.get("abilities", []))
 	abilities.add_entries(EnvironmentCatalog.abilities(environment_id))
 	_apply_background()
+	_start_rules(spawn_data)
 	_refresh_encounter_info(spawn_data)
 	EventBus.emit_encounter_started(spawn_data)
 	_refresh_status()
@@ -159,7 +185,27 @@ func _start_encounter() -> void:
 	])
 	_log("Terrain: " + EnvironmentCatalog.describe(environment_id))
 	_log("Opposites and thematic counters deal extra damage.")
+	_log_rules()
 	_begin_player_turn()
+
+
+# The foe's rotating rule must fit the encounter's fixed rules: any
+# accepted vow and the run-long forgotten letter.
+func _start_rules(spawn_data: Dictionary) -> void:
+	var pool: Array[String] = []
+	for rule_type: Variant in spawn_data.get("rules", []):
+		pool.append(String(rule_type))
+	rule_tracker = EnemyRuleTracker.new(
+		pool, enemy.tags, RunState.fixed_combat_rules(), rng
+	)
+	rule_tracker.roll(required_pos)
+
+
+func _log_rules() -> void:
+	for rule: Dictionary in rule_tracker.active_rules():
+		_log("[i]%s[/i]: %s" % [
+			WordRules.display_name(rule), WordRules.describe(rule),
+		])
 
 
 # A confirmed encounter setup is used exactly as previewed; without
@@ -210,8 +256,10 @@ func _begin_player_turn() -> void:
 	_turn_number += 1
 	_redraw_used = false
 	_selected_tiles = []
+	deck_manager.begin_turn()
 	for line: String in abilities.on_player_turn_start(_ability_context()):
 		_log(line)
+	thread.validate(deck_manager.hand())
 	_rebuild_hand_tiles()
 	_refresh_word_composer(word_input.text)
 	speed_timer.start()
@@ -224,6 +272,7 @@ func _enter_player_input() -> void:
 	submit_button.disabled = false
 	autocorrect_button.disabled = false
 	_refresh_redraw_button()
+	_refresh_boost_buttons()
 	_focus_word_input()
 
 
@@ -237,6 +286,9 @@ func _restore_composer_after_pause() -> void:
 
 
 func _on_text_submitted(_text: String) -> void:
+	if _state == State.THREAD_CHOICE:
+		skip_thread()
+		return
 	_on_submit()
 
 
@@ -246,8 +298,13 @@ func _on_submit() -> void:
 	# The deadline is judged by when the player submitted, not by how
 	# long validation takes.
 	var submitted_msec: int = speed_timer.now_msec()
-	var word: String = word_input.text.strip_edges().to_lower()
-	var verdict: Dictionary = validator.validate(word, required_pos)
+	var parsed: Dictionary = PunctuationCatalog.split_marks(
+		word_input.text
+	)
+	var word: String = parsed["word"]
+	var typed_marks: Array[String] = parsed["marks"]
+	var marks: Array[String] = _armed_marks(typed_marks)
+	var verdict: Dictionary = _check_cast(word, typed_marks)
 	if not verdict["valid"]:
 		feedback_label.text = verdict["reason"]
 		EventBus.emit_word_rejected(word, verdict["reason"])
@@ -267,7 +324,40 @@ func _on_submit() -> void:
 	autocorrect_button.disabled = true
 	suggestion_menu.hide()
 	feedback_label.text = ""
-	_resolve_word(word, swift)
+	_resolve_word(word, swift, marks)
+
+
+# Dictionary rules first, then carried punctuation and forbidding
+# rules such as amnesia, each refusing without using the turn.
+func _check_cast(word: String, typed_marks: Array[String]) -> Dictionary:
+	var verdict: Dictionary = validator.validate(word, required_pos)
+	if not verdict["valid"]:
+		return verdict
+	for mark: String in typed_marks:
+		if RunState.punctuation_count(mark) <= 0:
+			return {"valid": false, "reason": "You carry no %s." % mark}
+	var broken: Dictionary = WordRules.first_forbidden(
+		rule_tracker.active_rules(), word
+	)
+	if not broken.is_empty():
+		return {"valid": false, "reason": WordRules.describe(broken)}
+	return verdict
+
+
+# Typed marks plus an armed button, limited to marks actually carried.
+func _armed_marks(typed_marks: Array[String]) -> Array[String]:
+	var marks: Array[String] = []
+	for mark: String in typed_marks:
+		if not marks.has(mark):
+			marks.append(mark)
+	var exclamation: String = PunctuationCatalog.EXCLAMATION
+	if _exclaim_armed and not marks.has(exclamation):
+		marks.append(exclamation)
+	var carried: Array[String] = []
+	for mark: String in marks:
+		if RunState.punctuation_count(mark) > 0:
+			carried.append(mark)
+	return carried
 
 
 func _on_dev_kill_pressed() -> void:
@@ -279,14 +369,26 @@ func _on_dev_kill_pressed() -> void:
 	enemy.take_damage(999999.0)
 
 
-func _resolve_word(word: String, swift: bool = false) -> void:
-	var split: Dictionary = deck_manager.split_word(word, conditions)
+func _resolve_word(
+	word: String, swift: bool = false, marks: Array[String] = []
+) -> void:
+	var split: Dictionary = deck_manager.split_word(
+		word, conditions, thread.threaded()
+	)
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
+	# A full meter is spent only once the cast is accepted.
+	var inspired: bool = _inspire_armed and RunState.spend_inspiration()
+	var context: Dictionary = _calculation_context(swift, marks)
+	context["inspired"] = inspired
 	var result: Dictionary = calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos,
-		_calculation_context(swift)
+		word, drawn, undrawn, enemy.tags, required_pos, context
 	)
+	for mark: String in marks:
+		RunState.consume_punctuation(mark)
+	_inspire_armed = false
+	_exclaim_armed = false
+	RunState.add_inspiration(int(result["inspiration_gain"]))
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
@@ -305,15 +407,81 @@ func _resolve_word(word: String, swift: bool = false) -> void:
 	if not eligible.is_empty():
 		EventBus.emit_deck_changed()
 	_advance_prompt()
-	deck_manager.spend_letters(drawn)
+	thread.note_accepted(drawn)
+	if rule_tracker.after_accepted(result["rules_met"], required_pos):
+		_log_rules()
 	_selected_tiles = []
-	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
 	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
-	if enemy.is_alive():
-		_enemy_turn()
+	if not enemy.is_alive():
+		return
+	if thread.can_thread() and not drawn.is_empty():
+		_offer_thread(drawn)
+		return
+	if not thread.can_thread():
+		_log("The thread frays: the Threaded Letter went unused.")
+	_finish_thread_choice(drawn, null)
+
+
+# --- Threading -----------------------------------------------------
+
+func _offer_thread(drawn: Array[LetterStats]) -> void:
+	_state = State.THREAD_CHOICE
+	_thread_drawn = drawn.duplicate()
+	for child: Node in thread_choices.get_children():
+		thread_choices.remove_child(child)
+		child.queue_free()
+	for stats: LetterStats in _thread_drawn:
+		var button: Button = Button.new()
+		button.custom_minimum_size = Vector2(52, 44)
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_font_size_override("font_size", 20)
+		button.text = stats.letter.to_upper()
+		button.tooltip_text = "Keep %s in hand for the next turn.\n%s" % [
+			stats.describe(), stats.full_effect_text(),
+		]
+		button.pressed.connect(choose_thread.bind(stats))
+		thread_choices.add_child(button)
+	_rebuild_hand_tiles()
+	thread_bar.show()
+	_focus_word_input()
+
+
+## Letters the player may thread right now; empty outside the choice.
+func thread_candidates() -> Array[LetterStats]:
+	if _state != State.THREAD_CHOICE:
+		return []
+	return _thread_drawn.duplicate()
+
+
+## Keeps one used instance in hand for the next turn.
+func choose_thread(stats: LetterStats) -> void:
+	if _state != State.THREAD_CHOICE:
+		return
+	if not thread.choose(stats, _thread_drawn):
+		return
+	_log("%s is threaded into your next turn." % stats.tag_text())
+	_finish_thread_choice(_thread_drawn, stats)
+
+
+## Declines to thread; every used letter is spent.
+func skip_thread() -> void:
+	if _state != State.THREAD_CHOICE:
+		return
+	_finish_thread_choice(_thread_drawn, null)
+
+
+func _finish_thread_choice(
+	drawn: Array[LetterStats], keep: LetterStats
+) -> void:
+	thread_bar.hide()
+	_thread_drawn = []
+	deck_manager.spend_letters(drawn, keep)
+	_rebuild_hand_tiles()
+	_refresh_status()
+	_enemy_turn()
 
 
 func _enemy_turn() -> void:
@@ -331,6 +499,7 @@ func _enemy_turn() -> void:
 		return
 	for line: String in abilities.after_enemy_attack(_ability_context()):
 		_log(line)
+	thread.validate(deck_manager.hand())
 	_rebuild_hand_tiles()
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
@@ -356,7 +525,8 @@ func _on_enemy_died() -> void:
 	RunState.add_gold(earned)
 	RunState.complete_encounter()
 	RunState.is_run_active = true
-	RunState.begin_victory(enemy.enemy_name, earned)
+	var notes: Array[String] = RunState.return_pilgrims()
+	RunState.begin_victory(enemy.enemy_name, earned, notes)
 	EventBus.emit_encounter_won(earned)
 	_go(ScenePaths.FIGHT_COMPLETION)
 
@@ -434,6 +604,7 @@ func _confirm_redraw(turn: int, letters: Array[LetterStats]) -> void:
 		feedback_label.text = "Not enough gold to redraw."
 		return
 	deck_manager.redraw(letters)
+	thread.validate(deck_manager.hand())
 	_redraw_used = true
 	_selected_tiles = []
 	_log("You pay %dg to redraw %d tile(s)." % [
@@ -616,8 +787,9 @@ func _refresh_timer_display() -> void:
 
 func _on_text_changed(new_text: String) -> void:
 	var typing: bool = not new_text.strip_edges().is_empty()
+	var typed: String = PunctuationCatalog.split_marks(new_text)["word"]
 	var split: Dictionary = deck_manager.split_word(
-		new_text.strip_edges().to_lower(), conditions
+		typed, conditions, thread.threaded()
 	)
 	var drawn: Array[LetterStats] = split["drawn"]
 	_refresh_word_composer(new_text, split)
@@ -630,22 +802,31 @@ func _on_text_changed(new_text: String) -> void:
 func _refresh_word_composer(
 	raw_word: String, split: Dictionary = {}
 ) -> void:
-	var word: String = raw_word.strip_edges().to_lower()
+	var parsed: Dictionary = PunctuationCatalog.split_marks(raw_word)
+	var word: String = parsed["word"]
 	if split.is_empty():
-		split = deck_manager.split_word(word, conditions)
+		split = deck_manager.split_word(
+			word, conditions, thread.threaded()
+		)
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
 	word_tile_board.set_word(word, drawn)
 	if word.is_empty() or enemy == null or not enemy.is_alive():
 		_set_output_counters(0, 0, 0)
 		_set_health_previews(0, 0)
+		preview_label.text = _idle_preview_text()
 		return
 	var swift: bool = _state == State.PLAYER_INPUT \
 			and speed_timer.remaining_msec() > 0
-	var result: Dictionary = calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos,
-		_calculation_context(swift)
+	var context: Dictionary = _calculation_context(
+		swift, _armed_marks(parsed["marks"])
 	)
+	context["inspired"] = _inspire_armed \
+			and Inspiration.is_full(RunState.inspiration)
+	var result: Dictionary = calculator.calculate(
+		word, drawn, undrawn, enemy.tags, required_pos, context
+	)
+	preview_label.text = _preview_text(result)
 	_set_output_counters(
 		int(round(float(result["damage"]))),
 		int(result["heal_amount"]), int(result["gold_bonus"])
@@ -655,8 +836,118 @@ func _refresh_word_composer(
 	)
 
 
-func _calculation_context(swift: bool) -> Dictionary:
-	return {"conditions": conditions, "speed_bonus": swift}
+func _calculation_context(
+	swift: bool, marks: Array[String] = []
+) -> Dictionary:
+	var wait_turns: Dictionary = {}
+	for stats: LetterStats in deck_manager.hand():
+		wait_turns[stats] = deck_manager.waited_turns(stats)
+	var rules: Array[Dictionary] = []
+	if rule_tracker != null:
+		rules = rule_tracker.active_rules()
+	return {
+		"conditions": conditions,
+		"speed_bonus": swift,
+		"threaded": thread.threaded(),
+		"wait_turns": wait_turns,
+		"rules": rules,
+		"marks": marks,
+	}
+
+
+# --- Inspiration and punctuation -----------------------------------
+
+## Arms or disarms spending a full meter on the next accepted cast.
+func set_inspire_armed(armed: bool) -> void:
+	_inspire_armed = armed and _state == State.PLAYER_INPUT \
+			and Inspiration.is_full(RunState.inspiration)
+	_refresh_boost_buttons()
+	_on_text_changed(word_input.text)
+	call_deferred("_focus_word_input")
+
+
+## Arms or disarms a carried ! for the next accepted cast.
+func set_exclaim_armed(armed: bool) -> void:
+	var carried: int = RunState.punctuation_count(
+		PunctuationCatalog.EXCLAMATION
+	)
+	_exclaim_armed = armed and _state == State.PLAYER_INPUT \
+			and carried > 0
+	_refresh_boost_buttons()
+	_on_text_changed(word_input.text)
+	call_deferred("_focus_word_input")
+
+
+func _refresh_boost_buttons() -> void:
+	var input_open: bool = _state == State.PLAYER_INPUT
+	var full: bool = Inspiration.is_full(RunState.inspiration)
+	inspire_button.disabled = not input_open or not full
+	inspire_button.set_pressed_no_signal(_inspire_armed)
+	inspire_button.text = "Inspire (%d/%d)" % [
+		RunState.inspiration, Inspiration.MAX_POINTS
+	]
+	if _inspire_armed:
+		inspire_button.text = "Inspired!"
+	var carried: int = RunState.punctuation_count(
+		PunctuationCatalog.EXCLAMATION
+	)
+	exclaim_button.disabled = not input_open or carried <= 0
+	exclaim_button.set_pressed_no_signal(_exclaim_armed)
+	exclaim_button.text = "! ×%d%s" % [
+		carried, " armed" if _exclaim_armed else ""
+	]
+
+
+# The meter and every rule binding this turn.
+func _refresh_guidance() -> void:
+	inspiration_label.text = "Inspiration %d / %d" % [
+		RunState.inspiration, Inspiration.MAX_POINTS
+	]
+	inspiration_bar.value = float(RunState.inspiration)
+	var lines: Array[String] = []
+	if rule_tracker != null:
+		for rule: Dictionary in rule_tracker.active_rules():
+			lines.append("%s: %s" % [
+				WordRules.display_name(rule), WordRules.describe(rule),
+			])
+	if lines.is_empty():
+		lines.append("No word rules bind this fight.")
+	rules_label.text = "\n".join(lines)
+
+
+func _idle_preview_text() -> String:
+	var threaded: LetterStats = thread.threaded()
+	if threaded != null:
+		return "Threaded: %s. Reuse it for +%d Inspiration." % [
+			threaded.tag_text(), Inspiration.THREAD_POINTS
+		]
+	return ""
+
+
+## Exact effects of the typed word: modifiers with the instances they
+## affect, rules met or missed, Inspiration, and armed punctuation.
+func _preview_text(result: Dictionary) -> String:
+	var parts: Array[String] = []
+	for effect: Dictionary in result["modifier_effects"]:
+		parts.append(String(effect["text"]))
+	for rule_result: Dictionary in result["rule_results"]:
+		if rule_result["forbids"]:
+			continue
+		var status: String = "Rule met:" if rule_result["met"] \
+				else "Rule missed (×0.5):"
+		parts.append("%s %s" % [status, rule_result["name"]])
+	if result["inspired"]:
+		parts.append("Inspired ×2")
+	for mark: String in result["marks"]:
+		parts.append("%s ×%.0f damage" % [
+			mark, PunctuationCatalog.damage_multiplier(mark)
+		])
+	var gain: int = int(result["inspiration_gain"])
+	if gain > 0:
+		parts.append("Inspiration +%d (%s)" % [
+			gain, Inspiration.explain(result)
+		])
+	return " · ".join(parts)
 
 
 func _ability_context() -> AbilityContext:
@@ -750,6 +1041,7 @@ func _rebuild_hand_tiles() -> void:
 			conditions.describe(stats)
 		)
 		tile.set_selected(_selected_tiles.has(stats))
+		tile.set_threaded(thread.is_threaded(stats))
 		tile.pressed.connect(toggle_tile_selection)
 	_refresh_redraw_button()
 
@@ -767,6 +1059,8 @@ func _refresh_status() -> void:
 	if RunState.is_boss_next():
 		stage_text = "Final Encounter"
 	stage_label.text = stage_text
+	_refresh_guidance()
+	_refresh_boost_buttons()
 
 
 func _describe_result(result: Dictionary) -> String:
@@ -787,6 +1081,23 @@ func _describe_result(result: Dictionary) -> String:
 	if result["speed_bonus"]:
 		lines.append("  Swift cast! ×%.1f damage." % \
 				result["speed_multiplier"])
+	if result["inspired"]:
+		lines.append("  Inspired! Drawn letters and modifiers doubled.")
+	for mark: String in result["marks"]:
+		lines.append("  %s ×%.0f final damage." % [
+			mark, PunctuationCatalog.damage_multiplier(mark)
+		])
+	for rule_result: Dictionary in result["rule_results"]:
+		if not rule_result["forbids"] and not rule_result["met"]:
+			lines.append("  Missed %s: ×%.1f damage." % [
+				rule_result["name"], WordRules.UNMET_DAMAGE_FACTOR
+			])
+	for effect: Dictionary in result["modifier_effects"]:
+		lines.append("  " + String(effect["text"]))
+	if int(result["inspiration_gain"]) > 0:
+		lines.append("  Inspiration +%d (%s)." % [
+			result["inspiration_gain"], Inspiration.explain(result)
+		])
 	if not String(counter.get("tag", "")).is_empty():
 		lines.append("  counter vs %s: %.2f (%s)" % [
 			counter["tag"], counter["score"], counter["strategy"],

@@ -176,6 +176,39 @@ theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 1)
 theme_override_font_sizes/font_size = 14
 autowrap_mode = 2
 
+[node name="GuidanceArea" type="VBoxContainer" parent="Layout"]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 404.0
+offset_right = 280.0
+offset_bottom = 576.0
+theme_override_constants/separation = 4
+
+[node name="InspirationLabel" type="Label" parent="Layout/GuidanceArea"]
+layout_mode = 2
+tooltip_text = "Drawn-only words earn 2 Inspiration and reusing the Threaded Letter earns 1. Spend a full meter before a cast to double drawn-letter power, healing, gold, and numerical modifier effects. Inspiration carries between fights."
+mouse_filter = 0
+theme_override_colors/font_color = Color(0.85, 0.75, 1, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 18
+text = "Inspiration 0 / 6"
+
+[node name="InspirationBar" type="ProgressBar" parent="Layout/GuidanceArea"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 6.0
+step = 1.0
+show_percentage = false
+
+[node name="RulesLabel" type="Label" parent="Layout/GuidanceArea"]
+custom_minimum_size = Vector2(264, 0)
+layout_mode = 2
+tooltip_text = "Words that miss an ordinary rule deal 50% damage. Amnesia refuses words using its letter. The foe's rule changes after a word meets it or after two accepted words."
+mouse_filter = 0
+theme_override_colors/font_color = Color(1, 0.8, 0.55, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 2
+
 [node name="EnemyArea" type="CenterContainer" parent="Layout" unique_id=1732673650]
 layout_mode = 1
 anchors_preset = -1
@@ -349,6 +382,61 @@ text = "Fix (5g)"
 
 [node name="SuggestionMenu" type="PopupMenu" parent="Layout/InputArea/InputRow/AutocorrectButton" unique_id=1562287563]
 theme_override_font_sizes/font_size = 20
+
+[node name="BoostRow" type="HBoxContainer" parent="Layout/InputArea"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="InspireButton" type="Button" parent="Layout/InputArea/BoostRow"]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+tooltip_text = "Spend a full Inspiration meter on your next accepted cast: drawn-letter power, healing, gold, and numerical modifier effects are doubled. Leveling and Echoing or Inspired triggers are not doubled."
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+disabled = true
+toggle_mode = true
+text = "Inspire (0/6)"
+
+[node name="ExclaimButton" type="Button" parent="Layout/InputArea/BoostRow"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+tooltip_text = "Arm a carried ! to double your next accepted word's final damage. It is used only when the word is accepted. You can also type ! after the word."
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+disabled = true
+toggle_mode = true
+text = "! ×0"
+
+[node name="ThreadBar" type="HBoxContainer" parent="Layout/InputArea"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ThreadLabel" type="Label" parent="Layout/InputArea/ThreadBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "Thread a letter into next turn:"
+
+[node name="ThreadChoices" type="HBoxContainer" parent="Layout/InputArea/ThreadBar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LetGoButton" type="Button" parent="Layout/InputArea/ThreadBar"]
+custom_minimum_size = Vector2(120, 44)
+layout_mode = 2
+tooltip_text = "Keep no letter. Press Enter to let go."
+theme_override_font_sizes/font_size = 20
+text = "Let go"
+
+[node name="PreviewLabel" type="Label" parent="Layout/InputArea"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.88, 0.8, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="FeedbackLabel" type="Label" parent="Layout/InputArea" unique_id=1846545061]
 layout_mode = 2

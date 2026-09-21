@@ -1,0 +1,47 @@
+{
+	"pilgrimage": {
+		"name": "Letter on Pilgrimage",
+		"description": "A road-worn pilgrim asks one of your letters to walk with them for a while. It will miss your next fight, but returns wiser after a victory.",
+		"candidates": 4,
+		"upgrade_levels": 2,
+		"upgrade_modifier": true,
+		"minimum_circulating": 12
+	},
+	"vow": {
+		"name": "The Vow",
+		"description": "A hooded oathkeeper offers a boon to anyone who will bind their next battle with a rule of speech. Break the vow and your words strike at half strength.",
+		"rule_types": ["min_length", "starts_with", "ends_with", "required_letter", "repeated_letter"],
+		"rewards": [
+			{"kind": "relic"},
+			{"kind": "punctuation", "mark": "!", "count": 2},
+			{"kind": "gold", "amount": 40}
+		]
+	},
+	"memory": {
+		"name": "The Price of Memory",
+		"description": "A pale archivist will pay handsomely for one letter of your alphabet. Sell it, and for the rest of the run every word using it is refused and those letters sit out every fight.",
+		"letters": "bcdfghkmpvwy",
+		"minimum_circulating": 12,
+		"rewards": [
+			{"kind": "relic"},
+			{"kind": "punctuation", "mark": "!", "count": 3}
+		],
+		"bonus_gold": 30
+	},
+	"riddle": {
+		"name": "Riddle Gate",
+		"description": "A stone door poses riddles of spelling. Each answer earns a richer reward; leave whenever you like. Three wrong answers seal the gate.",
+		"rule_types": ["min_length", "max_length", "starts_with", "ends_with", "required_letter", "repeated_letter"],
+		"misses": 3,
+		"tiers": [
+			{"rules": 1, "reward": {"kind": "gold", "amount": 15}},
+			{"rules": 2, "reward": {"kind": "punctuation", "mark": "!", "count": 1}},
+			{"rules": 3, "reward": {"kind": "relic"}}
+		]
+	},
+	"copyist": {
+		"name": "The Copyist",
+		"description": "An ink-stained scribe will illuminate your letters if you prove your penmanship: attach a new modifier, move one between letters, or replace one.",
+		"rule_types": ["min_length", "starts_with", "ends_with", "required_letter", "repeated_letter"]
+	}
+}
