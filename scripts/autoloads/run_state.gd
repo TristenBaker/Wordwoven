@@ -22,6 +22,12 @@ var relics: Array[String] = []
 var completed_encounters: Array[int] = []
 var relic_rewards: Dictionary[int, String] = {}
 
+# Transient post-fight presentation data. These values carry a completed
+# encounter through the bard, power, and loot screens before the run advances.
+var pending_victory_enemy: String = ""
+var pending_victory_gold: int = 0
+var pending_relic_choices: Array[String] = []
+
 # Shop stock survives leaving and reopening the tavern.
 var recruitment_encounter: int = -1
 var recruitment_stock: Array[Dictionary] = []
@@ -51,6 +57,9 @@ func start_new_run() -> void:
 	relics = []
 	completed_encounters = []
 	relic_rewards = {}
+	pending_victory_enemy = ""
+	pending_victory_gold = 0
+	pending_relic_choices = []
 	recruitment_encounter = -1
 	recruitment_stock = []
 	encounter_index = 1
@@ -81,6 +90,18 @@ func advance_encounter() -> void:
 func complete_encounter() -> void:
 	if not completed_encounters.has(encounter_index):
 		completed_encounters.append(encounter_index)
+
+
+func begin_victory(enemy_name: String, gold_earned: int) -> void:
+	pending_victory_enemy = enemy_name
+	pending_victory_gold = gold_earned
+	pending_relic_choices = []
+
+
+func clear_pending_victory() -> void:
+	pending_victory_enemy = ""
+	pending_victory_gold = 0
+	pending_relic_choices = []
 
 
 func add_gold(amount: int) -> void:

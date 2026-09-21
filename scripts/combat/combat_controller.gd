@@ -33,12 +33,8 @@ var backgrounds: Array[Texture2D] = [
 ]
 
 var required_pos: String = "n"
-var relic_choice_buttons: Array[Button] = []
-var _offered_relic_ids: Array[String] = []
-
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
-var _continuing: bool = false
 var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
 
@@ -81,15 +77,6 @@ var _damage_popup_tween: Tween = null
 		$Layout/StatusArea/PlayerHealthBar/HealPreview
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
-@onready var victory_panel: PanelContainer = $VictoryPanel
-@onready var victory_label: Label = \
-		$VictoryPanel/VictoryBox/VictoryLabel
-@onready var victory_story: RichTextLabel = \
-		$VictoryPanel/VictoryBox/VictoryStory
-@onready var relic_status_label: Label = \
-		$VictoryPanel/VictoryBox/RelicStatusLabel
-@onready var continue_button: Button = \
-		$VictoryPanel/VictoryBox/ContinueButton
 
 
 func _ready() -> void:
@@ -103,15 +90,7 @@ func _ready() -> void:
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
-	continue_button.pressed.connect(_on_continue_pressed)
-	relic_choice_buttons = [
-		$VictoryPanel/VictoryBox/RelicChoices/QuillButton,
-		$VictoryPanel/VictoryBox/RelicChoices/TomeButton,
-		$VictoryPanel/VictoryBox/RelicChoices/BookmarkButton,
-	]
-	_setup_relic_choices()
 	enemy.died.connect(_on_enemy_died)
-	victory_panel.hide()
 	_start_encounter()
 
 
@@ -280,40 +259,14 @@ func _on_enemy_died() -> void:
 	RunState.add_gold(earned)
 	RunState.complete_encounter()
 	RunState.is_run_active = true
+	RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)
-	_refresh_status()
-	victory_label.text = "%s defeated!\n+%d gold" % [
-		enemy.enemy_name, earned
-	]
-	var bard: Storyteller = Storyteller.new()
-	victory_story.text = bard.generate_for_encounter(
-		RunState.encounter_index
-	)
-	_refresh_relic_choices()
-	continue_button.text = "Complete the Tale" \
-			if RunState.is_boss_next() else "To the Tavern"
-	victory_panel.show()
-	relic_choice_buttons[0].grab_focus()
+	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
 
 
 func _on_player_died() -> void:
 	_state = State.LOST
 	get_tree().change_scene_to_file(ScenePaths.RUN_LOST)
-
-
-func _on_continue_pressed() -> void:
-	if _state != State.WON or _continuing:
-		return
-	if not RunState.relic_rewards.has(RunState.encounter_index):
-		return
-	_continuing = true
-	continue_button.disabled = true
-	var beaten_boss: bool = RunState.is_boss_next()
-	RunState.advance_encounter()
-	if beaten_boss:
-		get_tree().change_scene_to_file(ScenePaths.RUN_WON)
-	else:
-		get_tree().change_scene_to_file(ScenePaths.TAVERN)
 
 
 # --- Screen updates ------------------------------------------------
@@ -333,55 +286,6 @@ func _refresh_prompt() -> void:
 		prompt_label.text += " (base form)"
 	word_input.placeholder_text = "Enter a %s..." % \
 			WordNet.pos_name(required_pos)
-
-
-func _setup_relic_choices() -> void:
-	for index: int in relic_choice_buttons.size():
-		relic_choice_buttons[index].pressed.connect(
-			_on_relic_button_pressed.bind(index)
-		)
-
-
-func _refresh_relic_choices() -> void:
-	if _offered_relic_ids.is_empty():
-		_offered_relic_ids = _relic_system.relic_ids()
-		_offered_relic_ids.shuffle()
-		_offered_relic_ids = _offered_relic_ids.slice(0, 3)
-	var claimed: String = RunState.relic_rewards.get(
-		RunState.encounter_index, ""
-	)
-	for index: int in relic_choice_buttons.size():
-		var button: Button = relic_choice_buttons[index]
-		var relic_id: String = _offered_relic_ids[index]
-		var info: Dictionary = _relic_system.relic_info(relic_id)
-		button.text = "%s\nOwned: %d" % [
-			info.get("name", relic_id), RunState.relics.count(relic_id),
-		]
-		button.tooltip_text = info.get("description", "")
-		button.disabled = not claimed.is_empty()
-	continue_button.disabled = claimed.is_empty()
-	if claimed.is_empty():
-		relic_status_label.text = "Choose one free relic. Copies stack."
-	else:
-		relic_status_label.text = "Claimed: %s" % \
-				_relic_system.relic_info(claimed).get("name", claimed)
-
-
-func _on_relic_selected(relic_id: String) -> void:
-	if _state != State.WON or _continuing:
-		return
-	if not _relic_system.grant_reward(
-		relic_id, RunState.encounter_index
-	):
-		return
-	_refresh_relic_choices()
-	_refresh_status()
-
-
-func _on_relic_button_pressed(index: int) -> void:
-	if index < 0 or index >= _offered_relic_ids.size():
-		return
-	_on_relic_selected(_offered_relic_ids[index])
 
 
 func _on_text_changed(new_text: String) -> void:
