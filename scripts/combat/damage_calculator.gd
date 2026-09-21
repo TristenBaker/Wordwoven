@@ -12,6 +12,12 @@ const UNDRAWN_POWER_FACTOR: float = 0.2
 # Bonus multiplier per letter beyond a three-letter word.
 const LENGTH_BONUS_STEP: float = 0.1
 
+# Quick answers earn up to 50% bonus damage. The bonus falls
+# linearly to normal damage over the first 20 seconds of a turn.
+const SPEED_BONUS_DURATION: float = 20.0
+const SPEED_MULTIPLIER_MAX: float = 1.5
+const SPEED_MULTIPLIER_MIN: float = 1.0
+
 # Damage multiplier for the word's best part of speech.
 const POS_MULTIPLIERS: Dictionary[String, float] = {
 	"v": 1.25,
@@ -23,6 +29,9 @@ const POS_MULTIPLIERS: Dictionary[String, float] = {
 # Semantic multiplier range from no counter to a direct counter.
 const SEMANTIC_MULTIPLIER_MIN: float = 0.5
 const SEMANTIC_MULTIPLIER_MAX: float = 2.0
+
+# A true WordNet antonym is stronger than a curated thematic counter.
+const ANTONYM_MULTIPLIER_BONUS: float = 0.5
 
 # Every Tome adds its bonus after counter scoring, without a cap.
 const TOME_MULTIPLIER_BONUS: float = 0.12
@@ -37,7 +46,8 @@ func calculate(
 	drawn: Array[LetterStats],
 	undrawn: Array[String],
 	enemy_tags: Array[String],
-	required_pos: String = ""
+	required_pos: String = "",
+	elapsed_seconds: float = SPEED_BONUS_DURATION
 ) -> Dictionary:
 	var letter_rows: Array[Dictionary] = []
 	var base_power: float = 0.0
@@ -75,14 +85,15 @@ func calculate(
 		counter.get("score", 0.0)
 		+ relic_system.total_effect("counter_bonus"), 0.0, 1.0
 	)
-	var semantic_multiplier: float = lerpf(
-		SEMANTIC_MULTIPLIER_MIN,
-		SEMANTIC_MULTIPLIER_MAX,
-		effectiveness
+	var semantic_multiplier: float = _semantic_multiplier(
+		counter,
+		effectiveness,
+		relic_system.total_effect("damage_multiplier")
 	)
-	semantic_multiplier += relic_system.total_effect("damage_multiplier")
+	var speed_bonus_multiplier: float = speed_multiplier(elapsed_seconds)
 	var damage: float = base_power * length_multiplier \
-			* pos_data["multiplier"] * semantic_multiplier
+			* pos_data["multiplier"] * semantic_multiplier \
+			* speed_bonus_multiplier
 	return {
 		"word": word,
 		"damage": damage,
@@ -98,9 +109,33 @@ func calculate(
 		"similarity": counter,
 		"effectiveness": effectiveness,
 		"semantic_multiplier": semantic_multiplier,
+		"elapsed_seconds": elapsed_seconds,
+		"speed_multiplier": speed_bonus_multiplier,
 		"gold_bonus": _rogue_gold(drawn),
 		"heal_amount": _healer_health(drawn),
 	}
+
+
+func speed_multiplier(elapsed_seconds: float) -> float:
+	var progress: float = clampf(
+		elapsed_seconds / SPEED_BONUS_DURATION, 0.0, 1.0
+	)
+	return lerpf(SPEED_MULTIPLIER_MAX, SPEED_MULTIPLIER_MIN, progress)
+
+
+func _semantic_multiplier(
+	counter: Dictionary,
+	effectiveness: float,
+	relic_damage_bonus: float
+) -> float:
+	var multiplier: float = lerpf(
+		SEMANTIC_MULTIPLIER_MIN,
+		SEMANTIC_MULTIPLIER_MAX,
+		effectiveness
+	)
+	if counter.get("strategy", "") == "wordnet antonym":
+		multiplier += ANTONYM_MULTIPLIER_BONUS
+	return multiplier + relic_damage_bonus
 
 
 # The prompt determines the multiplier; old callers keep best POS.

@@ -1,44 +1,44 @@
 extends Control
-## Offers every undefeated regular Tundra foe, or the final boss.
-## Other biomes retain their two stage-appropriate choices.
+## Presents the run as a left-to-right expedition map. Completed
+## encounters remain visible, the current stage branches into enemy
+## choices, and every route converges on the final boss. Tundra runs
+## expose every undefeated regular foe; other biomes offer two choices.
 
 const CHOICE_COUNT: int = 2
 
 @onready var factory: EnemyFactory = $EnemyFactory
-@onready var title_label: Label = $CenterBox/Menu/TitleLabel
-@onready var choices_box: HBoxContainer = \
-		$CenterBox/Menu/ChoicesBox
+@onready var title_label: Label = $Header/TitleLabel
+@onready var subtitle_label: Label = $Header/SubtitleLabel
+@onready var progress_label: Label = $ProgressBadge/ProgressLabel
+@onready var route_map: Control = \
+		$MapPanel/Margin/RouteMap
 
 
 func _ready() -> void:
-	title_label.text = "Choose your next foe"
-	if RunState.is_boss_next():
-		title_label.text = "The end of the road"
-		_add_choice(factory.boss_id())
-		return
-	var ids: Array[String] = factory.ids_for_stage(
-		RunState.encounter_index
-	)
-	ids.shuffle()
-	var count: int = ids.size() if RunState.selected_biome == "tundra" else mini(CHOICE_COUNT, ids.size())
-	for i: int in count:
-		_add_choice(ids[i])
-
-
-func _add_choice(enemy_id: String) -> void:
-	var data: Dictionary = factory.build_spawn_data(enemy_id)
-	if data.is_empty():
-		return
-	var button: Button = Button.new()
-	button.custom_minimum_size = Vector2(260, 120)
-	var pool: Array = data["tags"]
-	button.text = "%s\n(%s)" % [
-		data["name"], " / ".join(pool)
+	var stage: int = RunState.encounter_index
+	progress_label.text = "ENCOUNTER %d / %d" % [
+		mini(stage, RunState.ENCOUNTERS_PER_RUN),
+		RunState.ENCOUNTERS_PER_RUN,
 	]
-	button.pressed.connect(
-		_on_choice_pressed.bind(enemy_id)
-	)
-	choices_box.add_child(button)
+	route_map.enemy_selected.connect(_on_choice_pressed)
+	if RunState.is_boss_next():
+		title_label.text = "The End of the Road"
+		subtitle_label.text = \
+				"One final gate remains. Defeat its guardian to finish the run."
+		var boss_data: Dictionary = factory.build_spawn_data(
+			factory.boss_id()
+		)
+		var no_choices: Array[Dictionary] = []
+		route_map.setup(stage, no_choices, boss_data)
+		return
+	var ids: Array[String] = factory.ids_for_stage(stage)
+	ids.shuffle()
+	var count: int = ids.size() if RunState.selected_biome == "tundra" \
+			else mini(CHOICE_COUNT, ids.size())
+	var choices: Array[Dictionary] = []
+	for i: int in count:
+		choices.append(factory.build_spawn_data(ids[i]))
+	route_map.setup(stage, choices, {})
 
 
 func _on_choice_pressed(enemy_id: String) -> void:

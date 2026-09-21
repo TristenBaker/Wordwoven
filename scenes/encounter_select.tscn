@@ -1,46 +1,202 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/encounter_select.gd" id="1_select"]
 [ext_resource type="Script" path="res://scripts/combat/enemy_factory.gd" id="2_factory"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode-Bold.ttf" id="4_bold"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="5_body"]
+[ext_resource type="Script" path="res://scripts/ui/encounter_route_map.gd" id="6_map"]
+
+[sub_resource type="Gradient" id="Gradient_background"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.025, 0.075, 0.09, 1, 0.07, 0.14, 0.14, 1, 0.035, 0.055, 0.07, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture_background"]
+gradient = SubResource("Gradient_background")
+width = 1280
+height = 720
+fill_from = Vector2(0, 0)
+fill_to = Vector2(1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_map_panel"]
+bg_color = Color(0.055, 0.095, 0.095, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.54, 0.43, 0.24, 0.8)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_progress"]
+bg_color = Color(0.08, 0.12, 0.12, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.7, 0.6, 0.55)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 
 [node name="EncounterSelect" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_select")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.09, 0.08, 0.11, 1)
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Vignette" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.015, 0.02, 0.025, 0.22)
 
 [node name="EnemyFactory" type="Node" parent="."]
 script = ExtResource("2_factory")
 
-[node name="CenterBox" type="CenterContainer" parent="."]
+[node name="Header" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.035
+anchor_right = 0.72
+anchor_bottom = 0.2
+theme_override_constants/separation = 0
 
-[node name="Menu" type="VBoxContainer" parent="CenterBox"]
+[node name="Eyebrow" type="Label" parent="Header"]
 layout_mode = 2
-theme_override_constants/separation = 40
-alignment = 1
+theme_override_colors/font_color = Color(0.48, 0.82, 0.67, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 16
+text = "THE TUNDRA EXPEDITION"
 
-[node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
+[node name="TitleLabel" type="Label" parent="Header"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
+theme_override_colors/font_color = Color(0.94, 0.8, 0.53, 1)
 theme_override_fonts/font = ExtResource("3_title")
-theme_override_font_sizes/font_size = 56
-text = "Choose your next foe"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 52
+text = "Chart Your Course"
 
-[node name="ChoicesBox" type="HBoxContainer" parent="CenterBox/Menu"]
+[node name="SubtitleLabel" type="Label" parent="Header"]
 layout_mode = 2
-theme_override_constants/separation = 32
-alignment = 1
+theme_override_colors/font_color = Color(0.72, 0.76, 0.7, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 18
+text = "Choose the next threat. Every road leads deeper into the wilds."
+
+[node name="ProgressBadge" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.76
+anchor_top = 0.065
+anchor_right = 0.95
+anchor_bottom = 0.145
+theme_override_styles/panel = SubResource("StyleBox_progress")
+
+[node name="ProgressLabel" type="Label" parent="ProgressBadge"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.81, 1)
+theme_override_fonts/font = ExtResource("4_bold")
+theme_override_font_sizes/font_size = 18
+text = "ENCOUNTER 1 / 6"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MapPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.04
+anchor_top = 0.23
+anchor_right = 0.96
+anchor_bottom = 0.84
+theme_override_styles/panel = SubResource("StyleBox_map_panel")
+
+[node name="Margin" type="MarginContainer" parent="MapPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 20
+
+[node name="RouteMap" type="Control" parent="MapPanel/Margin"]
+custom_minimum_size = Vector2(0, 360)
+layout_mode = 2
+mouse_filter = 1
+script = ExtResource("6_map")
+
+[node name="Legend" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.06
+anchor_top = 0.875
+anchor_right = 0.72
+anchor_bottom = 0.94
+theme_override_constants/separation = 24
+
+[node name="Cleared" type="Label" parent="Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.79, 0.69, 0.45, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 17
+text = "●  Cleared"
+
+[node name="Available" type="Label" parent="Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.93, 0.68, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 17
+text = "◆  Available route"
+
+[node name="Unknown" type="Label" parent="Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.48, 0.48, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 17
+text = "○  Uncharted"
+
+[node name="Boss" type="Label" parent="Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.36, 0.29, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 17
+text = "◆  Final boss"
+
+[node name="HintLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.75
+anchor_top = 0.875
+anchor_right = 0.94
+anchor_bottom = 0.94
+theme_override_colors/font_color = Color(0.66, 0.7, 0.66, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 16
+text = "Select a node to continue  →"
+horizontal_alignment = 2

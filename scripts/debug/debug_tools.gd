@@ -80,6 +80,10 @@ func _on_word_resolved(result: Dictionary) -> void:
 		result["effectiveness"],
 		result["semantic_multiplier"],
 	])
+	lines.append("speed %.1fs -> x%.2f" % [
+		result["elapsed_seconds"],
+		result["speed_multiplier"],
+	])
 	if result["gold_bonus"] > 0:
 		lines.append("rogue gold +%d" % result["gold_bonus"])
 	if result["heal_amount"] > 0:
