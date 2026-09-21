@@ -24,6 +24,9 @@ const POS_MULTIPLIERS: Dictionary[String, float] = {
 const SEMANTIC_MULTIPLIER_MIN: float = 0.5
 const SEMANTIC_MULTIPLIER_MAX: float = 2.0
 
+# A true WordNet antonym is stronger than a curated thematic counter.
+const ANTONYM_MULTIPLIER_BONUS: float = 0.5
+
 # Every Tome adds its bonus after counter scoring, without a cap.
 const TOME_MULTIPLIER_BONUS: float = 0.12
 const LANTERN_MULTIPLIER_BONUS: float = 0.08
@@ -75,12 +78,11 @@ func calculate(
 		counter.get("score", 0.0)
 		+ relic_system.total_effect("counter_bonus"), 0.0, 1.0
 	)
-	var semantic_multiplier: float = lerpf(
-		SEMANTIC_MULTIPLIER_MIN,
-		SEMANTIC_MULTIPLIER_MAX,
-		effectiveness
+	var semantic_multiplier: float = _semantic_multiplier(
+		counter,
+		effectiveness,
+		relic_system.total_effect("damage_multiplier")
 	)
-	semantic_multiplier += relic_system.total_effect("damage_multiplier")
 	var damage: float = base_power * length_multiplier \
 			* pos_data["multiplier"] * semantic_multiplier
 	return {
@@ -101,6 +103,21 @@ func calculate(
 		"gold_bonus": _rogue_gold(drawn),
 		"heal_amount": _healer_health(drawn),
 	}
+
+
+func _semantic_multiplier(
+	counter: Dictionary,
+	effectiveness: float,
+	relic_damage_bonus: float
+) -> float:
+	var multiplier: float = lerpf(
+		SEMANTIC_MULTIPLIER_MIN,
+		SEMANTIC_MULTIPLIER_MAX,
+		effectiveness
+	)
+	if counter.get("strategy", "") == "wordnet antonym":
+		multiplier += ANTONYM_MULTIPLIER_BONUS
+	return multiplier + relic_damage_bonus
 
 
 # The prompt determines the multiplier; old callers keep best POS.

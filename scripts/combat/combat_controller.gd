@@ -21,7 +21,7 @@ const ENEMY_TURN_DELAY: float = 0.7
 
 const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
 
-# Adding background array
+# Adding background arrays
 var backgrounds: Array[Texture2D] = [
 	preload("res://art/backgrounds/desert.png"),
 	preload("res://art/backgrounds/new_forest.png"),

@@ -24,6 +24,7 @@ func _initialize() -> void:
 	_test_validation(reader)
 	_test_parts_of_speech(reader)
 	_test_similarity(reader)
+	_test_counter_damage(reader)
 	print("=== %d failure(s) ===" % _failures)
 	quit(1 if _failures > 0 else 0)
 
@@ -94,6 +95,29 @@ func _test_similarity(reader: WordNetReader) -> void:
 	)
 
 
+func _test_counter_damage(reader: WordNetReader) -> void:
+	var scorer: CounterScorer = CounterScorer.new(reader)
+	var antonym: Dictionary = scorer.score_detailed(
+		"hot", "cold", "a"
+	)
+	var thematic: Dictionary = scorer.score_detailed(
+		"fire", "cold", "n"
+	)
+	var same_tag: Dictionary = scorer.score_detailed(
+		"cold", "cold", "a"
+	)
+	_expect(
+		antonym["strategy"] == "wordnet antonym",
+		"hot is a direct WordNet antonym of cold"
+	)
+	_expect(
+		thematic["strategy"] == "thematic counter",
+		"fire remains a thematic counter to cold"
+	)
+	_expect(
+		same_tag["score"] == 0.0,
+		"cold does not counter the cold tag"
+	)
 func _expect(condition: bool, label: String) -> void:
 	if condition:
 		print("  PASS  " + label)
