@@ -61,6 +61,8 @@ func recruit_price(letter: String) -> int:
 
 ## Each offer can be bought once; owned copies remain separate characters.
 func buy_recruit(offer_index: int) -> bool:
+	if RunState.use_itemized_letters:
+		return false
 	ensure_recruitment_offers()
 	if offer_index < 0 or offer_index >= RunState.recruitment_stock.size():
 		return false

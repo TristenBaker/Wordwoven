@@ -4,6 +4,7 @@ extends Control
 
 @onready var enemy_label: Label = $CenterBox/LootPanel/Content/Enemy
 @onready var gold_label: Label = $CenterBox/LootPanel/Content/GoldCard/Gold
+@onready var letter_label: Label = $CenterBox/LootPanel/Content/LetterDrop
 @onready var continue_button: Button = $CenterBox/LootPanel/Content/ContinueButton
 
 
@@ -13,6 +14,11 @@ func _ready() -> void:
 		return
 	enemy_label.text = "%s left behind:" % RunState.pending_victory_enemy
 	gold_label.text = "%d gold" % RunState.pending_victory_gold
+	if RunState.pending_victory_letter != null:
+		letter_label.text = "Letter found: %s" % \
+			RunState.pending_victory_letter.describe()
+	else:
+		letter_label.text = "No letter item dropped this time."
 	continue_button.text = "Complete the Tale" if RunState.is_boss_next() else "Return to Tavern"
 	continue_button.pressed.connect(_finish_rewards)
 	continue_button.grab_focus()

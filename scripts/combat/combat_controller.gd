@@ -214,9 +214,10 @@ func _resolve_word(word: String) -> void:
 	EventBus.emit_word_resolved(result)
 	_log(_describe_result(result))
 	# Current-word numbers are frozen before the used letters grow.
-	for stats: LetterStats in drawn:
-		stats.gain_use_level()
-	if not drawn.is_empty():
+	if not RunState.use_itemized_letters:
+		for stats: LetterStats in drawn:
+			stats.gain_use_level()
+	if not drawn.is_empty() and not RunState.use_itemized_letters:
 		EventBus.emit_deck_changed()
 	_advance_prompt()
 	deck_manager.spend_letters(drawn)
@@ -259,7 +260,14 @@ func _on_enemy_died() -> void:
 	RunState.add_gold(earned)
 	RunState.complete_encounter()
 	RunState.is_run_active = true
-	RunState.begin_victory(enemy.enemy_name, earned)
+	if RunState.use_itemized_letters:
+		var dropped_letter := RunState.rolled_letter_drop()
+		RunState.add_letter_item(dropped_letter)
+		RunState.begin_victory_with_drop(
+			enemy.enemy_name, earned, dropped_letter
+		)
+	else:
+		RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)
 	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
 

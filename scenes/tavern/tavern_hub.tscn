@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/tavern/tavern_hub.gd" id="1_hub"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interaction"]
 bg_color = Color(0.08, 0.047, 0.026, 0.9)
@@ -198,3 +199,5 @@ theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 17
 text = "Press B to open the Tavern Page"
 horizontal_alignment = 1
+
+[node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

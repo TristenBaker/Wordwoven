@@ -14,7 +14,7 @@ var _hand: Array[LetterStats] = []
 ## Copies the run deck into a fresh shuffled draw pile and deals
 ## a full hand.
 func start_encounter() -> void:
-	_draw_pile = RunState.deck.duplicate()
+	_draw_pile = RunState.combat_letters().duplicate()
 	_draw_pile.shuffle()
 	_discard_pile = []
 	_hand = []

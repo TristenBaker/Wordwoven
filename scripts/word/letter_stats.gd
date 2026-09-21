@@ -54,6 +54,18 @@ static func create(new_letter: String) -> LetterStats:
 	return stats
 
 
+## Creates an itemized letter. Unlike legacy deck letters, both class and
+## level are explicit item properties and do not need to follow its alphabet
+## category.
+static func create_item(
+	new_letter: String, new_class: int, new_level: int = 1
+) -> LetterStats:
+	var stats := LetterStats.create(new_letter)
+	stats.letter_class = new_class as LetterClass
+	stats.level = maxi(1, new_level)
+	return stats
+
+
 ## Called once after this letter resolves an accepted use.
 func gain_use_level() -> void:
 	level += 1

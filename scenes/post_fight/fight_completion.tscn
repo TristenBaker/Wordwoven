@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/post_fight/fight_completion.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/Victory.png" id="2_background"]
 [ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.16, 0.07, 0.025, 0.95)
@@ -117,3 +118,5 @@ theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 23
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 text = "Claim a Power"
+
+[node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

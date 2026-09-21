@@ -54,6 +54,9 @@ func _rebuild_offers() -> void:
 	for child: Node in offers_grid.get_children():
 		offers_grid.remove_child(child)
 		child.queue_free()
+	if RunState.use_itemized_letters:
+		feedback_label.text = "Letter items now come from monster drops. Open Equip to manage them."
+		return
 	var offers: Array[Dictionary] = economy.recruitment_offers()
 	for index: int in range(offers.size()):
 		var offer: Dictionary = offers[index]

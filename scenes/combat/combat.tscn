@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://b0juen7st58ab" path="res://scripts/ui/word_tile_board.gd" id="9_word_board"]
 [ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="10_pause"]
 [ext_resource type="AudioStream" uid="uid://cuqj75v30tlmh" path="res://assets/Art/Music/2 - Crystal Veil (Loop).mp3" id="11_3dmww"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="12_equipment"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_damage"]
 bg_color = Color(0.72, 0.16, 0.13, 1)
@@ -320,3 +321,5 @@ theme_override_constants/separation = 10
 [node name="BattleMusic" type="AudioStreamPlayer" parent="." unique_id=408771475]
 stream = ExtResource("11_3dmww")
 autoplay = true
+
+[node name="EquipmentOverlay" parent="." instance=ExtResource("12_equipment")]
