@@ -2,8 +2,6 @@ extends Control
 ## Title screen. Waits for the WordNet database to finish loading,
 ## then lets the player start a run or quit.
 
-const FIRST_SCENE_PATH: String = "res://scenes/combat/combat.tscn"
-
 @onready var start_button: Button = $CenterBox/Menu/StartButton
 @onready var settings_button: Button = $CenterBox/Menu/SettingsButton
 @onready var quit_button: Button = $CenterBox/Menu/QuitButton
@@ -33,8 +31,7 @@ func _on_loading_finished(success: bool) -> void:
 
 
 func _on_start_pressed() -> void:
-	RunState.start_new_run()
-	get_tree().change_scene_to_file(FIRST_SCENE_PATH)
+	get_tree().change_scene_to_file(ScenePaths.BIOME_SELECT)
 
 
 func _on_settings_pressed() -> void:

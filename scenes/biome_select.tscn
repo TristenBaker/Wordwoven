@@ -1,0 +1,777 @@
+[gd_scene format=3 uid="uid://bayihulieoaed"]
+
+[ext_resource type="AudioStream" uid="uid://c7b8ckewcca6v" path="res://assets/Art/Music/1 - Whispers of the Eldertree (Loop).mp3" id="11_04c8o"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="body"]
+[ext_resource type="Texture2D" uid="uid://cp0f2utb33501" path="res://art/backgrounds/desert.png" id="desert"]
+[ext_resource type="Texture2D" uid="uid://cbrh0sa02pjyy" path="res://art/backgrounds/new_forest.png" id="forest"]
+[ext_resource type="Texture2D" uid="uid://cwb3qpbknboj1" path="res://art/backgrounds/rocky_mountains.png" id="rocky_mountains"]
+[ext_resource type="Script" uid="uid://ccmxhba2oujon" path="res://scripts/ui/biome_select.gd" id="script"]
+[ext_resource type="Texture2D" uid="uid://do67sb2f61ad6" path="res://art/backgrounds/sea.png" id="sea"]
+[ext_resource type="Texture2D" uid="uid://kl2wmog4aelh" path="res://art/backgrounds/sky.png" id="sky"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="title"]
+[ext_resource type="Texture2D" uid="uid://d0egk2rw12vv6" path="res://art/backgrounds/Tundra Biome/T6.png" id="tundra_thumbnail"]
+[ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="volcano"]
+
+[sub_resource type="Theme" id="Theme_menu"]
+default_font = ExtResource("body")
+default_font_size = 24
+Button/colors/font_pressed_color = Color(0.898039, 0.784314, 0.572549, 1)
+Label/colors/font_color = Color(0.898039, 0.784314, 0.572549, 1)
+
+[sub_resource type="StyleBoxFlat" id="card"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.075, 0.05, 0.04, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.28, 0.18, 1)
+
+[sub_resource type="StyleBoxFlat" id="selected"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.19, 0.13, 0.07, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.898039, 0.784314, 0.572549, 1)
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.14, 0.095, 0.06, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.65, 0.51, 0.32, 1)
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.9, 0.7, 0.8)
+
+[sub_resource type="Shader" id="Shader_locked"]
+code = "shader_type canvas_item;
+void fragment() {
+    vec4 pixel = texture(TEXTURE, UV);
+    float grey = dot(pixel.rgb, vec3(0.299, 0.587, 0.114));
+    COLOR = vec4(vec3(grey) * 0.5, pixel.a);
+}"
+
+[sub_resource type="ShaderMaterial" id="Material_locked"]
+shader = SubResource("Shader_locked")
+
+[sub_resource type="StyleBoxFlat" id="Lock_shackle"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_color = Color(0.686275, 0.6, 0.478431, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.075, 0.05, 0.04, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.28, 0.18, 1)
+
+[node name="BiomeSelect" type="Control" unique_id=1380686789]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_menu")
+script = ExtResource("script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=264542528]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.101961, 0.0666667, 0.054902, 1)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1581213438]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 24
+
+[node name="Layout" type="VBoxContainer" parent="Margin" unique_id=1599301448]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="Margin/Layout" unique_id=1331318380]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("title")
+theme_override_font_sizes/font_size = 64
+text = "Where Will Your Tale Begin?"
+horizontal_alignment = 1
+
+[node name="Choices" type="HBoxContainer" parent="Margin/Layout" unique_id=1300708614]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DesertButton" type="Button" parent="Margin/Layout/Choices" unique_id=1700706439]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Sunscorched Wastes — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "desert"
+metadata/description = "Golden dunes stretch between weathered ruins. Beneath the endless sky, forgotten stories sleep in the sand."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/DesertButton" unique_id=1871213821]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/DesertButton/Content" unique_id=287871702]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("desert")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/DesertButton/Content" unique_id=1140653359]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "Sunscorched Wastes"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/DesertButton/Content" unique_id=1871420095]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/DesertButton/Content/ComingSoon" unique_id=636641327]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/DesertButton/Content/ComingSoon/Lock" unique_id=1520633445]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/DesertButton/Content/ComingSoon/Lock" unique_id=1364505125]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/DesertButton/Content/ComingSoon" unique_id=286241726]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="ForestButton" type="Button" parent="Margin/Layout/Choices" unique_id=1105823669]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Whisperwood — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "forest"
+metadata/description = "Lanterns glow beneath an ancient canopy. Follow the quiet waters into a woodland steeped in wonder."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/ForestButton" unique_id=921759356]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/ForestButton/Content" unique_id=1855648838]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("forest")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/ForestButton/Content" unique_id=1434366962]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "Whisperwood"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/ForestButton/Content" unique_id=1414375641]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/ForestButton/Content/ComingSoon" unique_id=1205909654]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/ForestButton/Content/ComingSoon/Lock" unique_id=521672267]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/ForestButton/Content/ComingSoon/Lock" unique_id=1284493610]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/ForestButton/Content/ComingSoon" unique_id=796510166]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="RockyMountainsButton" type="Button" parent="Margin/Layout/Choices" unique_id=1055036403]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Stormspire Peaks — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "rocky_mountains"
+metadata/description = "Jagged peaks rise above the winding passes. Among these weathered stones, every echo carries a distant tale."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/RockyMountainsButton" unique_id=977658582]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/RockyMountainsButton/Content" unique_id=1507803384]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("rocky_mountains")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/RockyMountainsButton/Content" unique_id=1242460297]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "Stormspire Peaks"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/RockyMountainsButton/Content" unique_id=337522951]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/RockyMountainsButton/Content/ComingSoon" unique_id=864337138]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/RockyMountainsButton/Content/ComingSoon/Lock" unique_id=149523612]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/RockyMountainsButton/Content/ComingSoon/Lock" unique_id=1754098187]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/RockyMountainsButton/Content/ComingSoon" unique_id=1428949883]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="SeaButton" type="Button" parent="Margin/Layout/Choices" unique_id=398846273]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "The Drowned Realm — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "sea"
+metadata/description = "Sunlight filters through blue depths. Among coral and sunken ruins, forgotten tales wait beneath the waves."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/SeaButton" unique_id=28625233]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/SeaButton/Content" unique_id=1546151943]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("sea")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/SeaButton/Content" unique_id=1021758282]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "The Drowned Realm"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/SeaButton/Content" unique_id=1973518551]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/SeaButton/Content/ComingSoon" unique_id=1766503471]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/SeaButton/Content/ComingSoon/Lock" unique_id=288072920]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/SeaButton/Content/ComingSoon/Lock" unique_id=316886668]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/SeaButton/Content/ComingSoon" unique_id=573003301]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="SkyButton" type="Button" parent="Margin/Layout/Choices" unique_id=388957389]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Aetherreach — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "sky"
+metadata/description = "A boundless sky opens above the clouds. Let your tale wander where the earth gives way to air."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/SkyButton" unique_id=288273971]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/SkyButton/Content" unique_id=1424051207]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("sky")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/SkyButton/Content" unique_id=1576057268]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "Aetherreach"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/SkyButton/Content" unique_id=1990383328]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/SkyButton/Content/ComingSoon" unique_id=495240297]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/SkyButton/Content/ComingSoon/Lock" unique_id=1983637440]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/SkyButton/Content/ComingSoon/Lock" unique_id=1493561913]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/SkyButton/Content/ComingSoon" unique_id=1196359914]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="TundraButton" type="Button" parent="Margin/Layout/Choices" unique_id=1859259468]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Frostveil Expanse"
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+toggle_mode = true
+button_pressed = true
+metadata/biome_id = "tundra"
+metadata/preview_texture = ExtResource("tundra_thumbnail")
+metadata/description = "Beyond the icebound wastes, ancient whispers ride the bitter wind. Write your tale beneath the pale skies of Frostveil Expanse."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/TundraButton" unique_id=1128576164]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/TundraButton/Content" unique_id=1870753219]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("tundra_thumbnail")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/TundraButton/Content" unique_id=1885780500]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Frostveil Expanse"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="VolcanoButton" type="Button" parent="Margin/Layout/Choices" unique_id=2006622708]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Hellfire Gorge — Coming soon"
+focus_mode = 0
+theme_override_styles/normal = SubResource("card")
+theme_override_styles/pressed = SubResource("selected")
+theme_override_styles/hover = SubResource("hover")
+theme_override_styles/hover_pressed = SubResource("selected")
+theme_override_styles/disabled = SubResource("card")
+theme_override_styles/focus = SubResource("focus")
+disabled = true
+toggle_mode = true
+metadata/biome_id = "volcano"
+metadata/description = "Fire lights a land of blackened stone. In the shadow of the mountain, the earth still burns."
+
+[node name="Content" type="VBoxContainer" parent="Margin/Layout/Choices/VolcanoButton" unique_id=843693231]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Thumbnail" type="TextureRect" parent="Margin/Layout/Choices/VolcanoButton/Content" unique_id=51135208]
+material = SubResource("Material_locked")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+texture = ExtResource("volcano")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Name" type="Label" parent="Margin/Layout/Choices/VolcanoButton/Content" unique_id=60156166]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_font_sizes/font_size = 18
+text = "Hellfire Gorge"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ComingSoon" type="HBoxContainer" parent="Margin/Layout/Choices/VolcanoButton/Content" unique_id=1886370979]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Lock" type="Control" parent="Margin/Layout/Choices/VolcanoButton/Content/ComingSoon" unique_id=849723745]
+custom_minimum_size = Vector2(14, 20)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Shackle" type="Panel" parent="Margin/Layout/Choices/VolcanoButton/Content/ComingSoon/Lock" unique_id=207136381]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 11.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Lock_shackle")
+
+[node name="Body" type="ColorRect" parent="Margin/Layout/Choices/VolcanoButton/Content/ComingSoon/Lock" unique_id=2141372244]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 9.0
+offset_right = 13.0
+offset_bottom = 18.0
+mouse_filter = 2
+color = Color(0.686275, 0.6, 0.478431, 1)
+
+[node name="Text" type="Label" parent="Margin/Layout/Choices/VolcanoButton/Content/ComingSoon" unique_id=1056493687]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 14
+text = "COMING SOON"
+
+[node name="Details" type="HBoxContainer" parent="Margin/Layout" unique_id=3766079]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="PreviewFrame" type="PanelContainer" parent="Margin/Layout/Details" unique_id=1613980056]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.9
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Preview" type="TextureRect" parent="Margin/Layout/Details/PreviewFrame" unique_id=1948479165]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("tundra_thumbnail")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="InfoPanel" type="PanelContainer" parent="Margin/Layout/Details" unique_id=1278410067]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Padding" type="MarginContainer" parent="Margin/Layout/Details/InfoPanel" unique_id=451943366]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="Info" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding" unique_id=55940669]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SelectionLabel" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=143001833]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("title")
+theme_override_font_sizes/font_size = 40
+text = "Frostveil Expanse"
+autowrap_mode = 2
+
+[node name="Description" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=1896708119]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+text = "Beyond the icebound wastes, ancient whispers ride the bitter wind. Write your tale beneath the pale skies of Frostveil Expanse."
+autowrap_mode = 2
+
+[node name="BeginButton" type="Button" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=446214640]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Begin Journey"
+
+[node name="BackButton" type="Button" parent="Margin/Layout" unique_id=634583218]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 22
+text = "Back"
+
+[node name="TitleMusic" type="AudioStreamPlayer" parent="." unique_id=1977567207]
+stream = ExtResource("11_04c8o")
+autoplay = true

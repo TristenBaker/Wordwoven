@@ -1,4 +1,4 @@
-# Lexical Rogue
+# Word Woven
 
 Mad Libs meets a roguelike deckbuilder: spell words for a requested
 part of speech, counter the enemy's nature, and hear your exact
