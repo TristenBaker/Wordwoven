@@ -71,12 +71,12 @@ func _run_test() -> void:
 		combat.feedback_label.text == "Already played this fight",
 		"repeat word rejected"
 	)
-	# Finishing the enemy shows the victory panel and pays gold.
+	# Finishing the enemy opens the post-fight flow and pays gold.
 	var gold_before: int = RunState.gold
 	enemy.take_damage(999.0)
 	await get_tree().process_frame
 	_expect(
-		combat.victory_panel.visible, "victory panel shown"
+		not RunState.pending_victory_enemy.is_empty(), "post-fight flow started"
 	)
 	_expect(
 		RunState.gold > gold_before,

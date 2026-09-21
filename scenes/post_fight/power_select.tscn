@@ -1,0 +1,146 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/post_fight/power_select.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/Victory.png" id="2_background"]
+[ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.11, 0.05, 0.12, 0.96)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.64, 0.38, 0.9, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+content_margin_left = 38.0
+content_margin_top = 30.0
+content_margin_right = 38.0
+content_margin_bottom = 30.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_choice"]
+bg_color = Color(0.75, 0.62, 0.88, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.14, 0.55, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+
+[node name="PowerSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_background")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.01, 0.08, 0.66)
+mouse_filter = 2
+
+[node name="CenterBox" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PowerPanel" type="PanelContainer" parent="CenterBox"]
+custom_minimum_size = Vector2(1080, 450)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Content" type="VBoxContainer" parent="CenterBox/PowerPanel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterBox/PowerPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.8, 1, 1)
+theme_override_fonts/font = ExtResource("3_title")
+theme_override_font_sizes/font_size = 48
+text = "Choose a Power"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="CenterBox/PowerPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.8, 0.95, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 21
+text = "Your victories become part of the tale."
+horizontal_alignment = 1
+
+[node name="Choices" type="HBoxContainer" parent="CenterBox/PowerPanel/Content"]
+custom_minimum_size = Vector2(0, 156)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ChoiceOne" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
+autowrap_mode = 2
+
+[node name="ChoiceTwo" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
+autowrap_mode = 2
+
+[node name="ChoiceThree" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
+autowrap_mode = 2
+
+[node name="Status" type="Label" parent="CenterBox/PowerPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="CenterBox/PowerPanel/Content"]
+custom_minimum_size = Vector2(250, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 22
+text = "View Loot"
