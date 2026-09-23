@@ -18,6 +18,10 @@ const LETTER_TILE_SCENE: PackedScene = \
 
 # Pause before and after the enemy's retaliation, in seconds.
 const ENEMY_TURN_DELAY: float = 0.7
+# Shorter pause once the party has finished its actions.
+const PARTY_SETTLE_DELAY: float = 0.25
+# Fade to black between the enemy's death and the victory tale.
+const VICTORY_FADE_TIME: float = 0.35
 
 const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
 
@@ -68,6 +72,10 @@ var _damage_popup_tween: Tween = null
 @onready var prompt_label: Label = $Layout/InputArea/PromptLabel
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
+@onready var side_panel: PanelContainer = $Layout/SidePanel
+@onready var log_toggle_button: Button = $Layout/LogToggleButton
+@onready var party_stage: PartyStage = $Layout/PartyStage
+@onready var transition_fade: ColorRect = $TransitionFade
 @onready var player_health_bar: ProgressBar = \
 		$Layout/StatusArea/PlayerHealthBar
 @onready var player_health_label: Label = \
@@ -89,6 +97,7 @@ func _ready() -> void:
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
+	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
 	_start_encounter()
 
@@ -124,7 +133,8 @@ func _randomize_background() -> void:
 	background.texture = backgrounds.pick_random()
 	if RunState.selected_biome == "tundra":
 		background.texture = load(
-			"res://art/backgrounds/Tundra Biome/T%d.png" % RunState.encounter_index
+			"res://art/backgrounds/Tundra Biome/T%d.png"
+			% RunState.encounter_index
 		)
 
 func _pick_spawn_data() -> Dictionary:
@@ -212,6 +222,8 @@ func _resolve_word(word: String) -> void:
 		RunState.heal_player(result["heal_amount"])
 	EventBus.emit_word_resolved(result)
 	_log(_describe_result(result))
+	# The typed letters act before the hand changes under them.
+	var performing: bool = party_stage.perform_word(enemy.strike_point())
 	# Current-word numbers are frozen before the used letters grow.
 	for stats: LetterStats in drawn:
 		stats.gain_use_level()
@@ -222,6 +234,8 @@ func _resolve_word(word: String) -> void:
 	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
+	if performing:
+		await party_stage.impact_landed
 	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
@@ -230,7 +244,11 @@ func _resolve_word(word: String) -> void:
 
 func _enemy_turn() -> void:
 	_state = State.ENEMY_TURN
-	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
+	var delay: float = ENEMY_TURN_DELAY
+	if party_stage.is_performing():
+		await party_stage.performance_finished
+		delay = PARTY_SETTLE_DELAY
+	await get_tree().create_timer(delay).timeout
 	if _state != State.ENEMY_TURN:
 		return
 	_log("The %s retaliates for %d damage!" % [
@@ -260,7 +278,23 @@ func _on_enemy_died() -> void:
 	RunState.is_run_active = true
 	RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)
+	word_input.editable = false
+	submit_button.disabled = true
+	await _play_victory_transition()
 	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
+
+
+# Every party action finishes before the enemy dissolves, then the
+# screen fades out into the victory tale.
+func _play_victory_transition() -> void:
+	if party_stage.is_performing():
+		await party_stage.performance_finished
+	await enemy.play_death()
+	var fade: Tween = create_tween()
+	fade.tween_property(
+		transition_fade, "color:a", 1.0, VICTORY_FADE_TIME
+	)
+	await fade.finished
 
 
 func _on_player_died() -> void:
@@ -269,6 +303,11 @@ func _on_player_died() -> void:
 
 
 # --- Screen updates ------------------------------------------------
+
+func _on_log_toggled(shown: bool) -> void:
+	side_panel.visible = shown
+	log_toggle_button.text = "Hide Log" if shown else "Show Log"
+
 
 func _advance_prompt() -> void:
 	var current: int = PROMPT_ORDER.find(required_pos)
@@ -296,12 +335,13 @@ func _on_text_changed(new_text: String) -> void:
 	_refresh_word_composer(new_text, split)
 	_animate_new_tile_selections(drawn)
 	_previous_drawn = drawn.duplicate()
+	party_stage.sync_letters(drawn)
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_used(drawn.has(tile.stats), typing)
 
 
 func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
-	var word := raw_word.strip_edges().to_lower()
+	var word: String = raw_word.strip_edges().to_lower()
 	if split.is_empty():
 		split = deck_manager.split_word(word)
 	var drawn: Array[LetterStats] = split["drawn"]
@@ -311,7 +351,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		_set_output_counters(0, 0, 0)
 		_set_health_previews(0, 0)
 		return
-	var result := calculator.calculate(
+	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos
 	)
 	_set_output_counters(
@@ -331,8 +371,8 @@ func _set_output_counters(damage: int, healing: int, gold: int) -> void:
 
 func _set_health_previews(damage: int, healing: int) -> void:
 	enemy.set_projected_damage(damage)
-	var current_health := RunState.player_health
-	var projected_health := mini(
+	var current_health: int = RunState.player_health
+	var projected_health: int = mini(
 		current_health + healing, RunState.player_max_health
 	)
 	player_heal_preview.anchor_left = float(current_health) \
@@ -371,7 +411,7 @@ func _fly_tile_to_board(
 	flying.z_index = 20
 	flying.global_position = source.global_position
 	flying.size = source.size
-	var tween := create_tween().set_parallel(true)
+	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flying, "global_position", target.position, 0.24)
 	tween.tween_property(flying, "size", target.size, 0.24)

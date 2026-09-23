@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://dpnvyruifir1a"]
+
+[ext_resource type="Script" uid="uid://da3viasnx3gq1" path="res://scripts/combat/party_member.gd" id="1_member"]
+[ext_resource type="SpriteFrames" uid="uid://bcgxp2tgc1k4b" path="res://art/party/chibi/warrior_frames.tres" id="2_warrior"]
+[ext_resource type="SpriteFrames" uid="uid://rhqol2mmdd3" path="res://art/party/chibi/healer_frames.tres" id="3_healer"]
+[ext_resource type="SpriteFrames" uid="uid://6y71lmp4m64" path="res://art/party/chibi/rogue_frames.tres" id="4_rogue"]
+[ext_resource type="Texture2D" uid="uid://csmwwxdgx7uqt" path="res://art/party/effects/spark.png" id="5_spark"]
+[ext_resource type="Texture2D" uid="uid://2fqg3bgal80w" path="res://art/party/effects/heal_ring.png" id="6_ring"]
+[ext_resource type="Texture2D" uid="uid://b21yqufcf7lhg" path="res://art/party/effects/impact_burst.png" id="7_burst"]
+[ext_resource type="Texture2D" uid="uid://d1k6tbhcqdmyk" path="res://art/party/effects/shadow.png" id="8_shadow"]
+[ext_resource type="Texture2D" uid="uid://cvcwc28tdrk0l" path="res://assets/Art/Items/coin.png" id="9_coin"]
+
+[sub_resource type="Gradient" id="Gradient_fade"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[node name="PartyMember" type="Node2D"]
+script = ExtResource("1_member")
+warrior_frames = ExtResource("2_warrior")
+healer_frames = ExtResource("3_healer")
+rogue_frames = ExtResource("4_rogue")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+position = Vector2(0, -1)
+scale = Vector2(3, 3)
+texture = ExtResource("8_shadow")
+
+[node name="Dust" type="CPUParticles2D" parent="."]
+position = Vector2(0, -2)
+emitting = false
+one_shot = true
+texture = ExtResource("5_spark")
+color_ramp = SubResource("Gradient_fade")
+amount = 8
+lifetime = 0.35
+explosiveness = 0.9
+emission_shape = 3
+emission_rect_extents = Vector2(14, 1)
+direction = Vector2(-1, -0.4)
+spread = 50.0
+gravity = Vector2(0, -30)
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color = Color(0.86, 0.76, 0.6, 0.8)
+
+[node name="Body" type="Node2D" parent="."]
+scale = Vector2(3, 3)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Body"]
+sprite_frames = ExtResource("2_warrior")
+animation = &"idle"
+offset = Vector2(0, -13)
+
+[node name="Coin" type="Sprite2D" parent="Body"]
+visible = false
+position = Vector2(2, -27)
+scale = Vector2(0.14, 0.14)
+texture = ExtResource("9_coin")
+
+[node name="HealRing" type="Sprite2D" parent="."]
+visible = false
+self_modulate = Color(0.55, 1, 0.65, 1)
+position = Vector2(0, -30)
+texture = ExtResource("6_ring")
+
+[node name="HealSparkles" type="CPUParticles2D" parent="."]
+position = Vector2(0, -36)
+emitting = false
+one_shot = true
+texture = ExtResource("5_spark")
+color_ramp = SubResource("Gradient_fade")
+amount = 18
+lifetime = 0.7
+explosiveness = 0.6
+emission_shape = 1
+emission_sphere_radius = 16.0
+direction = Vector2(0, -1)
+spread = 30.0
+gravity = Vector2(0, -70)
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+scale_amount_min = 1.0
+scale_amount_max = 2.5
+color = Color(0.65, 1, 0.72, 1)
+
+[node name="ImpactBurst" type="Sprite2D" parent="."]
+visible = false
+z_index = 2
+self_modulate = Color(1, 0.92, 0.72, 1)
+texture = ExtResource("7_burst")
+
+[node name="ImpactSparks" type="CPUParticles2D" parent="."]
+position = Vector2(0, 0)
+emitting = false
+one_shot = true
+texture = ExtResource("5_spark")
+color_ramp = SubResource("Gradient_fade")
+z_index = 2
+amount = 16
+lifetime = 0.4
+explosiveness = 1.0
+direction = Vector2(1, -0.5)
+spread = 180.0
+gravity = Vector2(0, 420)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color = Color(1, 0.84, 0.5, 1)
+
+[node name="CoinSparkle" type="CPUParticles2D" parent="."]
+position = Vector2(6, -80)
+emitting = false
+one_shot = true
+texture = ExtResource("5_spark")
+color_ramp = SubResource("Gradient_fade")
+amount = 10
+lifetime = 0.4
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 120)
+initial_velocity_min = 30.0
+initial_velocity_max = 90.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color = Color(1, 0.86, 0.35, 1)

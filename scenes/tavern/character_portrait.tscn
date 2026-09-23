@@ -1,0 +1,87 @@
+[gd_scene format=3 uid="uid://ce26pyfgafmr"]
+
+[ext_resource type="Script" uid="uid://b23lmly4fikhh" path="res://scripts/tavern/character_portrait.gd" id="1_portrait"]
+[ext_resource type="Texture2D" uid="uid://dsb8o5o03r258" path="res://art/party/portraits/warrior_1.png" id="2_warrior"]
+[ext_resource type="Texture2D" uid="uid://bdvua5jnxenyd" path="res://art/party/portraits/healer_1.png" id="3_healer"]
+[ext_resource type="Texture2D" uid="uid://ea2olu4qosiu" path="res://art/party/portraits/rogue_1.png" id="4_rogue"]
+[ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="5_title"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="6_body"]
+
+[node name="CharacterPortrait" type="PanelContainer"]
+size_flags_horizontal = 3
+script = ExtResource("1_portrait")
+warrior_tiers = Array[Texture2D]([ExtResource("2_warrior")])
+healer_tiers = Array[Texture2D]([ExtResource("3_healer")])
+rogue_tiers = Array[Texture2D]([ExtResource("4_rogue")])
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Stage" type="Control" parent="Margin"]
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="Margin/Stage"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 24.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_warrior")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelLabel" type="Label" parent="Margin/Stage"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 80.0
+offset_bottom = 70.0
+tooltip_text = "Level"
+mouse_filter = 1
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.12, 0.07, 0.03, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("5_title")
+theme_override_font_sizes/font_size = 60
+text = "1"
+
+[node name="NameLabel" type="Label" parent="Margin/Stage"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9, 0.78, 0.57, 1)
+theme_override_fonts/font = ExtResource("6_body")
+theme_override_font_sizes/font_size = 24
+text = "A · Healer"
+horizontal_alignment = 1
+
+[node name="EmptyLabel" type="Label" parent="Margin/Stage"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_fonts/font = ExtResource("6_body")
+theme_override_font_sizes/font_size = 22
+text = "Select a party member to see them here."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
