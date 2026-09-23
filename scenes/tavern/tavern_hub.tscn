@@ -1,21 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene format=3 uid="uid://3vtham4p6wk0"]
 
-[ext_resource type="Script" path="res://scripts/tavern/tavern_hub.gd" id="1_hub"]
-[ext_resource type="Texture2D" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
+[ext_resource type="Script" uid="uid://2lece1lnnonq" path="res://scripts/tavern/tavern_hub.gd" id="1_hub"]
+[ext_resource type="Texture2D" uid="uid://bkrq8ekxejoqs" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interaction"]
-bg_color = Color(0.08, 0.047, 0.026, 0.9)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.93, 0.66, 0.28, 0.9)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation"]
 bg_color = Color(0.12, 0.055, 0.018, 0.96)
@@ -41,7 +29,19 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
-[node name="TavernHub" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interaction"]
+bg_color = Color(0.08, 0.047, 0.026, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.66, 0.28, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="TavernHub" type="Control" unique_id=1081497914]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,29 +50,29 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_hub")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=2006893668]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("2_background")
 expand_mode = 1
 stretch_mode = 6
-mouse_filter = 2
 
-[node name="Atmosphere" type="ColorRect" parent="."]
+[node name="Atmosphere" type="ColorRect" parent="." unique_id=650678163]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.12, 0.055, 0.01, 0.18)
 mouse_filter = 2
+color = Color(0.12, 0.055, 0.01, 0.18)
 
-[node name="Title" type="Label" parent="."]
+[node name="Title" type="Label" parent="." unique_id=2094088359]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -80,12 +80,13 @@ offset_left = 30.0
 offset_top = 22.0
 offset_right = -30.0
 offset_bottom = 78.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.5, 1)
 theme_override_fonts/font = ExtResource("3_title")
 theme_override_font_sizes/font_size = 46
 text = "The Inkwell Tavern"
 
-[node name="Subtitle" type="Label" parent="."]
+[node name="Subtitle" type="Label" parent="." unique_id=643482664]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -93,12 +94,13 @@ offset_left = 34.0
 offset_top = 78.0
 offset_right = -30.0
 offset_bottom = 110.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.7, 0.9)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 20
 text = "A warm fire, a full mug, and another chapter waiting to be written."
 
-[node name="StatusPanel" type="VBoxContainer" parent="."]
+[node name="StatusPanel" type="VBoxContainer" parent="." unique_id=1574892893]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -107,23 +109,24 @@ offset_left = -240.0
 offset_top = 24.0
 offset_right = -150.0
 offset_bottom = 92.0
+grow_horizontal = 0
 theme_override_constants/separation = 4
 
-[node name="HealthLabel" type="Label" parent="StatusPanel"]
+[node name="HealthLabel" type="Label" parent="StatusPanel" unique_id=1327590516]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 1, 0.7, 1)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
 text = "Health  50 / 50"
 
-[node name="GoldLabel" type="Label" parent="StatusPanel"]
+[node name="GoldLabel" type="Label" parent="StatusPanel" unique_id=1875021324]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
 text = "Gold  0"
 
-[node name="LeaveButton" type="Button" parent="."]
+[node name="LeaveButton" type="Button" parent="." unique_id=1477876439]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -132,28 +135,29 @@ offset_left = -138.0
 offset_top = 26.0
 offset_right = -26.0
 offset_bottom = 72.0
+grow_horizontal = 0
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
 text = "Leave Tavern"
 
-[node name="GoLeftButton" type="Button" parent="."]
+[node name="GoLeftButton" type="Button" parent="." unique_id=2015612367]
 layout_mode = 1
-anchor_left = 0.0
+anchors_preset = 4
 anchor_top = 0.5
-anchor_right = 0.0
 anchor_bottom = 0.5
 offset_left = 30.0
 offset_top = -36.0
 offset_right = 102.0
 offset_bottom = 36.0
+tooltip_text = "Visit the barkeeper"
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
 theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
-tooltip_text = "Visit the barkeeper"
 text = "<"
 
-[node name="RightArrow" type="Button" parent="."]
+[node name="RightArrow" type="Button" parent="." unique_id=1741650384]
 layout_mode = 1
+anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
@@ -162,28 +166,31 @@ offset_left = -102.0
 offset_top = -36.0
 offset_right = -30.0
 offset_bottom = 36.0
+tooltip_text = "Visit the letter dealer"
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
 theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
-tooltip_text = "Visit the letter dealer"
 text = ">"
 
-[node name="TavernPageButton" type="Button" parent="."]
+[node name="TavernPageButton" type="Button" parent="." unique_id=2122480003]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -230.0
 offset_top = 478.0
 offset_right = 230.0
 offset_bottom = 584.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.6, 1)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 23
 theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
-text = "Visit the Tavern Page\nManage your letters, recruits, and provisions  [B]"
+text = "Visit the Tavern Page
+Manage your letters, recruits, and provisions  [B]"
 
-[node name="Hint" type="Label" parent="."]
+[node name="Hint" type="Label" parent="." unique_id=1802721590]
+visible = false
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -193,6 +200,8 @@ offset_left = 30.0
 offset_top = -42.0
 offset_right = -30.0
 offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.9, 0.72, 0.75)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 17

@@ -4,8 +4,8 @@
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="4_economy"]
-[ext_resource type="PackedScene" uid="uid://ce26pyfgafmr" path="res://scenes/tavern/character_portrait.tscn" id="6_portrait"]
 [ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/Music/BasicMusic.mp3" id="5_nnv1s"]
+[ext_resource type="PackedScene" uid="uid://ce26pyfgafmr" path="res://scenes/tavern/character_portrait.tscn" id="6_portrait"]
 
 [node name="Tavern" type="Control" unique_id=286457882]
 layout_mode = 3
@@ -62,6 +62,10 @@ theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 24
 text = "Gold: 0"
+
+[node name="Panel" type="Panel" parent="TopBar" unique_id=1730505752]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
 
 [node name="Layout" type="HBoxContainer" parent="." unique_id=1431850374]
 layout_mode = 1
@@ -172,6 +176,7 @@ size_flags_horizontal = 3
 text = "Hot Meal (15g): heal 10"
 
 [node name="RecruitLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox" unique_id=1556430934]
+visible = false
 layout_mode = 2
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
@@ -179,6 +184,7 @@ text = "Recruit Letters — new offers after each fight"
 
 [node name="RecruitGrid" type="GridContainer" parent="Layout/ShopPanel/ShopMargin/ShopBox" unique_id=694372223]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 6
@@ -187,16 +193,18 @@ columns = 6
 
 [node name="FeedbackLabel" type="Label" parent="Layout/ShopPanel/ShopMargin/ShopBox" unique_id=1534727062]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
 
-[node name="CharacterPortrait" parent="Layout" instance=ExtResource("6_portrait")]
+[node name="CharacterPortrait" parent="Layout" unique_id=1244764923 instance=ExtResource("6_portrait")]
 unique_name_in_owner = true
 layout_mode = 2
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1212310021]
+visible = false
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -212,7 +220,7 @@ grow_vertical = 0
 theme_override_font_sizes/font_size = 22
 text = "Set Out"
 
-[node name="CloseButton" type="Button" parent="."]
+[node name="CloseButton" type="Button" parent="." unique_id=810238793]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -221,8 +229,9 @@ offset_left = -64.0
 offset_top = 14.0
 offset_right = -18.0
 offset_bottom = 60.0
-theme_override_font_sizes/font_size = 30
+grow_horizontal = 0
 tooltip_text = "Return to the tavern"
+theme_override_font_sizes/font_size = 30
 text = "×"
 
 [node name="TavernMusic" type="AudioStreamPlayer" parent="." unique_id=602779641]
