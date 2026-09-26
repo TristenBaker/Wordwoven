@@ -5,7 +5,17 @@ extends Control
 
 signal died()
 
+const IDLE_SPEED_MULTIPLIER: float = 0.5
+
+static var _matte_mask: ImageTexture
+
+var enemy_id: String = ""
 var enemy_name: String = ""
+var _idle_atlas: AtlasTexture
+var _idle_frames: int = 1
+var _idle_fps: float = 5.0
+var _idle_elapsed: float = 0.0
+var _idle_width: float = 0.0
 var attack: int = 0
 var gold_reward: int = 0
 var tags: Array[String] = []
@@ -33,6 +43,7 @@ func _ready() -> void:
 
 ## Applies spawn data from the EnemyFactory to this display.
 func setup(spawn_data: Dictionary) -> void:
+	enemy_id = spawn_data["id"]
 	enemy_name = spawn_data["name"]
 	attack = spawn_data["attack"]
 	gold_reward = spawn_data["gold"]
@@ -42,7 +53,7 @@ func setup(spawn_data: Dictionary) -> void:
 	name_label.text = enemy_name
 	tags_label.text = " • ".join(tags)
 	_apply_texture(
-		spawn_data["texture"], spawn_data["frame_width"]
+		spawn_data["texture"], spawn_data["frame_width"], spawn_data
 	)
 	_refresh_health()
 
@@ -122,16 +133,43 @@ func _play_hit() -> void:
 	)
 
 
-# Sprite sheets from the monster pack hold idle frames in a strip;
-# a frame width crops the first frame, zero means a full image.
+# Tundra sheets use four idle poses with per-sheet vertical framing.
+# Legacy enemies retain their existing static image or first-frame crop.
 func _apply_texture(
-	texture_id: String, frame_width: int
+	texture_id: String, frame_width: int, data: Dictionary = {}
 ) -> void:
 	var texture: Texture2D = load(texture_id)
 	if texture == null:
 		push_error("Enemy: missing texture " + texture_id)
 		return
-	if frame_width > 0:
+	sprite.material = null
+	if data.get("black_matte", false):
+		var matte_material := ShaderMaterial.new()
+		matte_material.shader = preload("res://shaders/tundra_black_key.gdshader")
+		matte_material.set_shader_parameter("matte_mask", _get_matte_mask(texture))
+		sprite.material = matte_material
+	_idle_frames = int(data.get("idle_frames", 1))
+	_idle_fps = float(data.get("idle_fps", 5.0)) * IDLE_SPEED_MULTIPLIER
+	_idle_elapsed = 0.0
+	_idle_atlas = null
+	if _idle_frames > 1:
+		_idle_width = float(texture.get_width()) / _idle_frames
+		_idle_atlas = AtlasTexture.new()
+		_idle_atlas.atlas = texture
+		_idle_atlas.filter_clip = true
+		_idle_atlas.region = Rect2(0, data.get("idle_top", 0),
+			_idle_width, data.get("idle_height", texture.get_height()))
+		sprite.texture = _idle_atlas
+		var extent: float = data.get("display_size", 360.0)
+		sprite.scale = Vector2.ONE
+		sprite.size = Vector2(extent, extent)
+		if enemy_id == "frost_wyrm":
+			sprite.pivot_offset = sprite.size * 0.5
+			sprite.scale = Vector2(1.5, 1.5)
+		# Center below the existing name/health UI on the same ground line.
+		sprite.position = Vector2(size.x * 0.5 + 20.0 - extent * 0.5, 470.0 - extent)
+		_sprite_rest = sprite.position
+	elif frame_width > 0:
 		var atlas: AtlasTexture = AtlasTexture.new()
 		atlas.atlas = texture
 		atlas.region = Rect2(
@@ -140,6 +178,62 @@ func _apply_texture(
 		sprite.texture = atlas
 	else:
 		sprite.texture = texture
+
+
+# The supplied Behemoth has an opaque matte. Flood from the sheet border
+# once, so black eyes/body details remain opaque; never modify the source PNG.
+func _get_matte_mask(texture: Texture2D) -> ImageTexture:
+	if _matte_mask != null:
+		return _matte_mask
+	var source: Image = texture.get_image()
+	if source.is_compressed():
+		source.decompress()
+	var width: int = source.get_width()
+	var height: int = source.get_height()
+	var mask := PackedByteArray()
+	mask.resize(width * height)
+	mask.fill(255)
+	var queue := PackedInt32Array()
+	for x in width:
+		queue.append(x)
+		queue.append((height - 1) * width + x)
+	for y in height:
+		queue.append(y * width)
+		queue.append(y * width + width - 1)
+	var cursor: int = 0
+	while cursor < queue.size():
+		var index: int = queue[cursor]
+		cursor += 1
+		if mask[index] == 0:
+			continue
+		var x: int = index % width
+		var y: int = index / width
+		var pixel: Color = source.get_pixel(x, y)
+		if maxf(pixel.r, maxf(pixel.g, pixel.b)) > 0.10:
+			continue
+		mask[index] = 0
+		if x > 0:
+			queue.append(index - 1)
+		if x < width - 1:
+			queue.append(index + 1)
+		if y > 0:
+			queue.append(index - width)
+		if y < height - 1:
+			queue.append(index + width)
+	_matte_mask = ImageTexture.create_from_image(
+		Image.create_from_data(width, height, false, Image.FORMAT_R8, mask)
+	)
+	return _matte_mask
+
+
+func _process(delta: float) -> void:
+	if _idle_atlas == null or not is_alive():
+		return
+	_idle_elapsed = fmod(_idle_elapsed + delta, float(_idle_frames) / _idle_fps)
+	var frame: int = int(_idle_elapsed * _idle_fps) % _idle_frames
+	var region: Rect2 = _idle_atlas.region
+	region.position.x = frame * _idle_width
+	_idle_atlas.region = region
 
 
 func _refresh_health() -> void:

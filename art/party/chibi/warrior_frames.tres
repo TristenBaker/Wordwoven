@@ -2,6 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://hmtopi0xw04d" path="res://art/party/chibi/warrior.png" id="1_sheet"]
 
+[sub_resource type="AtlasTexture" id="Atlas_crouch"]
+atlas = ExtResource("1_sheet")
+region = Rect2(192, 0, 32, 32)
+
 [sub_resource type="AtlasTexture" id="Atlas_idle_0"]
 atlas = ExtResource("1_sheet")
 region = Rect2(0, 0, 32, 32)
@@ -9,6 +13,14 @@ region = Rect2(0, 0, 32, 32)
 [sub_resource type="AtlasTexture" id="Atlas_idle_1"]
 atlas = ExtResource("1_sheet")
 region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_leap"]
+atlas = ExtResource("1_sheet")
+region = Rect2(224, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_slash"]
+atlas = ExtResource("1_sheet")
+region = Rect2(256, 0, 32, 32)
 
 [sub_resource type="AtlasTexture" id="Atlas_walk_0"]
 atlas = ExtResource("1_sheet")
@@ -26,20 +38,16 @@ region = Rect2(128, 0, 32, 32)
 atlas = ExtResource("1_sheet")
 region = Rect2(160, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="Atlas_crouch"]
-atlas = ExtResource("1_sheet")
-region = Rect2(192, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="Atlas_leap"]
-atlas = ExtResource("1_sheet")
-region = Rect2(224, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="Atlas_slash"]
-atlas = ExtResource("1_sheet")
-region = Rect2(256, 0, 32, 32)
-
 [resource]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_crouch")
+}],
+"loop": 0,
+"name": &"crouch",
+"speed": 1.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("Atlas_idle_0")
@@ -47,9 +55,25 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("Atlas_idle_1")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_leap")
+}],
+"loop": 0,
+"name": &"leap",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_slash")
+}],
+"loop": 0,
+"name": &"slash",
+"speed": 1.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -64,31 +88,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("Atlas_walk_3")
 }],
-"loop": true,
+"loop": 1,
 "name": &"walk",
 "speed": 12.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("Atlas_crouch")
-}],
-"loop": false,
-"name": &"crouch",
-"speed": 1.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("Atlas_leap")
-}],
-"loop": false,
-"name": &"leap",
-"speed": 1.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("Atlas_slash")
-}],
-"loop": false,
-"name": &"slash",
-"speed": 1.0
 }]

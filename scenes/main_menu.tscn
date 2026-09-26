@@ -91,3 +91,4 @@ layout_mode = 1
 [node name="TitleMusic" type="AudioStreamPlayer" parent="." unique_id=1568006341]
 stream = ExtResource("6_rtw2f")
 autoplay = true
+parameters/looping = true

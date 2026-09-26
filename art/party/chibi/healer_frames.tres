@@ -2,6 +2,18 @@
 
 [ext_resource type="Texture2D" uid="uid://2efvka2ph2ne" path="res://art/party/chibi/healer.png" id="1_sheet"]
 
+[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(192, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(224, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(256, 0, 32, 32)
+
 [sub_resource type="AtlasTexture" id="Atlas_idle_0"]
 atlas = ExtResource("1_sheet")
 region = Rect2(0, 0, 32, 32)
@@ -26,20 +38,22 @@ region = Rect2(128, 0, 32, 32)
 atlas = ExtResource("1_sheet")
 region = Rect2(160, 0, 32, 32)
 
-[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
-atlas = ExtResource("1_sheet")
-region = Rect2(192, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
-atlas = ExtResource("1_sheet")
-region = Rect2(224, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
-atlas = ExtResource("1_sheet")
-region = Rect2(256, 0, 32, 32)
-
 [resource]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_2")
+}],
+"loop": 0,
+"name": &"cast",
+"speed": 14.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("Atlas_idle_0")
@@ -47,7 +61,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("Atlas_idle_1")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 3.0
 }, {
@@ -64,21 +78,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("Atlas_walk_3")
 }],
-"loop": true,
+"loop": 1,
 "name": &"walk",
 "speed": 12.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("Atlas_cast_0")
-}, {
-"duration": 1.0,
-"texture": SubResource("Atlas_cast_1")
-}, {
-"duration": 1.0,
-"texture": SubResource("Atlas_cast_2")
-}],
-"loop": false,
-"name": &"cast",
-"speed": 14.0
 }]

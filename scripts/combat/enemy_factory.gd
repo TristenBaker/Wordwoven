@@ -7,6 +7,9 @@ extends Node
 
 const ENEMIES_DATA_PATH: String = "res://data/enemies.json"
 const BOSS_TIER: int = 4
+const TUNDRA_REGULARS: Array[String] = [
+	"glacier_bear", "frozen_revenant", "winter_wraith", "tundra_behemoth",
+]
 
 # Enemy id -> definition dictionary, loaded once.
 var _definitions: Dictionary = {}
@@ -18,18 +21,30 @@ func _ready() -> void:
 
 ## Enemy ids whose tier suits the given encounter stage (1-based).
 func ids_for_stage(stage: int) -> Array[String]:
+	if RunState.selected_biome == "tundra":
+		if stage == 1:
+			return ["frostfang_wolf"]
+		if stage >= RunState.ENCOUNTERS_PER_RUN:
+			return ["frost_wyrm"]
+		var remaining: Array[String] = []
+		for id: String in TUNDRA_REGULARS:
+			if not RunState.defeated_enemy_ids.has(id):
+				remaining.append(id)
+		return remaining
 	var tier: int = _tier_for_stage(stage)
 	var ids: Array[String] = []
 	for id: String in _definitions:
-		if _definitions[id]["tier"] == tier:
+		if _definitions[id].get("biome", "") == "" and _definitions[id]["tier"] == tier:
 			ids.append(id)
 	return ids
 
 
 ## The boss enemy id (first definition at the boss tier).
 func boss_id() -> String:
+	if RunState.selected_biome == "tundra":
+		return "frost_wyrm"
 	for id: String in _definitions:
-		if _definitions[id]["tier"] == BOSS_TIER:
+		if _definitions[id].get("biome", "") == "" and _definitions[id]["tier"] == BOSS_TIER:
 			return id
 	return ""
 
@@ -52,15 +67,25 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 	# The debug overlay can force specific tags for testing.
 	if not DebugTools.forced_tags.is_empty():
 		tags = DebugTools.forced_tags.duplicate()
+	# Regular Tundra foes grow with their chosen slot, regardless of order.
+	var growth: int = 0
+	if definition.get("biome", "") == "tundra" and enemy_id in TUNDRA_REGULARS:
+		growth = clampi(RunState.encounter_index - 2, 0, 3)
 	return {
 		"id": enemy_id,
 		"name": definition["name"],
-		"health": int(definition["health"]),
-		"attack": int(definition["attack"]),
-		"gold": int(definition["gold"]),
+		"health": int(definition["health"]) + growth * 6,
+		"attack": int(definition["attack"]) + growth,
+		"gold": int(definition["gold"]) + growth * 6,
 		"texture": definition["texture"],
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,
+		"black_matte": bool(definition.get("black_matte", false)),
+		"idle_frames": int(definition.get("idle_frames", 1)),
+		"idle_fps": float(definition.get("idle_fps", 5.0)),
+		"idle_top": int(definition.get("idle_top", 0)),
+		"idle_height": int(definition.get("idle_height", 0)),
+		"display_size": float(definition.get("display_size", 0.0)),
 	}
 
 
