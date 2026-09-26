@@ -1,7 +1,6 @@
 extends Control
-## Lets the player choose the next encounter. Offers two enemies
-## suited to the current stage, or only the boss when the run has
-## reached its final encounter.
+## Offers every undefeated regular Tundra foe, or the final boss.
+## Other biomes retain their two stage-appropriate choices.
 
 const CHOICE_COUNT: int = 2
 
@@ -21,7 +20,8 @@ func _ready() -> void:
 		RunState.encounter_index
 	)
 	ids.shuffle()
-	for i: int in mini(CHOICE_COUNT, ids.size()):
+	var count: int = ids.size() if RunState.selected_biome == "tundra" else mini(CHOICE_COUNT, ids.size())
+	for i: int in count:
 		_add_choice(ids[i])
 
 

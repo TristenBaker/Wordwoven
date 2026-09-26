@@ -140,6 +140,10 @@ func _randomize_background() -> void:
 func _pick_spawn_data() -> Dictionary:
 	var enemy_id: String = RunState.next_enemy_id
 	RunState.next_enemy_id = ""
+	if RunState.selected_biome == "tundra":
+		var allowed: Array[String] = factory.ids_for_stage(RunState.encounter_index)
+		if not allowed.has(enemy_id):
+			enemy_id = allowed.pick_random()
 	if enemy_id.is_empty():
 		if RunState.is_boss_next():
 			enemy_id = factory.boss_id()
@@ -274,7 +278,7 @@ func _on_enemy_died() -> void:
 	# Newly selected Quills begin paying on the next victory.
 	earned += int(_relic_system.total_effect("victory_gold"))
 	RunState.add_gold(earned)
-	RunState.complete_encounter()
+	RunState.complete_encounter(enemy.enemy_id)
 	RunState.is_run_active = true
 	RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)

@@ -20,6 +20,7 @@ var relics: Array[String] = []
 
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
+var defeated_enemy_ids: Array[String] = []
 var relic_rewards: Dictionary[int, String] = {}
 
 # Transient post-fight presentation data. These values carry a completed
@@ -39,7 +40,7 @@ var encounter_index: int = 1
 # combat scene should roll one for the current stage.
 var next_enemy_id: String = ""
 
-# Menu selection only; gameplay does not consume this yet.
+# Biome used by encounter selection and combat backgrounds.
 var selected_biome: String = ""
 
 # History entries for the storyteller:
@@ -56,6 +57,7 @@ func start_new_run() -> void:
 	gold = STARTING_GOLD
 	relics = []
 	completed_encounters = []
+	defeated_enemy_ids = []
 	relic_rewards = {}
 	pending_victory_enemy = ""
 	pending_victory_gold = 0
@@ -87,7 +89,9 @@ func advance_encounter() -> void:
 
 
 ## Records a victory once before its relic can be claimed.
-func complete_encounter() -> void:
+func complete_encounter(enemy_id: String = "") -> void:
+	if not enemy_id.is_empty() and not defeated_enemy_ids.has(enemy_id):
+		defeated_enemy_ids.append(enemy_id)
 	if not completed_encounters.has(encounter_index):
 		completed_encounters.append(encounter_index)
 

@@ -64,5 +64,138 @@
 		"tag_pool": ["fiery", "huge", "ancient", "greedy"],
 		"tag_count": 2,
 		"tier": 4
+	},
+	"frostfang_wolf": {
+		"name": "Frostfang Wolf",
+		"health": 20,
+		"attack": 4,
+		"gold": 28,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Wolf/FrostFang Wolf Idle.png",
+		"frame_width": 0,
+		"idle_frames": 4,
+		"idle_fps": 5.0,
+		"idle_top": 220,
+		"idle_height": 380,
+		"display_size": 300,
+		"tag_pool": [
+			"cold",
+			"quick",
+			"hungry",
+			"wild"
+		],
+		"tag_count": 1,
+		"tier": 1,
+		"biome": "tundra"
+	},
+	"glacier_bear": {
+		"name": "Glacier Bear",
+		"health": 29,
+		"attack": 5,
+		"gold": 38,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Bear/Glacier Bear Idle.png",
+		"frame_width": 0,
+		"idle_frames": 4,
+		"idle_fps": 5.0,
+		"idle_top": 240,
+		"idle_height": 410,
+		"display_size": 330,
+		"tag_pool": [
+			"cold",
+			"strong",
+			"wild",
+			"heavy"
+		],
+		"tag_count": 2,
+		"tier": 1,
+		"biome": "tundra"
+	},
+	"frozen_revenant": {
+		"name": "Frozen Revenant",
+		"health": 27,
+		"attack": 6,
+		"gold": 38,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Revenant/Frozen Revenant Idle.png",
+		"frame_width": 0,
+		"idle_frames": 4,
+		"idle_fps": 5.0,
+		"idle_top": 120,
+		"idle_height": 590,
+		"display_size": 280,
+		"tag_pool": [
+			"cold",
+			"dead",
+			"brittle",
+			"angry"
+		],
+		"tag_count": 2,
+		"tier": 1,
+		"biome": "tundra"
+	},
+	"winter_wraith": {
+		"name": "Winter Wraith",
+		"health": 26,
+		"attack": 6,
+		"gold": 38,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Wraith/Winter Wraith Idle.png",
+		"frame_width": 0,
+		"idle_frames": 4,
+		"idle_fps": 5.0,
+		"idle_top": 130,
+		"idle_height": 590,
+		"display_size": 300,
+		"tag_pool": [
+			"cold",
+			"ghostly",
+			"flying",
+			"dark"
+		],
+		"tag_count": 2,
+		"tier": 1,
+		"biome": "tundra"
+	},
+	"tundra_behemoth": {
+		"name": "Tundra Behemoth",
+		"black_matte": true,
+		"health": 31,
+		"attack": 5,
+		"gold": 38,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Behemoth/Tundra Behemoth Idle.png",
+		"frame_width": 0,
+		"idle_frames": 4,
+		"idle_fps": 5.0,
+		"idle_top": 150,
+		"idle_height": 470,
+		"display_size": 350,
+		"tag_pool": [
+			"cold",
+			"huge",
+			"heavy",
+			"strong"
+		],
+		"tag_count": 2,
+		"tier": 1,
+		"biome": "tundra"
+	},
+	"frost_wyrm": {
+		"name": "Frost Wyrm",
+		"health": 80,
+		"attack": 12,
+		"gold": 120,
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Wyrm/Frost Wyrm Idle.png",
+		"frame_width": 0,
+		"idle_frames": 8,
+		"idle_fps": 5.0,
+		"idle_top": 140,
+		"idle_height": 470,
+		"display_size": 380,
+		"tag_pool": [
+			"cold",
+			"ancient",
+			"huge",
+			"flying"
+		],
+		"tag_count": 2,
+		"tier": 4,
+		"biome": "tundra"
 	}
 }
