@@ -40,6 +40,10 @@ var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
 var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
+var cold := preload("res://scripts/combat/tundra_cold.gd").new()
+var heat_meter: PanelContainer
+var _last_allowed_text: String = ""
+
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -99,6 +103,10 @@ func _ready() -> void:
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
+	heat_meter = PanelContainer.new()
+	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
+	$Layout/InputArea.add_child(heat_meter)
+	$Layout/InputArea.move_child(heat_meter, 1)
 	_start_encounter()
 
 
@@ -115,6 +123,13 @@ func _start_encounter() -> void:
 	_refresh_prompt()
 	validator.start_encounter()
 	deck_manager.start_encounter()
+	cold.reset(RunState.selected_biome == "tundra")
+	heat_meter.visible = cold.enabled
+	if cold.enabled:
+		# Reserve vertical room for the meter without crowding prompt/feedback into the hand.
+		$Layout/InputArea.offset_top -= 48.0
+		$Layout/InputArea.offset_bottom -= 48.0
+	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
 	enemy.setup(spawn_data)
 	EventBus.emit_encounter_started(spawn_data)
@@ -161,6 +176,7 @@ func _enter_player_input() -> void:
 	_state = State.PLAYER_INPUT
 	word_input.editable = true
 	submit_button.disabled = false
+	_refresh_cold()
 	_focus_word_input()
 
 
@@ -182,6 +198,9 @@ func _on_submit() -> void:
 		return
 	var word: String = word_input.text.strip_edges().to_lower()
 	var verdict: Dictionary = validator.validate(word, required_pos)
+	var blocked: String = cold.blocked_letter(word, deck_manager.hand())
+	if not blocked.is_empty():
+		verdict = {"valid": false, "reason": "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]}
 	if not verdict["valid"]:
 		feedback_label.text = verdict["reason"]
 		EventBus.emit_word_rejected(word, verdict["reason"])
@@ -192,6 +211,8 @@ func _on_submit() -> void:
 		_enter_player_input()
 		call_deferred("_focus_word_input")
 		return
+	cold.accept_word()
+	_refresh_cold()
 	_state = State.RESOLVING
 	word_input.editable = false
 	submit_button.disabled = true
@@ -265,6 +286,10 @@ func _enemy_turn() -> void:
 		return
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
+		var newly_frozen: LetterStats = cold.freeze_after_turn(deck_manager.hand())
+		_refresh_cold(newly_frozen)
+		if newly_frozen != null:
+			_log("The cold freezes %s. Thaw it for %d Heat." % [newly_frozen.letter.to_upper(), cold.THAW_COST])
 		# Defer once so a just-finished animation or button event cannot claim
 		# focus from the hidden LineEdit after the next player turn opens.
 		call_deferred("_enter_player_input")
@@ -331,6 +356,14 @@ func _refresh_prompt() -> void:
 
 
 func _on_text_changed(new_text: String) -> void:
+	var blocked: String = cold.blocked_letter(new_text, deck_manager.hand())
+	if not blocked.is_empty():
+		feedback_label.text = "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]
+		var caret: int = word_input.caret_column
+		word_input.text = _last_allowed_text
+		word_input.caret_column = mini(caret, _last_allowed_text.length())
+		return
+	_last_allowed_text = new_text
 	var typing: bool = not new_text.strip_edges().is_empty()
 	var split: Dictionary = deck_manager.split_word(
 		new_text.strip_edges().to_lower()
@@ -449,6 +482,34 @@ func _rebuild_hand_tiles() -> void:
 		var tile: LetterTile = LETTER_TILE_SCENE.instantiate()
 		hand_box.add_child(tile)
 		tile.setup(stats)
+		tile.activated.connect(_on_hand_tile_activated)
+	_refresh_cold()
+
+
+func _refresh_cold(newly_frozen: LetterStats = null) -> void:
+	deck_manager.frozen_letters = cold.frozen
+	if heat_meter == null:
+		return
+	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty())
+	for tile: LetterTile in hand_box.get_children():
+		tile.set_frozen(cold.frozen.has(tile.stats), cold.heat >= cold.THAW_COST,
+			tile.stats == newly_frozen)
+
+
+func _on_hand_tile_activated(tile: LetterTile) -> void:
+	if _state != State.PLAYER_INPUT or get_tree().paused:
+		return
+	if cold.frozen.has(tile.stats):
+		if cold.thaw(tile.stats):
+			tile.set_frozen(false, false, true)
+			_refresh_cold()
+			feedback_label.text = ""
+			_on_text_changed(word_input.text)
+		else:
+			tile.deny_thaw()
+			heat_meter.pulse(true)
+			feedback_label.text = "Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD]
+	_focus_word_input()
 
 
 func _refresh_status() -> void:
