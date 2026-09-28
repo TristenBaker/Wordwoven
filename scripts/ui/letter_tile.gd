@@ -36,7 +36,7 @@ func set_used(used: bool, typing: bool) -> void:
 
 func _tile_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = tile_theme.fill_for(stats.letter_class)
+	style.bg_color = tile_theme.fill_for(stats.element)
 	style.border_color = tile_theme.border_for(stats.level)
 	style.set_border_width_all(6)
 	style.set_corner_radius_all(10)

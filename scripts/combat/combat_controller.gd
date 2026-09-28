@@ -37,6 +37,8 @@ var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
 var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
+var _retaliation_reduction: int = 0
+var _guard: int = 0
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -200,17 +202,15 @@ func _resolve_word(word: String) -> void:
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
 	var result: Dictionary = calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos
+		word, drawn, undrawn, enemy.tags, required_pos,
+		enemy.affinities, true
 	)
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
 		required_pos
 	)
-	if result["gold_bonus"] > 0:
-		RunState.add_gold(result["gold_bonus"])
-	if result["heal_amount"] > 0:
-		RunState.heal_player(result["heal_amount"])
+	_apply_elemental_effects(result)
 	EventBus.emit_word_resolved(result)
 	_log(_describe_result(result))
 	# Current-word numbers are frozen before the used letters grow.
@@ -235,10 +235,29 @@ func _enemy_turn() -> void:
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state != State.ENEMY_TURN:
 		return
+	var burn_damage: float = enemy.consume_burn()
+	if burn_damage > 0.0:
+		_log("Burn scorches the %s for %.0f damage." % [
+			enemy.enemy_name, burn_damage
+		])
+	if not enemy.is_alive():
+		return
+	var poison_damage: float = enemy.consume_poison()
+	if poison_damage > 0.0:
+		_log("Poison withers the %s for %.0f damage." % [
+			enemy.enemy_name, poison_damage
+		])
+	if not enemy.is_alive():
+		return
+	var retaliation: int = maxi(
+		enemy.attack - _retaliation_reduction - _guard, 0
+	)
 	_log("The %s retaliates for %d damage!" % [
-		enemy.enemy_name, enemy.attack
+		enemy.enemy_name, retaliation
 	])
-	RunState.damage_player(enemy.attack)
+	_retaliation_reduction = 0
+	_guard = 0
+	RunState.damage_player(retaliation)
 	_refresh_status()
 	if RunState.player_health <= 0:
 		_on_player_died()
@@ -321,14 +340,14 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		_set_health_previews(0, 0)
 		return
 	var result := calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos
+		word, drawn, undrawn, enemy.tags, required_pos,
+		enemy.affinities
 	)
 	_set_output_counters(
-		int(round(float(result["damage"]))),
-		int(result["heal_amount"]), int(result["gold_bonus"])
+		int(round(float(result["damage"]))), int(result["water_heal"]), 0
 	)
 	_set_health_previews(
-		int(round(float(result["damage"]))), int(result["heal_amount"])
+		int(round(float(result["damage"]))), int(result["water_heal"])
 	)
 
 
@@ -450,11 +469,39 @@ func _describe_result(result: Dictionary) -> String:
 		lines.append("  counter vs %s: %.2f (%s)" % [
 			counter["tag"], counter["score"], counter["strategy"],
 		])
-	if result["heal_amount"] > 0:
-		lines.append("  Healers restore %d HP." % result["heal_amount"])
-	if result["gold_bonus"] > 0:
-		lines.append("  Rogues collect %d gold." % result["gold_bonus"])
+	var elemental_damage: Dictionary = result["elemental_damage"]
+	var elements: Array[String] = []
+	for element_name: String in elemental_damage:
+		var amount: float = elemental_damage[element_name]
+		if amount > 0.0:
+			elements.append("%s %.0f" % [element_name, amount])
+	if not elements.is_empty():
+		lines.append("  elements: " + ", ".join(elements))
+	if result["lightning_procs"] > 0:
+		lines.append("  lightning echoes %d time(s)." % result["lightning_procs"])
+	if result["water_heal"] > 0:
+		lines.append("  water restores %d health." % result["water_heal"])
+	if result["ice_slow"] > 0:
+		lines.append("  ice weakens retaliation by %d." % result["ice_slow"])
+	if result["earth_guard"] > 0:
+		lines.append("  earth grants %d Guard." % result["earth_guard"])
 	return "\n".join(lines)
+
+
+func _apply_elemental_effects(result: Dictionary) -> void:
+	var relic_system: RelicSystem = RelicSystem.new()
+	var fire_damage: float = result["elemental_damage"]["fire"]
+	var burn_ratio: float = relic_system.total_effect("fire_burn_ratio")
+	if fire_damage > 0.0 and burn_ratio > 0.0:
+		enemy.add_burn(fire_damage * burn_ratio)
+	var nature_poison: float = result["nature_poison"]
+	if nature_poison > 0.0:
+		enemy.add_poison(nature_poison)
+	var water_heal: int = result["water_heal"]
+	if water_heal > 0:
+		RunState.heal_player(water_heal)
+	_retaliation_reduction = result["ice_slow"]
+	_guard = result["earth_guard"]
 
 
 func _log(message: String) -> void:

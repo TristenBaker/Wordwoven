@@ -13,7 +13,7 @@ Code style: [docs/gdscript-style.md](docs/gdscript-style.md).
 Fight → draw letters → write a noun, base-form verb, adjective,
 or adverb as prompted → counter the enemy's tags for bonus damage
 → survive retaliation → read your victory story and choose a free
-relic → recruit or dismiss letters and hear the bard at the tavern
+power → recruit or dismiss letters and hear the bard at the tavern
 → choose the next encounter → defeat the boss.
 
 ## Gameplay rules
@@ -22,14 +22,15 @@ relic → recruit or dismiss letters and hear the bard at the tavern
   words, with a different starting position each encounter.
   Rejected words consume no turn. Countering is optional: any
   valid word for the prompt still deals damage.
-- Vowels **AEIOU** are Healers (heal HP equal to level), common
-  consonants **BCDFGHLMNPRST** are Warriors (add twice their level
-  in damage power), and uncommon consonants **JKQVWXYZ** are Rogues
-  (earn twice their level in gold).
+- Each letter item is attuned to **Fire, Lightning, Water, Ice, Nature,**
+  or **Earth**. A word deals a mixture of the drawn letters' elemental
+  damage; enemies show elemental weaknesses and resistances. The reward
+  choice after each victory includes stacking elemental powers, such as
+  Fire Burn and recursive Lightning echoes.
 - Start with 18 level-1 vowels/common consonants, 50 HP, and 0g.
   Each drawn letter used in an accepted word gains one level after
   its effects resolve. Duplicate copies level independently.
-  Undrawn letters contribute 20% base power and have no class or
+  Undrawn letters contribute 20% base power and have no elemental or
   leveling effects.
 - The tavern offers six distinct recruits, including at least one
   uncommon consonant, once per completed encounter. Offers persist
@@ -38,13 +39,11 @@ relic → recruit or dismiss letters and hear the bard at the tavern
   least ten letters remain. A meal costs 15g and heals 10 HP.
 - Victory gold is 24/32/40/48/56/120g for rat/goblin/myconid/
   skeleton/flying eye/dragon. Each victory, including the boss,
-  requires one free relic choice before continuing. Copies stack:
-  Quill of Fortune grants +5g on future victories; Iron Bookmark
-  grants +10 maximum HP and heals 10; Tome of Echoes adds 0.12 to
-  the semantic damage multiplier per copy. Traveler's Satchel grants
-  +3g; Lantern of Insight upgrades counter
-  synonyms to direct-counter strength; and Red Thread draws one extra
-  letter into every combat hand. Additional copies stack where applicable.
+  offers three color-coded powers: Common (white), Uncommon (green),
+  Rare (blue), and Legendary (purple). Powers stack. Common powers
+  scale elemental damage; Uncommon powers unlock Burn, Lightning
+  echoes, Water healing, Ice slow, Nature poison, and Earth guard;
+  Rare powers amplify those builds; Legendary powers reshape a run.
 - Counters such as **water** against **fiery** score 1.0; their
   synonyms score 0.9. Matching-tag and unrelated words score zero.
   The semantic multiplier is `0.5 + 1.5 * counter_score`, plus
@@ -71,7 +70,7 @@ in `user://`; later launches load in well under a second.
 - `scripts/combat/` — damage calculator, enemy factory, enemy,
   combat controller (turn state machine).
 - `scripts/tavern/` — recruitment, dismissal, meals, tavern UI.
-- `data/` — enemy, relic, and thematic counter definitions (JSON).
+- `data/` — enemy affinities, quality-based powers, and thematic counter definitions (JSON).
 - `tools/` — headless test scenes (see below).
 
 ## Tests
@@ -88,7 +87,7 @@ godot --headless --path . res://tools/tavern_sim_test.tscn
 Import first after pulling new scripts to refresh Godot's class
 and resource caches. The suites cover generic WordNet similarity,
 all enemy-tag counters, POS validation, fixed-hand combat,
-leveling, stories, recruitment, paid dismissal, and relic rewards.
+leveling, stories, recruitment, paid dismissal, and power rewards.
 
 ## Debug tools
 

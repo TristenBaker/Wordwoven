@@ -126,7 +126,7 @@ func _draw_tile(
 	draw_style_box(
 		_tile_style(tile_theme.shadow_color, Color("090604"), 2), shadow_rect
 	)
-	var fill := tile_theme.fill_for(stats.letter_class) \
+	var fill := tile_theme.fill_for(stats.element) \
 			if is_drawn else Color("d9c08a")
 	var border := tile_theme.border_for(stats.level) \
 			if is_drawn else Color("8a6b37")

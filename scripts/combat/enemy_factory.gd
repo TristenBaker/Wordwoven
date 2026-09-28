@@ -61,6 +61,7 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 		"texture": definition["texture"],
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,
+		"affinities": definition.get("affinities", {}),
 	}
 
 

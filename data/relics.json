@@ -1,32 +1,22 @@
 {
-	"quill_of_fortune": {
-		"name": "Quill of Fortune",
-		"description": "Earn 5 extra gold after every future victory.",
-		"effect": "victory_gold", "amount": 5
-	},
-	"tome_of_echoes": {
-		"name": "Tome of Echoes",
-		"description": "Your words gain +0.12 damage multiplier per copy.",
-		"effect": "damage_multiplier", "amount": 0.12
-	},
-	"iron_bookmark": {
-		"name": "Iron Bookmark",
-		"description": "Sturdy binding. +10 maximum health and heal 10.",
-		"effect": "max_health", "amount": 10
-	},
-	"lantern_of_insight": {
-		"name": "Lantern of Insight",
-		"description": "Counter synonyms become as strong as direct counters.",
-		"effect": "counter_bonus", "amount": 0.1
-	},
-	"traveler_satchel": {
-		"name": "Traveler's Satchel",
-		"description": "+3 gold per future victory.",
-		"effect": "victory_gold", "amount": 3
-	},
-	"red_thread": {
-		"name": "Red Thread",
-		"description": "Draw one extra letter into every combat hand.",
-		"effect": "hand_size", "amount": 1
-	}
+  "coal_script": {"name": "Coal Script", "description": "Fire damage gains 12% per copy.", "quality": "common", "effect": "fire_damage_multiplier", "amount": 0.12},
+  "static_ink": {"name": "Static Ink", "description": "Lightning damage gains 12% per copy.", "quality": "common", "effect": "lightning_damage_multiplier", "amount": 0.12},
+  "tide_verse": {"name": "Tide Verse", "description": "Water damage gains 12% per copy.", "quality": "common", "effect": "water_damage_multiplier", "amount": 0.12},
+  "rime_mark": {"name": "Rime Mark", "description": "Ice damage gains 12% per copy.", "quality": "common", "effect": "ice_damage_multiplier", "amount": 0.12},
+  "seeded_line": {"name": "Seeded Line", "description": "Nature damage gains 12% per copy.", "quality": "common", "effect": "nature_damage_multiplier", "amount": 0.12},
+  "stone_rhyme": {"name": "Stone Rhyme", "description": "Earth damage gains 12% per copy.", "quality": "common", "effect": "earth_damage_multiplier", "amount": 0.12},
+  "ember_pact": {"name": "Ember Pact", "description": "Fire damage applies Burn equal to 25% of its damage per copy.", "quality": "uncommon", "effect": "fire_burn_ratio", "amount": 0.25},
+  "storm_chorus": {"name": "Storm Chorus", "description": "Lightning has an 18% chance to echo; each echo can echo again.", "quality": "uncommon", "effect": "lightning_echo_chance", "amount": 0.18},
+  "tidal_mend": {"name": "Tidal Mend", "description": "Heal for 20% of Water damage per copy.", "quality": "uncommon", "effect": "water_heal_ratio", "amount": 0.20},
+  "winter_grip": {"name": "Winter Grip", "description": "Ice damage reduces the next retaliation by 1 per copy.", "quality": "uncommon", "effect": "ice_retaliation_reduction", "amount": 1},
+  "briar_script": {"name": "Briar Script", "description": "Nature damage applies Poison equal to 20% of its damage per copy.", "quality": "uncommon", "effect": "nature_poison_ratio", "amount": 0.20},
+  "earthward_couplet": {"name": "Earthward Couplet", "description": "Earth damage grants 3 Guard per copy against the next retaliation.", "quality": "uncommon", "effect": "earth_guard", "amount": 3},
+  "furnace_heart": {"name": "Furnace Heart", "description": "Fire damage gains 35% per copy.", "quality": "rare", "effect": "fire_damage_multiplier", "amount": 0.35},
+  "charged_verse": {"name": "Charged Verse", "description": "Lightning echoes deal 50% of original Lightning damage per copy.", "quality": "rare", "effect": "lightning_echo_damage", "amount": 0.50},
+  "maelstrom_meter": {"name": "Maelstrom Meter", "description": "Water damage gains 35% per copy.", "quality": "rare", "effect": "water_damage_multiplier", "amount": 0.35},
+  "absolute_zero": {"name": "Absolute Zero", "description": "Ice damage gains 35% per copy.", "quality": "rare", "effect": "ice_damage_multiplier", "amount": 0.35},
+  "thorn_crown": {"name": "Thorn Crown", "description": "Nature damage gains 35% per copy.", "quality": "rare", "effect": "nature_damage_multiplier", "amount": 0.35},
+  "faultline_folio": {"name": "Faultline Folio", "description": "Earth damage gains 35% per copy.", "quality": "rare", "effect": "earth_damage_multiplier", "amount": 0.35},
+  "prismatic_refrain": {"name": "Prismatic Refrain", "description": "All elemental damage gains 15% per copy.", "quality": "legendary", "effect": "all_element_damage_multiplier", "amount": 0.15},
+  "red_thread": {"name": "Red Thread", "description": "Draw one extra letter into every combat hand per copy.", "quality": "legendary", "effect": "hand_size", "amount": 1}
 }

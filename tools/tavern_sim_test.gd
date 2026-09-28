@@ -32,8 +32,8 @@ func _run_test() -> void:
 	var economy: EconomySystem = tavern.economy
 	var first: LetterStats = RunState.deck[0]
 	_expect(RunState.deck.size() == 18, "starter party has 18 letters")
-	_expect(first.letter_class == LetterStats.LetterClass.HEALER,
-			"starter vowel is a healer")
+	_expect(first.element == LetterStats.Element.WATER,
+			"starter vowel is Water")
 	RunState.add_gold(500)
 	var offers: Array[Dictionary] = economy.recruitment_offers()
 	_expect(offers.size() == 6, "six recruit offers")

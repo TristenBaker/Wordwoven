@@ -109,7 +109,7 @@ func _rebuild_recruit_buttons() -> void:
 		button.custom_minimum_size = Vector2(0, 52)
 		button.text = "%s — %s\n%s" % [
 			stats.letter.to_upper(),
-			stats.class_name_text(),
+			stats.element_name_text(),
 			"Recruited" if offer["purchased"] else "%dg" % price,
 		]
 		button.disabled = offer["purchased"] or RunState.gold < price
@@ -143,11 +143,10 @@ func _clear_grid(grid: GridContainer) -> void:
 
 
 func _grid_for(stats: LetterStats) -> GridContainer:
-	match stats.letter_class:
-		LetterStats.LetterClass.HEALER:
-			return vowel_grid
-		LetterStats.LetterClass.WARRIOR:
-			return common_grid
+	if LetterStats.VOWELS.contains(stats.letter):
+		return vowel_grid
+	if LetterStats.COMMON_CONSONANTS.contains(stats.letter):
+		return common_grid
 	return uncommon_grid
 
 

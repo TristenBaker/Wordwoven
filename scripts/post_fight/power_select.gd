@@ -1,7 +1,7 @@
 extends Control
 ## Second step after a fight: choose one stacking roguelite power.
 
-var relic_system := RelicSystem.new()
+var relic_system: RelicSystem = RelicSystem.new()
 var choice_buttons: Array[Button] = []
 
 @onready var status_label: Label = $CenterBox/PowerPanel/Content/Status
@@ -27,12 +27,9 @@ func _ready() -> void:
 func _ensure_choices() -> void:
 	if not RunState.pending_relic_choices.is_empty():
 		return
-	var ids: Array[String] = relic_system.relic_ids()
-	ids.shuffle()
-	for relic_id: String in ids:
-		if RunState.pending_relic_choices.size() >= choice_buttons.size():
-			break
-		RunState.pending_relic_choices.append(relic_id)
+	RunState.pending_relic_choices = relic_system.roll_choices(
+		choice_buttons.size()
+	)
 
 
 func _select_choice(index: int) -> void:
@@ -53,16 +50,36 @@ func _refresh() -> void:
 			continue
 		var relic_id := RunState.pending_relic_choices[index]
 		var info := relic_system.relic_info(relic_id)
-		button.text = "%s\n%s\nOwned: %d" % [
+		button.text = "%s  •  %s\n%s\nOwned: %d" % [
+			relic_system.quality_name(relic_id),
 			info.get("name", relic_id), info.get("description", ""),
 			RunState.relics.count(relic_id),
 		]
+		button.add_theme_color_override(
+			"font_color", relic_system.quality_color(relic_id)
+		)
+		button.add_theme_stylebox_override(
+			"normal", _quality_style(relic_system.quality_color(relic_id))
+		)
 		button.disabled = not claimed.is_empty()
 	if claimed.is_empty():
-		status_label.text = "Choose one power. Copies stack."
+		status_label.text = "Choose one power. Quality affects its rarity; copies stack."
 		continue_button.disabled = true
 	else:
 		status_label.text = "Power gained: %s" % relic_system.relic_info(claimed).get("name", claimed)
 		continue_button.disabled = false
 func _open_loot() -> void:
 	get_tree().change_scene_to_file(ScenePaths.LOOT_DROP)
+
+
+func _quality_style(color: Color) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.07, 0.18, 0.98)
+	style.border_color = color
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 12.0
+	style.content_margin_top = 10.0
+	style.content_margin_right = 12.0
+	style.content_margin_bottom = 10.0
+	return style

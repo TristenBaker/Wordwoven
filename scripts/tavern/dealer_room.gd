@@ -60,8 +60,8 @@ func _rebuild_offers() -> void:
 	var offers: Array[Dictionary] = economy.recruitment_offers()
 	for index: int in range(offers.size()):
 		var offer: Dictionary = offers[index]
-		var stats := LetterStats.create(offer["letter"])
-		var price := economy.recruit_price(stats.letter)
+		var stats: LetterStats = LetterStats.create(offer["letter"])
+		var price: int = economy.recruit_price(stats.letter)
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(142, 70)
 		button.add_theme_color_override("font_color", Color(0.2, 0.09, 0.03, 1))
@@ -76,7 +76,7 @@ func _rebuild_offers() -> void:
 			Color(0.34, 0.25, 0.16, 0.9), Color(0.2, 0.12, 0.07, 1)
 		))
 		button.text = "%s\n%s · %dg" % [
-			stats.letter.to_upper(), stats.class_name_text(), price
+			stats.letter.to_upper(), stats.element_name_text(), price
 		]
 		button.disabled = offer["purchased"] or RunState.gold < price
 		if offer["purchased"]:

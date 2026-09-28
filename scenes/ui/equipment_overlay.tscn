@@ -37,13 +37,29 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -282.0
+offset_top = -72.0
+offset_right = -156.0
+offset_bottom = -22.0
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 21
+text = "Letters"
+
+[node name="PowersButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = -150.0
 offset_top = -72.0
 offset_right = -24.0
 offset_bottom = -22.0
+theme_override_colors/font_color = Color(0.78, 0.56, 1, 1)
 theme_override_fonts/font = ExtResource("2_body")
 theme_override_font_sizes/font_size = 21
-text = "Equip"
+text = "Powers (0)"
 
 [node name="EquipmentPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -53,9 +69,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -550.0
-offset_top = -315.0
+offset_top = -350.0
 offset_right = 550.0
-offset_bottom = 315.0
+offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -73,13 +89,30 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.84, 0.48, 1)
 theme_override_fonts/font = ExtResource("2_body")
 theme_override_font_sizes/font_size = 30
-text = "Letter Equipment"
+text = "Equipment"
 
 [node name="CloseButton" type="Button" parent="EquipmentPanel/Content/TitleRow"]
 custom_minimum_size = Vector2(46, 38)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "×"
+
+[node name="LettersTab" type="Button" parent="EquipmentPanel/Content/TitleRow"]
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+button_pressed = true
+text = "Letters"
+
+[node name="PowersTab" type="Button" parent="EquipmentPanel/Content/TitleRow"]
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+text = "Powers"
 
 [node name="ModeLabel" type="Label" parent="EquipmentPanel/Content"]
 layout_mode = 2
@@ -95,8 +128,9 @@ theme_override_font_sizes/font_size = 20
 text = "Equipped letter slots — click an equipped item to unequip it"
 
 [node name="SlotsScroll" type="ScrollContainer" parent="EquipmentPanel/Content"]
-custom_minimum_size = Vector2(0, 155)
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
+vertical_scroll_mode = 0
 horizontal_scroll_mode = 0
 
 [node name="SlotsGrid" type="GridContainer" parent="EquipmentPanel/Content/SlotsScroll"]
@@ -123,3 +157,26 @@ layout_mode = 2
 columns = 6
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
+
+[node name="InventoryEmptyLabel" type="Label" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.83, 0.66, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PowersScroll" type="ScrollContainer" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 480)
+layout_mode = 2
+vertical_scroll_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="PowersGrid" type="GridContainer" parent="EquipmentPanel/Content/PowersScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 1
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12

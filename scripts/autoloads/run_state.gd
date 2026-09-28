@@ -147,7 +147,7 @@ func add_letter_item(item: LetterStats) -> void:
 func equip_letter_item(item: LetterStats) -> bool:
 	if item == null or not letter_inventory.has(item):
 		return false
-	var slot := item.letter.to_lower()
+	var slot: String = item.letter.to_lower()
 	var previous: LetterStats = equipped_letters.get(slot, null)
 	letter_inventory.erase(item)
 	if previous != null:
@@ -158,7 +158,7 @@ func equip_letter_item(item: LetterStats) -> bool:
 
 
 func unequip_letter(slot: String) -> bool:
-	var normalized := slot.to_lower()
+	var normalized: String = slot.to_lower()
 	var item: LetterStats = equipped_letters.get(normalized, null)
 	if item == null:
 		return false
@@ -173,15 +173,18 @@ func rolled_letter_drop() -> LetterStats:
 	for letter: String in LetterStats.BASE_POWER:
 		letters.append(letter)
 	var letter: String = letters.pick_random()
-	var classes: Array[int] = [
-		LetterStats.LetterClass.HEALER,
-		LetterStats.LetterClass.WARRIOR,
-		LetterStats.LetterClass.ROGUE,
+	var elements: Array[int] = [
+		LetterStats.Element.FIRE,
+		LetterStats.Element.LIGHTNING,
+		LetterStats.Element.WATER,
+		LetterStats.Element.ICE,
+		LetterStats.Element.NATURE,
+		LetterStats.Element.EARTH,
 	]
-	var item_class: int = classes.pick_random()
-	var maximum_level := mini(5, 1 + encounter_index)
-	var item_level := randi_range(1, maximum_level)
-	return LetterStats.create_item(letter, item_class, item_level)
+	var item_element: int = elements.pick_random()
+	var maximum_level: int = mini(5, 1 + encounter_index)
+	var item_level: int = randi_range(1, maximum_level)
+	return LetterStats.create_item(letter, item_element, item_level)
 
 
 func _setup_itemized_starters() -> void:
@@ -191,13 +194,18 @@ func _setup_itemized_starters() -> void:
 	letters.shuffle()
 	for index: int in range(10):
 		var letter: String = letters[index]
-		var classes: Array[int] = [
-			LetterStats.LetterClass.HEALER,
-			LetterStats.LetterClass.WARRIOR,
-			LetterStats.LetterClass.ROGUE,
+		var elements: Array[int] = [
+			LetterStats.Element.FIRE,
+			LetterStats.Element.LIGHTNING,
+			LetterStats.Element.WATER,
+			LetterStats.Element.ICE,
+			LetterStats.Element.NATURE,
+			LetterStats.Element.EARTH,
 		]
-		var item_class: int = classes.pick_random()
-		equipped_letters[letter] = LetterStats.create_item(letter, item_class, 1)
+		var item_element: int = elements.pick_random()
+		equipped_letters[letter] = LetterStats.create_item(
+			letter, item_element, 1
+		)
 
 
 func add_gold(amount: int) -> void:
