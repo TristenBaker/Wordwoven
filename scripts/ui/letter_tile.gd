@@ -66,7 +66,7 @@ func set_frozen(value: bool, affordable: bool, animate: bool = false) -> void:
 		_ice_tween = create_tween().set_parallel(true)
 		var target_fill: Color = style.bg_color
 		var target_border: Color = style.border_color
-		style.bg_color = tile_theme.fill_for(stats.letter_class) if frozen else Color("315d79")
+		style.bg_color = tile_theme.fill_for(stats.element) if frozen else Color("315d79")
 		style.border_color = tile_theme.border_for(stats.level) if frozen else Color("ffd19b")
 		_ice_tween.tween_property(style, "bg_color", target_fill, 0.4)
 		_ice_tween.tween_property(style, "border_color", target_border, 0.4)

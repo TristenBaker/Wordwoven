@@ -51,7 +51,7 @@ func _ready() -> void:
 
 func setup(new_stats: LetterStats) -> void:
 	stats = new_stats
-	sprite.sprite_frames = _frames_for(stats.letter_class)
+	sprite.sprite_frames = _frames_for(stats.element)
 	sprite.play(&"idle")
 	sprite.frame = randi() % 2
 
@@ -99,12 +99,12 @@ func perform(target: Vector2, exit_x: float, delay: float) -> void:
 	sprite.flip_h = false
 	if delay > 0.0:
 		_motion.tween_interval(delay)
-	match stats.letter_class:
-		LetterStats.LetterClass.WARRIOR:
+	match stats.element:
+		LetterStats.Element.FIRE, LetterStats.Element.EARTH:
 			_queue_warrior_action(target)
-		LetterStats.LetterClass.HEALER:
+		LetterStats.Element.WATER, LetterStats.Element.NATURE:
 			_queue_healer_action()
-		LetterStats.LetterClass.ROGUE:
+		LetterStats.Element.LIGHTNING, LetterStats.Element.ICE:
 			_queue_rogue_action(target, exit_x)
 	_motion.tween_callback(_finish)
 
@@ -263,11 +263,11 @@ func _finish() -> void:
 	queue_free()
 
 
-func _frames_for(letter_class: LetterStats.LetterClass) -> SpriteFrames:
-	match letter_class:
-		LetterStats.LetterClass.WARRIOR:
+func _frames_for(element: int) -> SpriteFrames:
+	match element:
+		LetterStats.Element.FIRE, LetterStats.Element.EARTH:
 			return warrior_frames
-		LetterStats.LetterClass.ROGUE:
+		LetterStats.Element.LIGHTNING, LetterStats.Element.ICE:
 			return rogue_frames
 	return healer_frames
 
