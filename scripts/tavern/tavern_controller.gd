@@ -1,6 +1,7 @@
 extends Control
-## The tavern offers new recruits, paid dismissals, a meal, and the bard's
-## story. Letters grow in combat and relics are chosen after victories.
+## The tavern offers new recruits, paid dismissals, a meal, and a
+## portrait of the selected party member. Letters grow in combat and
+## relics are chosen after victories.
 
 var _selected: LetterStats = null
 var _letter_group: ButtonGroup = ButtonGroup.new()
@@ -8,8 +9,7 @@ var _letter_group: ButtonGroup = ButtonGroup.new()
 @onready var economy: EconomySystem = $Systems/EconomySystem
 @onready var gold_label: Label = $TopBar/GoldLabel
 @onready var health_label: Label = $TopBar/HealthLabel
-@onready var story_label: RichTextLabel = \
-		$Layout/StoryPanel/StoryMargin/StoryLabel
+@onready var portrait: CharacterPortrait = %CharacterPortrait
 @onready var vowel_grid: GridContainer = %VowelGrid
 @onready var common_grid: GridContainer = %CommonGrid
 @onready var uncommon_grid: GridContainer = %UncommonGrid
@@ -30,12 +30,13 @@ func _ready() -> void:
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.deck_changed.connect(_on_deck_changed)
 	economy.ensure_recruitment_offers()
+	if not RunState.deck.is_empty():
+		_selected = RunState.deck[0]
 	_rebuild_deck_grids()
 	_rebuild_recruit_buttons()
 	_refresh_top_bar()
 	_refresh_actions()
-	var bard: Storyteller = Storyteller.new()
-	story_label.text = bard.generate()
+	portrait.show_member(_selected)
 
 
 func _input(event: InputEvent) -> void:
@@ -92,6 +93,7 @@ func _on_gold_changed(_new_total: int) -> void:
 func _on_deck_changed() -> void:
 	if _selected != null and not RunState.deck.has(_selected):
 		_selected = null
+		portrait.show_member(null)
 	_rebuild_deck_grids()
 	_rebuild_recruit_buttons()
 	_refresh_actions()
@@ -152,6 +154,7 @@ func _grid_for(stats: LetterStats) -> GridContainer:
 
 func _on_letter_selected(stats: LetterStats) -> void:
 	_selected = stats
+	portrait.show_member(stats)
 	_refresh_actions()
 
 

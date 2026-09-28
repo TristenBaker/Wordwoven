@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://do67sb2f61ad6" path="res://art/backgrounds/sea.png" id="sea"]
 [ext_resource type="Texture2D" uid="uid://kl2wmog4aelh" path="res://art/backgrounds/sky.png" id="sky"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="title"]
-[ext_resource type="Texture2D" uid="uid://d0egk2rw12vv6" path="res://art/backgrounds/Tundra Biome/T6.png" id="tundra_thumbnail"]
+[ext_resource type="Texture2D" uid="uid://dn6wnoyj4x5pr" path="res://art/backgrounds/Tundra Biome/T6.png" id="tundra_thumbnail"]
 [ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="volcano"]
 
 [sub_resource type="Theme" id="Theme_menu"]
@@ -775,3 +775,4 @@ text = "Back"
 [node name="TitleMusic" type="AudioStreamPlayer" parent="." unique_id=1977567207]
 stream = ExtResource("11_04c8o")
 autoplay = true
+parameters/looping = true

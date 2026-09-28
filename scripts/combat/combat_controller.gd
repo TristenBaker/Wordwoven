@@ -18,6 +18,10 @@ const LETTER_TILE_SCENE: PackedScene = \
 
 # Pause before and after the enemy's retaliation, in seconds.
 const ENEMY_TURN_DELAY: float = 0.7
+# Shorter pause once the party has finished its actions.
+const PARTY_SETTLE_DELAY: float = 0.25
+# Fade to black between the enemy's death and the victory tale.
+const VICTORY_FADE_TIME: float = 0.35
 
 const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
 
@@ -31,7 +35,6 @@ var backgrounds: Array[Texture2D] = [
 	preload("res://art/backgrounds/tundra.png"),
 	preload("res://art/backgrounds/volcano.png")
 ]
-
 var required_pos: String = "n"
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
@@ -39,6 +42,9 @@ var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
 var _retaliation_reduction: int = 0
 var _guard: int = 0
+var cold := preload("res://scripts/combat/tundra_cold.gd").new()
+var heat_meter: PanelContainer
+var _last_allowed_text: String = ""
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -71,6 +77,10 @@ var _guard: int = 0
 @onready var prompt_label: Label = $Layout/InputArea/PromptLabel
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
+@onready var side_panel: PanelContainer = $Layout/SidePanel
+@onready var log_toggle_button: Button = $Layout/LogToggleButton
+@onready var party_stage: PartyStage = $Layout/PartyStage
+@onready var transition_fade: ColorRect = $TransitionFade
 @onready var player_health_bar: ProgressBar = \
 		$Layout/StatusArea/PlayerHealthBar
 @onready var player_health_label: Label = \
@@ -92,7 +102,12 @@ func _ready() -> void:
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
+	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
+	heat_meter = PanelContainer.new()
+	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
+	$Layout/InputArea.add_child(heat_meter)
+	$Layout/InputArea.move_child(heat_meter, 1)
 	_start_encounter()
 
 
@@ -109,6 +124,13 @@ func _start_encounter() -> void:
 	_refresh_prompt()
 	validator.start_encounter()
 	deck_manager.start_encounter()
+	cold.reset(RunState.selected_biome == "tundra")
+	heat_meter.visible = cold.enabled
+	if cold.enabled:
+		# Reserve vertical room for the meter without crowding prompt/feedback into the hand.
+		$Layout/InputArea.offset_top -= 48.0
+		$Layout/InputArea.offset_bottom -= 48.0
+	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
 	enemy.setup(spawn_data)
 	EventBus.emit_encounter_started(spawn_data)
@@ -127,12 +149,17 @@ func _randomize_background() -> void:
 	background.texture = backgrounds.pick_random()
 	if RunState.selected_biome == "tundra":
 		background.texture = load(
-			"res://art/backgrounds/Tundra Biome/T%d.png" % RunState.encounter_index
+			"res://art/backgrounds/Tundra Biome/T%d.png"
+			% RunState.encounter_index
 		)
 
 func _pick_spawn_data() -> Dictionary:
 	var enemy_id: String = RunState.next_enemy_id
 	RunState.next_enemy_id = ""
+	if RunState.selected_biome == "tundra":
+		var allowed: Array[String] = factory.ids_for_stage(RunState.encounter_index)
+		if not allowed.has(enemy_id):
+			enemy_id = allowed.pick_random()
 	if enemy_id.is_empty():
 		if RunState.is_boss_next():
 			enemy_id = factory.boss_id()
@@ -150,6 +177,7 @@ func _enter_player_input() -> void:
 	_state = State.PLAYER_INPUT
 	word_input.editable = true
 	submit_button.disabled = false
+	_refresh_cold()
 	_focus_word_input()
 
 
@@ -171,6 +199,9 @@ func _on_submit() -> void:
 		return
 	var word: String = word_input.text.strip_edges().to_lower()
 	var verdict: Dictionary = validator.validate(word, required_pos)
+	var blocked: String = cold.blocked_letter(word, deck_manager.hand())
+	if not blocked.is_empty():
+		verdict = {"valid": false, "reason": "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]}
 	if not verdict["valid"]:
 		feedback_label.text = verdict["reason"]
 		EventBus.emit_word_rejected(word, verdict["reason"])
@@ -181,6 +212,8 @@ func _on_submit() -> void:
 		_enter_player_input()
 		call_deferred("_focus_word_input")
 		return
+	cold.accept_word()
+	_refresh_cold()
 	_state = State.RESOLVING
 	word_input.editable = false
 	submit_button.disabled = true
@@ -213,6 +246,8 @@ func _resolve_word(word: String) -> void:
 	_apply_elemental_effects(result)
 	EventBus.emit_word_resolved(result)
 	_log(_describe_result(result))
+	# The typed letters act before the hand changes under them.
+	var performing: bool = party_stage.perform_word(enemy.strike_point())
 	# Current-word numbers are frozen before the used letters grow.
 	if not RunState.use_itemized_letters:
 		for stats: LetterStats in drawn:
@@ -224,6 +259,8 @@ func _resolve_word(word: String) -> void:
 	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
+	if performing:
+		await party_stage.impact_landed
 	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
@@ -232,7 +269,11 @@ func _resolve_word(word: String) -> void:
 
 func _enemy_turn() -> void:
 	_state = State.ENEMY_TURN
-	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
+	var delay: float = ENEMY_TURN_DELAY
+	if party_stage.is_performing():
+		await party_stage.performance_finished
+		delay = PARTY_SETTLE_DELAY
+	await get_tree().create_timer(delay).timeout
 	if _state != State.ENEMY_TURN:
 		return
 	var burn_damage: float = enemy.consume_burn()
@@ -264,6 +305,10 @@ func _enemy_turn() -> void:
 		return
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
+		var newly_frozen: LetterStats = cold.freeze_after_turn(deck_manager.hand())
+		_refresh_cold(newly_frozen)
+		if newly_frozen != null:
+			_log("The cold freezes %s. Thaw it for %d Heat." % [newly_frozen.letter.to_upper(), cold.THAW_COST])
 		# Defer once so a just-finished animation or button event cannot claim
 		# focus from the hidden LineEdit after the next player turn opens.
 		call_deferred("_enter_player_input")
@@ -277,7 +322,7 @@ func _on_enemy_died() -> void:
 	# Newly selected Quills begin paying on the next victory.
 	earned += int(_relic_system.total_effect("victory_gold"))
 	RunState.add_gold(earned)
-	RunState.complete_encounter()
+	RunState.complete_encounter(enemy.enemy_id)
 	RunState.is_run_active = true
 	if RunState.use_itemized_letters:
 		var dropped_letter := RunState.rolled_letter_drop()
@@ -288,7 +333,23 @@ func _on_enemy_died() -> void:
 	else:
 		RunState.begin_victory(enemy.enemy_name, earned)
 	EventBus.emit_encounter_won(earned)
+	word_input.editable = false
+	submit_button.disabled = true
+	await _play_victory_transition()
 	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
+
+
+# Every party action finishes before the enemy dissolves, then the
+# screen fades out into the victory tale.
+func _play_victory_transition() -> void:
+	if party_stage.is_performing():
+		await party_stage.performance_finished
+	await enemy.play_death()
+	var fade: Tween = create_tween()
+	fade.tween_property(
+		transition_fade, "color:a", 1.0, VICTORY_FADE_TIME
+	)
+	await fade.finished
 
 
 func _on_player_died() -> void:
@@ -297,6 +358,11 @@ func _on_player_died() -> void:
 
 
 # --- Screen updates ------------------------------------------------
+
+func _on_log_toggled(shown: bool) -> void:
+	side_panel.visible = shown
+	log_toggle_button.text = "Hide Log" if shown else "Show Log"
+
 
 func _advance_prompt() -> void:
 	var current: int = PROMPT_ORDER.find(required_pos)
@@ -316,6 +382,14 @@ func _refresh_prompt() -> void:
 
 
 func _on_text_changed(new_text: String) -> void:
+	var blocked: String = cold.blocked_letter(new_text, deck_manager.hand())
+	if not blocked.is_empty():
+		feedback_label.text = "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]
+		var caret: int = word_input.caret_column
+		word_input.text = _last_allowed_text
+		word_input.caret_column = mini(caret, _last_allowed_text.length())
+		return
+	_last_allowed_text = new_text
 	var typing: bool = not new_text.strip_edges().is_empty()
 	var split: Dictionary = deck_manager.split_word(
 		new_text.strip_edges().to_lower()
@@ -324,12 +398,13 @@ func _on_text_changed(new_text: String) -> void:
 	_refresh_word_composer(new_text, split)
 	_animate_new_tile_selections(drawn)
 	_previous_drawn = drawn.duplicate()
+	party_stage.sync_letters(drawn)
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_used(drawn.has(tile.stats), typing)
 
 
 func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
-	var word := raw_word.strip_edges().to_lower()
+	var word: String = raw_word.strip_edges().to_lower()
 	if split.is_empty():
 		split = deck_manager.split_word(word)
 	var drawn: Array[LetterStats] = split["drawn"]
@@ -339,7 +414,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		_set_output_counters(0, 0, 0)
 		_set_health_previews(0, 0)
 		return
-	var result := calculator.calculate(
+	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos,
 		enemy.affinities
 	)
@@ -359,8 +434,8 @@ func _set_output_counters(damage: int, healing: int, gold: int) -> void:
 
 func _set_health_previews(damage: int, healing: int) -> void:
 	enemy.set_projected_damage(damage)
-	var current_health := RunState.player_health
-	var projected_health := mini(
+	var current_health: int = RunState.player_health
+	var projected_health: int = mini(
 		current_health + healing, RunState.player_max_health
 	)
 	player_heal_preview.anchor_left = float(current_health) \
@@ -399,7 +474,7 @@ func _fly_tile_to_board(
 	flying.z_index = 20
 	flying.global_position = source.global_position
 	flying.size = source.size
-	var tween := create_tween().set_parallel(true)
+	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flying, "global_position", target.position, 0.24)
 	tween.tween_property(flying, "size", target.size, 0.24)
@@ -433,6 +508,34 @@ func _rebuild_hand_tiles() -> void:
 		var tile: LetterTile = LETTER_TILE_SCENE.instantiate()
 		hand_box.add_child(tile)
 		tile.setup(stats)
+		tile.activated.connect(_on_hand_tile_activated)
+	_refresh_cold()
+
+
+func _refresh_cold(newly_frozen: LetterStats = null) -> void:
+	deck_manager.frozen_letters = cold.frozen
+	if heat_meter == null:
+		return
+	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty())
+	for tile: LetterTile in hand_box.get_children():
+		tile.set_frozen(cold.frozen.has(tile.stats), cold.heat >= cold.THAW_COST,
+			tile.stats == newly_frozen)
+
+
+func _on_hand_tile_activated(tile: LetterTile) -> void:
+	if _state != State.PLAYER_INPUT or get_tree().paused:
+		return
+	if cold.frozen.has(tile.stats):
+		if cold.thaw(tile.stats):
+			tile.set_frozen(false, false, true)
+			_refresh_cold()
+			feedback_label.text = ""
+			_on_text_changed(word_input.text)
+		else:
+			tile.deny_thaw()
+			heat_meter.pulse(true)
+			feedback_label.text = "Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD]
+	_focus_word_input()
 
 
 func _refresh_status() -> void:

@@ -1,0 +1,103 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://6y71lmp4m64"]
+
+[ext_resource type="Texture2D" uid="uid://css5xaucjr52h" path="res://art/party/chibi/rogue.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="Atlas_grab"]
+atlas = ExtResource("1_sheet")
+region = Rect2(320, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_run_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(192, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_run_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(224, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_run_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(256, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_run_3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(288, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(128, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(160, 0, 32, 32)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_grab")
+}],
+"loop": 0,
+"name": &"grab",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_1")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_run_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_run_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_run_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_run_3")
+}],
+"loop": 1,
+"name": &"run",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_3")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12.0
+}]

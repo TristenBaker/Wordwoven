@@ -1,0 +1,84 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://rhqol2mmdd3"]
+
+[ext_resource type="Texture2D" uid="uid://2efvka2ph2ne" path="res://art/party/chibi/healer.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(192, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(224, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(256, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(128, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(160, 0, 32, 32)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_2")
+}],
+"loop": 0,
+"name": &"cast",
+"speed": 14.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_1")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_3")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12.0
+}]

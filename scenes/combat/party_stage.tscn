@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://dyeg6h1ty16mm"]
+
+[ext_resource type="Script" uid="uid://c3h1l4ka0b4c4" path="res://scripts/combat/party_stage.gd" id="1_stage"]
+[ext_resource type="PackedScene" uid="uid://dpnvyruifir1a" path="res://scenes/combat/party_member.tscn" id="2_member"]
+[ext_resource type="Script" uid="uid://dskcbm1ukmj04" path="res://scripts/combat/party_sfx.gd" id="3_sfx"]
+[ext_resource type="AudioStream" uid="uid://do8dwv4gpd8k1" path="res://assets/Audio/party/step.wav" id="4_step"]
+[ext_resource type="AudioStream" uid="uid://c38fec5igekme" path="res://assets/Audio/party/jump.wav" id="5_jump"]
+[ext_resource type="AudioStream" uid="uid://dk4clpshngrym" path="res://assets/Audio/party/slash.wav" id="6_slash"]
+[ext_resource type="AudioStream" uid="uid://y8xibpacklc0" path="res://assets/Audio/party/impact.wav" id="7_impact"]
+[ext_resource type="AudioStream" uid="uid://cfowfsy2h0lqt" path="res://assets/Audio/party/heal.wav" id="8_heal"]
+[ext_resource type="AudioStream" uid="uid://csnv7vynfu0j4" path="res://assets/Audio/party/coin.wav" id="9_coin"]
+[ext_resource type="AudioStream" uid="uid://d10jeb2kwcjfa" path="res://assets/Audio/party/dash.wav" id="10_dash"]
+
+[node name="PartyStage" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_stage")
+member_scene = ExtResource("2_member")
+
+[node name="Members" type="Node2D" parent="."]
+
+[node name="PartySfx" type="Node" parent="."]
+script = ExtResource("3_sfx")
+step_sound = ExtResource("4_step")
+jump_sound = ExtResource("5_jump")
+slash_sound = ExtResource("6_slash")
+impact_sound = ExtResource("7_impact")
+heal_sound = ExtResource("8_heal")
+coin_sound = ExtResource("9_coin")
+dash_sound = ExtResource("10_dash")
+
+[node name="Voices" type="Node" parent="PartySfx"]
+
+[node name="Voice1" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice2" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice3" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice4" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice5" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice6" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice7" type="AudioStreamPlayer" parent="PartySfx/Voices"]
+
+[node name="Voice8" type="AudioStreamPlayer" parent="PartySfx/Voices"]

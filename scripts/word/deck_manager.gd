@@ -9,11 +9,13 @@ const HAND_SIZE: int = 8
 var _draw_pile: Array[LetterStats] = []
 var _discard_pile: Array[LetterStats] = []
 var _hand: Array[LetterStats] = []
+var frozen_letters: Array[LetterStats] = []
 
 
 ## Copies the run deck into a fresh shuffled draw pile and deals
 ## a full hand.
 func start_encounter() -> void:
+	frozen_letters = []
 	_draw_pile = RunState.combat_letters().duplicate()
 	_draw_pile.shuffle()
 	_discard_pile = []
@@ -67,7 +69,7 @@ func split_word(word: String) -> Dictionary:
 	for character: String in word.to_lower():
 		var found: LetterStats = null
 		for stats: LetterStats in remaining:
-			if stats.letter == character:
+			if stats.letter == character and not frozen_letters.has(stats):
 				found = stats
 				break
 		if found != null:
