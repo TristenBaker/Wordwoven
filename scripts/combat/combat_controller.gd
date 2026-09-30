@@ -43,7 +43,8 @@ var _damage_popup_tween: Tween = null
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
 var _last_allowed_text: String = ""
-
+var _turn_elapsed_seconds: float = 0.0
+var _preview_refresh_accumulator: float = 0.0
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -74,6 +75,7 @@ var _last_allowed_text: String = ""
 @onready var feedback_label: Label = \
 		$Layout/InputArea/FeedbackLabel
 @onready var prompt_label: Label = $Layout/InputArea/PromptLabel
+@onready var timer_label: Label = $Layout/StatusArea/TimerLabel
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
 @onready var side_panel: PanelContainer = $Layout/SidePanel
@@ -108,6 +110,18 @@ func _ready() -> void:
 	$Layout/InputArea.add_child(heat_meter)
 	$Layout/InputArea.move_child(heat_meter, 1)
 	_start_encounter()
+
+
+func _process(delta: float) -> void:
+	if _state != State.PLAYER_INPUT:
+		return
+	_turn_elapsed_seconds += delta
+	_preview_refresh_accumulator += delta
+	_update_timer_display()
+	if _preview_refresh_accumulator >= 0.1:
+		_preview_refresh_accumulator = 0.0
+		if not word_input.text.strip_edges().is_empty():
+			_refresh_word_composer(word_input.text)
 
 
 func _start_encounter() -> void:
@@ -172,8 +186,12 @@ func _pick_spawn_data() -> Dictionary:
 
 # --- Turn flow -----------------------------------------------------
 
-func _enter_player_input() -> void:
+func _enter_player_input(reset_timer: bool = true) -> void:
 	_state = State.PLAYER_INPUT
+	if reset_timer:
+		_turn_elapsed_seconds = 0.0
+		_preview_refresh_accumulator = 0.0
+	_update_timer_display()
 	word_input.editable = true
 	submit_button.disabled = false
 	_refresh_cold()
@@ -208,7 +226,7 @@ func _on_submit() -> void:
 		# then defer focus restoration so Enter/button submission cannot leave
 		# the visually hidden LineEdit unfocused.
 		word_input.clear()
-		_enter_player_input()
+		_enter_player_input(false)
 		call_deferred("_focus_word_input")
 		return
 	cold.accept_word()
@@ -234,7 +252,8 @@ func _resolve_word(word: String) -> void:
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
 	var result: Dictionary = calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos
+		word, drawn, undrawn, enemy.tags, required_pos,
+		_turn_elapsed_seconds
 	)
 	validator.mark_played(word)
 	RunState.record_word(
@@ -389,7 +408,8 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		_set_health_previews(0, 0)
 		return
 	var result: Dictionary = calculator.calculate(
-		word, drawn, undrawn, enemy.tags, required_pos
+		word, drawn, undrawn, enemy.tags, required_pos,
+		_turn_elapsed_seconds
 	)
 	_set_output_counters(
 		int(round(float(result["damage"]))),
@@ -404,6 +424,19 @@ func _set_output_counters(damage: int, healing: int, gold: int) -> void:
 	damage_output.text = str(damage)
 	heal_output.text = str(healing)
 	gold_output.text = str(gold)
+
+
+func _update_timer_display() -> void:
+	var remaining: float = maxf(
+		DamageCalculator.SPEED_BONUS_DURATION - _turn_elapsed_seconds,
+		0.0
+	)
+	var multiplier: float = calculator.speed_multiplier(
+		_turn_elapsed_seconds
+	)
+	timer_label.text = "Quick-cast: %.1fs  •  Damage ×%.2f" % [
+		remaining, multiplier,
+	]
 
 
 func _set_health_previews(damage: int, healing: int) -> void:
@@ -534,14 +567,16 @@ func _describe_result(result: Dictionary) -> String:
 		result["word"].to_upper(), result["damage"]
 	])
 	lines.append(
-		"  power %.1f × length %.1f × %s %.2f × tag %.2f" % [
+		"  power %.1f × length %.1f × %s %.2f × tag %.2f × speed %.2f" % [
 			result["base_power"],
 			result["length_multiplier"],
 			WordNet.pos_name(result["pos"]),
 			result["pos_multiplier"],
 			result["semantic_multiplier"],
+			result["speed_multiplier"],
 		]
 	)
+	lines.append("  answered in %.1f seconds" % result["elapsed_seconds"])
 	if not String(counter.get("tag", "")).is_empty():
 		lines.append("  counter vs %s: %.2f (%s)" % [
 			counter["tag"], counter["score"], counter["strategy"],

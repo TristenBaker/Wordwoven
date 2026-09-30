@@ -28,6 +28,35 @@ func _run_test() -> void:
 	)
 	_expect(not enemy.tags.is_empty(), "enemy has tags")
 	print("  enemy: %s %s" % [enemy.enemy_name, enemy.tags])
+	var antonym: Dictionary = WordNet.counter_detailed(
+		"hot", "cold", "a"
+	)
+	var thematic: Dictionary = WordNet.counter_detailed(
+		"fire", "cold", "n"
+	)
+	var calculator: DamageCalculator = DamageCalculator.new()
+	var antonym_multiplier: float = calculator._semantic_multiplier(
+		antonym, 1.0, 0.0
+	)
+	var thematic_multiplier: float = calculator._semantic_multiplier(
+		thematic, 1.0, 0.0
+	)
+	_expect(
+		antonym_multiplier > thematic_multiplier,
+		"antonym damage x%.2f > thematic damage x%.2f" % [
+			antonym_multiplier, thematic_multiplier,
+		]
+	)
+	_expect(
+		calculator.speed_multiplier(2.0) \
+				> calculator.speed_multiplier(18.0),
+		"quick answers deal more damage than slow answers"
+	)
+	_expect(
+		is_equal_approx(calculator.speed_multiplier(20.0), 1.0),
+		"speed bonus expires after 20 seconds"
+	)
+	calculator.free()
 	_expect(
 		combat.hand_box.get_child_count() == 8,
 		"hand deals 8 tiles"
