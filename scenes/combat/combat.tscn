@@ -37,7 +37,6 @@ shadow_size = 3
 shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_chronicle_body"]
-content_margin_top = 34.0
 content_margin_right = 5.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chronicle_track"]
@@ -276,9 +275,9 @@ layout_mode = 2
 [node name="DevKillButton" type="Button" parent="Layout" unique_id=515990117]
 layout_mode = 1
 offset_left = 16.0
-offset_top = 150.0
+offset_top = 220.0
 offset_right = 280.0
-offset_bottom = 190.0
+offset_bottom = 260.0
 tooltip_text = "Development only: immediately defeat the current enemy."
 theme_override_font_sizes/font_size = 16
 text = "DEV: Auto Kill"
@@ -315,14 +314,10 @@ anchor_right = 0.99
 anchor_bottom = 0.72
 offset_top = 44.0
 
-[node name="LogLabel" type="RichTextLabel" parent="Layout/SidePanel" unique_id=678540740]
+[node name="ChronicleContent" type="Control" parent="Layout/SidePanel"]
 layout_mode = 2
-theme = SubResource("Theme_chronicle")
-autowrap_mode = 3
-bbcode_enabled = true
-scroll_following = true
 
-[node name="ChronicleHeader" type="Label" parent="Layout/SidePanel/LogLabel"]
+[node name="ChronicleHeader" type="Label" parent="Layout/SidePanel/ChronicleContent"]
 layout_mode = 0
 anchor_right = 1.0
 offset_right = -12.0
@@ -334,7 +329,7 @@ theme_override_font_sizes/font_size = 18
 text = "BATTLE CHRONICLE"
 horizontal_alignment = 1
 
-[node name="ChronicleDivider" type="ColorRect" parent="Layout/SidePanel/LogLabel"]
+[node name="ChronicleDivider" type="ColorRect" parent="Layout/SidePanel/ChronicleContent"]
 layout_mode = 0
 anchor_right = 1.0
 offset_right = -12.0
@@ -342,6 +337,20 @@ offset_top = 28.0
 offset_bottom = 29.0
 mouse_filter = 2
 color = Color(0.60, 0.49, 0.29, 0.5)
+
+[node name="LogLabel" type="RichTextLabel" parent="Layout/SidePanel/ChronicleContent" unique_id=678540740]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 34.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_chronicle")
+autowrap_mode = 3
+bbcode_enabled = true
+scroll_following = true
 
 [node name="LogToggleButton" type="Button" parent="Layout" unique_id=128742266]
 theme = ExtResource("ww_buttons")
@@ -428,20 +437,40 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="InputRow" type="HBoxContainer" parent="Layout/InputArea" unique_id=1432806170]
+custom_minimum_size = Vector2(0, 62)
 layout_mode = 2
 theme_override_constants/separation = 12
+
+[node name="PromptLabel" type="Label" parent="Layout/InputArea/InputRow" unique_id=99701348]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.94, 0.87, 0.70, 1)
+theme_override_colors/font_outline_color = Color(0.015, 0.025, 0.045, 0.95)
+theme_override_colors/font_shadow_color = Color(0.005, 0.01, 0.02, 0.8)
+theme_override_constants/outline_size = 3
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 28
+text = "Write a noun to shape your tale"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="WordInput" type="LineEdit" parent="Layout/InputArea/InputRow" unique_id=2135745102]
 modulate = Color(1, 1, 1, 0)
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 0
+theme_override_constants/minimum_character_width = 0
 theme_override_font_sizes/font_size = 28
 placeholder_text = "spell a word..."
 max_length = 24
 
 [node name="SubmitButton" type="Button" parent="Layout/InputArea/InputRow" unique_id=757434732]
 custom_minimum_size = Vector2(140, 48)
+size_flags_vertical = 4
 theme = ExtResource("ww_buttons")
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -457,19 +486,6 @@ theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 28
-horizontal_alignment = 1
-
-[node name="PromptLabel" type="Label" parent="Layout/InputArea" unique_id=99701348]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.94, 0.87, 0.70, 1)
-theme_override_colors/font_outline_color = Color(0.015, 0.025, 0.045, 0.95)
-theme_override_colors/font_shadow_color = Color(0.005, 0.01, 0.02, 0.8)
-theme_override_constants/outline_size = 3
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 2
-theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 28
-text = "Write a noun to shape your tale"
 horizontal_alignment = 1
 
 [node name="HandArea" type="CenterContainer" parent="Layout" unique_id=1963770266]
@@ -498,3 +514,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
+
+[node name="FateIndicator" type="Label" parent="Layout"]
+visible = false
+layout_mode = 0
+offset_left = 16.0
+offset_top = 150.0
+offset_right = 280.0
+offset_bottom = 212.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_chronicle_panel")
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.07, 1)
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -4,10 +4,9 @@
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
 [ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="4_economy"]
-[ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/Music/BasicMusic.mp3" id="5_nnv1s"]
 [ext_resource type="PackedScene" uid="uid://ce26pyfgafmr" path="res://scenes/tavern/character_portrait.tscn" id="6_portrait"]
-
-[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+[ext_resource type="AudioStream" uid="uid://bhsnn27a3ao3e" path="res://assets/Audio/Tavern.mp3" id="7_mwr1b"]
+[ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [node name="Tavern" type="Control" unique_id=286457882]
 layout_mode = 3
@@ -207,7 +206,6 @@ layout_mode = 2
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1212310021]
 visible = false
-theme = ExtResource("ww_buttons")
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -220,11 +218,11 @@ offset_right = -24.0
 offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
+theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 22
 text = "Set Out"
 
 [node name="CloseButton" type="Button" parent="." unique_id=810238793]
-theme = ExtResource("ww_buttons")
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -235,9 +233,11 @@ offset_right = -18.0
 offset_bottom = 60.0
 grow_horizontal = 0
 tooltip_text = "Return to the tavern"
+theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
 text = "×"
 
 [node name="TavernMusic" type="AudioStreamPlayer" parent="." unique_id=602779641]
-stream = ExtResource("5_nnv1s")
+stream = ExtResource("7_mwr1b")
 autoplay = true
+parameters/looping = true

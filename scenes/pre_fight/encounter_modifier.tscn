@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://xxsw68k56cop"]
+
+[ext_resource type="Script" uid="uid://bp20cwg61rycl" path="res://scripts/ui/encounter_modifier.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://chjshehq17hwx" path="res://art/backgrounds/Modifier.png" id="2_p6xqk"]
+[ext_resource type="AudioStream" uid="uid://d4cakwr4veonh" path="res://assets/Audio/Cosmic.mp3" id="3_ax8dh"]
+
+[node name="EncounterModifier" type="Control" unique_id=229182769]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1683961323]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_p6xqk")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=577679230]
+stream = ExtResource("3_ax8dh")
+autoplay = true
+parameters/looping = true

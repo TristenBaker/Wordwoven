@@ -53,7 +53,7 @@ func _on_begin_pressed() -> void:
 	begin_button.disabled = true
 	RunState.start_new_run()
 	RunState.selected_biome = _selected_biome
-	get_tree().change_scene_to_file(ScenePaths.COMBAT)
+	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)
 
 
 func _on_back_pressed() -> void:

@@ -43,4 +43,4 @@ func _ready() -> void:
 
 func _on_choice_pressed(enemy_id: String) -> void:
 	RunState.next_enemy_id = enemy_id
-	get_tree().change_scene_to_file(ScenePaths.COMBAT)
+	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)

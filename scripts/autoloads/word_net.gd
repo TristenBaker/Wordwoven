@@ -99,6 +99,25 @@ func synonyms_of(word: String, limit: int = 8) -> Array[String]:
 	return synonyms
 
 
+## Read-only adjective meaning links for encounter Fate classification.
+## Same synsets and similar-adjective pointers used by SemanticScorer;
+## deliberately excludes antonyms, gloss overlap and unrelated noun senses.
+func adjective_relations(word: String) -> Dictionary:
+	var offsets: Array[int] = []
+	var similar: Array[int] = []
+	if not _check_ready():
+		return {"synsets": offsets, "similar": similar}
+	for synset: WordNetReader.Synset in _reader.get_synsets(word, "a"):
+		if not offsets.has(synset.offset):
+			offsets.append(synset.offset)
+		for pointer: Dictionary in synset.pointers:
+			if pointer.get("symbol", "") == "&" and pointer.get("pos", "") in ["a", "s"]:
+				var offset: int = pointer["offset"]
+				if not similar.has(offset):
+					similar.append(offset)
+	return {"synsets": offsets, "similar": similar}
+
+
 ## Dictionary definition of the word's first matching sense.
 func gloss_of(word: String) -> String:
 	if not _check_ready():
