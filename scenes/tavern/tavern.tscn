@@ -7,6 +7,8 @@
 [ext_resource type="AudioStream" uid="uid://b1jek5fa8f4ds" path="res://assets/Art/Music/BasicMusic.mp3" id="5_nnv1s"]
 [ext_resource type="PackedScene" uid="uid://ce26pyfgafmr" path="res://scenes/tavern/character_portrait.tscn" id="6_portrait"]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [node name="Tavern" type="Control" unique_id=286457882]
 layout_mode = 3
 anchors_preset = 15
@@ -205,6 +207,7 @@ layout_mode = 2
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1212310021]
 visible = false
+theme = ExtResource("ww_buttons")
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -221,6 +224,7 @@ theme_override_font_sizes/font_size = 22
 text = "Set Out"
 
 [node name="CloseButton" type="Button" parent="." unique_id=810238793]
+theme = ExtResource("ww_buttons")
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0

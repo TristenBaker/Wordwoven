@@ -11,6 +11,7 @@ var _biome_group: ButtonGroup = ButtonGroup.new()
 @onready var selection_label: Label = %SelectionLabel
 @onready var preview: TextureRect = %Preview
 @onready var description: Label = %Description
+@onready var mechanics: VBoxContainer = %Mechanics
 @onready var begin_button: Button = %BeginButton
 @onready var back_button: Button = %BackButton
 
@@ -42,6 +43,7 @@ func _on_biome_selected(button: Button) -> void:
 		"preview_texture", button.get_node("Content/Thumbnail").texture
 	)
 	description.text = String(button.get_meta("description"))
+	mechanics.visible = biome_id == "tundra"
 
 
 func _on_begin_pressed() -> void:

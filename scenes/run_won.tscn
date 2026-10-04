@@ -5,6 +5,8 @@
 [ext_resource type="AudioStream" uid="uid://dwv378je3u0ec" path="res://assets/Art/Music/4 - Realm of Emberlight (Loop).mp3" id="3_boyns"]
 [ext_resource type="Texture2D" uid="uid://10vuspkl71xa" path="res://art/backgrounds/Victory.png" id="4_victory"]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [node name="RunWon" type="Control" unique_id=1133320662]
 layout_mode = 3
 anchors_preset = 15
@@ -55,6 +57,7 @@ horizontal_alignment = 1
 
 [node name="MenuButton" type="Button" parent="CenterBox/Menu" unique_id=711482985]
 custom_minimum_size = Vector2(240, 52)
+theme = ExtResource("ww_buttons")
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22

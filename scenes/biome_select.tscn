@@ -12,6 +12,8 @@
 [ext_resource type="Texture2D" uid="uid://dn6wnoyj4x5pr" path="res://art/backgrounds/Tundra Biome/T6.png" id="tundra_thumbnail"]
 [ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="volcano"]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [sub_resource type="Theme" id="Theme_menu"]
 default_font = ExtResource("body")
 default_font_size = 24
@@ -739,7 +741,7 @@ theme_override_constants/margin_bottom = 12
 
 [node name="Info" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding" unique_id=55940669]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 
 [node name="SelectionLabel" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=143001833]
 unique_name_in_owner = true
@@ -749,17 +751,96 @@ theme_override_font_sizes/font_size = 40
 text = "Frostveil Expanse"
 autowrap_mode = 2
 
-[node name="Description" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=1896708119]
-unique_name_in_owner = true
+[node name="DetailsScroll" type="ScrollContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="TextContent" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Description" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent" unique_id=1896708119]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 22
 text = "Beyond the icebound wastes, ancient whispers ride the bitter wind. Write your tale beneath the pale skies of Frostveil Expanse."
+autowrap_mode = 2
+
+[node name="Mechanics" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Divider" type="ColorRect" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.36, 0.28, 0.18, 1)
+
+[node name="FrozenLetters" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Heading" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/FrozenLetters"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "FROZEN LETTERS"
+
+[node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/FrozenLetters"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 18
+text = "Letters can become frozen and temporarily unavailable."
+autowrap_mode = 2
+
+[node name="GapBeforeHeat" type="Control" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Heat" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Heading" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/Heat"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "HEAT"
+
+[node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/Heat"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 18
+text = "Maintain heat to manage frozen letters throughout the Tundra."
+autowrap_mode = 2
+
+[node name="GapBeforeWordTip" type="Control" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="WordTip" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Heading" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/WordTip"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "WORD TIP"
+
+[node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/WordTip"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_font_sizes/font_size = 18
+text = "Warm words can be more effective against cold enemies."
 autowrap_mode = 2
 
 [node name="BeginButton" type="Button" parent="Margin/Layout/Details/InfoPanel/Padding/Info" unique_id=446214640]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
+theme = ExtResource("ww_buttons")
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Begin Journey"
@@ -767,6 +848,7 @@ text = "Begin Journey"
 [node name="BackButton" type="Button" parent="Margin/Layout" unique_id=634583218]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 44)
+theme = ExtResource("ww_buttons")
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 22
