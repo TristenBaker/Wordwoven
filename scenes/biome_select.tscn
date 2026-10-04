@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="volcano"]
 
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+[ext_resource type="Texture2D" uid="uid://csopulerv0ktq" path="res://art/backgrounds/Title Background/Title Background Updated.png" id="menu_background"]
 
 [sub_resource type="Theme" id="Theme_menu"]
 default_font = ExtResource("body")
@@ -110,7 +111,8 @@ grow_vertical = 2
 theme = SubResource("Theme_menu")
 script = ExtResource("script")
 
-[node name="Background" type="ColorRect" parent="." unique_id=264542528]
+[node name="Background" type="TextureRect" parent="." unique_id=264542528]
+self_modulate = Color(0.8, 0.8, 0.8, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -118,7 +120,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.101961, 0.0666667, 0.054902, 1)
+texture = ExtResource("menu_background")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="BackgroundShade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.5)
 
 [node name="Margin" type="MarginContainer" parent="." unique_id=1581213438]
 layout_mode = 1
@@ -780,6 +794,11 @@ custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.36, 0.28, 0.18, 1)
+
+[node name="GapAfterDivider" type="Control" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+mouse_filter = 2
 
 [node name="FrozenLetters" type="VBoxContainer" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics"]
 layout_mode = 2
