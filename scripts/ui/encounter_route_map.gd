@@ -112,20 +112,11 @@ func _rebuild_buttons() -> void:
 func _add_enemy_button(data: Dictionary, is_boss: bool) -> void:
 	var button: Button = Button.new()
 	var compact: bool = _choices.size() > 2 and not is_boss
-	button.custom_minimum_size = Vector2(190, 72) if compact \
-			else (Vector2(205, 96) if not is_boss else Vector2(224, 116))
-	button.text = "%s\n%s" % [
-		data.get("name", "Unknown"),
-		" • ".join(data.get("tags", [])),
-	]
+	button.custom_minimum_size = Vector2(240, 72) if compact \
+			else (Vector2(260, 96) if not is_boss else Vector2(248, 116))
 	button.tooltip_text = "Health %d  •  Attack %d  •  Reward %dg" % [
 		data.get("health", 0), data.get("attack", 0), data.get("gold", 0),
 	]
-	button.icon = _enemy_icon(data)
-	button.expand_icon = true
-	button.add_theme_constant_override(
-		"icon_max_width", 48 if compact else (62 if not is_boss else 78)
-	)
 	button.add_theme_font_size_override(
 		"font_size", 16 if compact else (18 if not is_boss else 20)
 	)
@@ -139,7 +130,60 @@ func _add_enemy_button(data: Dictionary, is_boss: bool) -> void:
 		enemy_selected.emit.bind(String(data.get("id", "")))
 	)
 	add_child(button)
+	_add_card_content(button, data, compact, is_boss)
 	_buttons.append(button)
+
+
+func _add_card_content(
+	button: Button, data: Dictionary, compact: bool, is_boss: bool
+) -> void:
+	# The card remains the sole input target; its children are presentation only.
+	var row := HBoxContainer.new()
+	row.name = "PreviewRow"
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 12.0
+	row.offset_right = -12.0
+	row.offset_top = 10.0
+	row.offset_bottom = -10.0
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 10)
+	button.add_child(row)
+
+	var preview := TextureRect.new()
+	preview.name = "MonsterPreview"
+	var extent: float = 52.0 if compact else (64.0 if not is_boss else 96.0)
+	preview.custom_minimum_size = Vector2(extent, extent)
+	preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	preview.texture = _preview_texture(data)
+	row.add_child(preview)
+
+	var text_box := VBoxContainer.new()
+	text_box.name = "EnemyText"
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_box.add_theme_constant_override("separation", 3)
+	row.add_child(text_box)
+	var name_label := Label.new()
+	name_label.name = "EnemyName"
+	name_label.text = String(data.get("name", "Unknown"))
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.add_theme_font_size_override("font_size", 16 if compact else (18 if not is_boss else 20))
+	name_label.add_theme_color_override("font_color", Color(0.94, 0.9, 0.76, 1.0))
+	text_box.add_child(name_label)
+	var tags_label := Label.new()
+	tags_label.name = "EnemyTags"
+	tags_label.text = " • ".join(data.get("tags", []))
+	tags_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tags_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tags_label.add_theme_font_size_override("font_size", 14 if compact else 16)
+	tags_label.add_theme_color_override("font_color", Color(0.94, 0.9, 0.76, 1.0))
+	text_box.add_child(tags_label)
 
 
 func _layout_buttons() -> void:
@@ -224,14 +268,43 @@ func _card_style(is_boss: bool, highlighted: bool) -> StyleBoxFlat:
 	return style
 
 
+func _preview_texture(data: Dictionary) -> Texture2D:
+	var frame: Texture2D = _enemy_icon(data)
+	if frame == null:
+		return null
+	# Ignore transparent sheet padding so legacy sprites are recognizable too.
+	# Both atlases reference the original texture; no source pixels are changed.
+	var image: Image = frame.get_image()
+	if image == null:
+		return frame
+	if image.is_compressed():
+		image.decompress()
+	var used: Rect2i = image.get_used_rect()
+	if not used.has_area():
+		return frame
+	var trimmed := AtlasTexture.new()
+	trimmed.atlas = frame
+	trimmed.region = Rect2(used)
+	trimmed.filter_clip = true
+	return trimmed
+
+
 func _enemy_icon(data: Dictionary) -> Texture2D:
 	var texture: Texture2D = load(String(data.get("texture", "")))
 	if texture == null:
 		return null
-	var frame_width: int = int(data.get("frame_width", 0))
-	if frame_width <= 0:
-		return texture
-	var atlas: AtlasTexture = AtlasTexture.new()
+	# Match combat's idle framing, without sharing its mutable animation atlas.
+	var idle_frames: int = maxi(int(data.get("idle_frames", 1)), 1)
+	var frame_width: float = float(texture.get_width()) / idle_frames \
+			if idle_frames > 1 else float(data.get("frame_width", 0))
+	if frame_width <= 0.0:
+		frame_width = texture.get_width()
+	var top: float = float(data.get("idle_top", 0)) if idle_frames > 1 else 0.0
+	var height: float = float(data.get("idle_height", 0)) if idle_frames > 1 else 0.0
+	if height <= 0.0:
+		height = texture.get_height() - top
+	var atlas := AtlasTexture.new()
 	atlas.atlas = texture
-	atlas.region = Rect2(0, 0, frame_width, texture.get_height())
+	atlas.filter_clip = true
+	atlas.region = Rect2(0, top, frame_width, height)
 	return atlas

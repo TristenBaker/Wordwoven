@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1_settings"]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -45,6 +47,7 @@ text = "Audio\nMore audio options are coming soon."
 
 [node name="BackButton" type="Button" parent="Center/Panel/Settings"]
 custom_minimum_size = Vector2(0, 46)
+theme = ExtResource("ww_buttons")
 layout_mode = 2
 theme_override_font_sizes/font_size = 21
 text = "Back"
