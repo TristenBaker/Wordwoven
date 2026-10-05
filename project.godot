@@ -17,6 +17,7 @@ config/icon="uid://bg2ivw416ifpk"
 
 [autoload]
 
+AppSettings="*res://scripts/autoloads/app_settings.gd"
 WordNet="*res://scripts/autoloads/word_net.gd"
 RunState="*res://scripts/autoloads/run_state.gd"
 EventBus="*res://scripts/autoloads/event_bus.gd"
@@ -28,6 +29,7 @@ _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
 
 [dotnet]
 

@@ -49,6 +49,9 @@ var encounter_index: int = 1
 # combat scene should roll one for the current stage.
 var next_enemy_id: String = ""
 
+# Cached preparation outcome, keyed to exactly one upcoming enemy/encounter.
+var pending_encounter_modifier: Dictionary = {}
+
 # Biome used by encounter selection and combat backgrounds.
 var selected_biome: String = ""
 
@@ -76,6 +79,7 @@ func start_new_run() -> void:
 	recruitment_stock = []
 	encounter_index = 1
 	next_enemy_id = ""
+	pending_encounter_modifier.clear()
 	selected_biome = ""
 	word_history = []
 	deck = []
@@ -256,3 +260,21 @@ func record_word(
 		"pos": pos,
 		"encounter": encounter_index,
 	})
+
+
+func cache_encounter_modifier(enemy_id: String, word: String, modifier_id: String) -> Dictionary:
+	if not pending_encounter_modifier.is_empty():
+		return pending_encounter_modifier.duplicate(true)
+	pending_encounter_modifier = {
+		"encounter": encounter_index, "enemy_id": enemy_id,
+		"word": word, "modifier_id": modifier_id,
+	}
+	return pending_encounter_modifier.duplicate(true)
+
+
+func take_encounter_modifier(enemy_id: String) -> Dictionary:
+	var pending: Dictionary = pending_encounter_modifier.duplicate(true)
+	pending_encounter_modifier.clear()
+	if pending.get("encounter", -1) != encounter_index or pending.get("enemy_id", "") != enemy_id:
+		return {}
+	return pending

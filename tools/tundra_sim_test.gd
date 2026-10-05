@@ -99,7 +99,11 @@ func _run() -> void:
 			RunState.advance_encounter()
 			var selection = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 			add_child(selection)
-			check(selection.choices_box.get_child_count() == (1 if stage == 5 else 5 - stage), "selection buttons")
+			check(
+				selection.route_map._buttons.size() \
+						== (1 if stage == 5 else 5 - stage),
+				"selection map nodes"
+			)
 			selection.queue_free()
 			await get_tree().process_frame
 	RunState.start_new_run()

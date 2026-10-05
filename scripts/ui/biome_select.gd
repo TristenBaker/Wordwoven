@@ -11,6 +11,7 @@ var _biome_group: ButtonGroup = ButtonGroup.new()
 @onready var selection_label: Label = %SelectionLabel
 @onready var preview: TextureRect = %Preview
 @onready var description: Label = %Description
+@onready var mechanics: VBoxContainer = %Mechanics
 @onready var begin_button: Button = %BeginButton
 @onready var back_button: Button = %BackButton
 
@@ -42,6 +43,7 @@ func _on_biome_selected(button: Button) -> void:
 		"preview_texture", button.get_node("Content/Thumbnail").texture
 	)
 	description.text = String(button.get_meta("description"))
+	mechanics.visible = biome_id == "tundra"
 
 
 func _on_begin_pressed() -> void:
@@ -51,7 +53,7 @@ func _on_begin_pressed() -> void:
 	begin_button.disabled = true
 	RunState.start_new_run()
 	RunState.selected_biome = _selected_biome
-	get_tree().change_scene_to_file(ScenePaths.COMBAT)
+	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)
 
 
 func _on_back_pressed() -> void:

@@ -21,32 +21,42 @@ func score_detailed(
 		"strategy": "none",
 		"detail": "no counter",
 		"target": "",
+		"pos": "",
 	}
-	var positions: Array[String] = []
-	if required_pos.is_empty():
-		positions = _reader.parts_of_speech(word)
-	else:
-		positions.append(required_pos)
+	# The prompt still controls whether the word is playable, but counter
+	# meaning is allowed to come from any part of speech the word possesses.
+	# For example, "clean" entered for a noun prompt can still use its
+	# adjective sense to counter the "filthy" tag.
+	var positions: Array[String] = _reader.parts_of_speech(word)
+	if not required_pos.is_empty() and not positions.has(required_pos):
+		positions.push_front(required_pos)
 	for pos: String in positions:
+		# Direct antonyms of the enemy tag are the strongest counter.
+		# Check the tag itself rather than its curated thematic counters;
+		# otherwise a word matching the tag could be misclassified as an
+		# antonym of one of those counters.
+		if _is_antonym(word, tag, pos):
+			result["score"] = 1.0
+			result["strategy"] = "wordnet antonym"
+			result["detail"] = "%s is the opposite of %s" % [word, tag]
+			result["target"] = tag
+			result["pos"] = pos
+			return result
 		var targets: Array = _counters.get(tag, {}).get(pos, [])
 		for target: String in targets:
-			if _is_antonym(word, target, pos):
-				result["score"] = 1.0
-				result["strategy"] = "wordnet antonym"
-				result["detail"] = "%s opposes %s" % [word, tag]
-				result["target"] = target
-				return result
 			if _same_word(word, target, pos):
 				result["score"] = 1.0
 				result["strategy"] = "thematic counter"
 				result["detail"] = "%s counters %s" % [word, tag]
 				result["target"] = target
+				result["pos"] = pos
 				return result
 			if _shares_synset(word, target, pos):
 				result["score"] = 0.9
 				result["strategy"] = "counter synonym"
 				result["detail"] = "%s echoes %s" % [word, target]
 				result["target"] = target
+				result["pos"] = pos
 				return result
 	return result
 

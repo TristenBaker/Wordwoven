@@ -27,6 +27,9 @@ var _burn_damage: float = 0.0
 var _poison_damage: float = 0.0
 var _hit_tween: Tween = null
 var _sprite_rest: Vector2 = Vector2.ZERO
+var _retaliation_tween: Tween
+var _retaliation_origin: Vector2
+var _retaliation_peak: Vector2
 
 @onready var sprite: TextureRect = $Sprite
 @onready var name_label: Label = $InfoBox/NameLabel
@@ -72,6 +75,40 @@ func is_alive() -> bool:
 func strike_point() -> Vector2:
 	var area: Rect2 = sprite.get_global_rect()
 	return area.get_center() + Vector2(0.0, area.size.y * 0.12)
+
+
+## Presentation only: texture-region idle playback continues during the lunge.
+func begin_retaliation_lunge(target_global: Vector2) -> void:
+	cancel_retaliation_lunge()
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+		sprite.position = _sprite_rest
+		sprite.modulate = Color.WHITE
+	_retaliation_origin = sprite.position
+	var center: Vector2 = sprite.get_global_rect().get_center()
+	var global_offset: Vector2 = center.direction_to(target_global) * 32.0
+	var inverse: Transform2D = sprite.get_parent().get_global_transform().affine_inverse()
+	_retaliation_peak = _retaliation_origin + (inverse * (center + global_offset) - inverse * center)
+	_retaliation_tween = create_tween()
+	_retaliation_tween.tween_property(sprite, "position", _retaliation_peak, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+func finish_retaliation_lunge() -> void:
+	if _retaliation_tween == null:
+		return
+	_retaliation_tween.kill()
+	# Snap to the contact point at the authoritative damage event, then recoil.
+	sprite.position = _retaliation_peak
+	_retaliation_tween = create_tween()
+	_retaliation_tween.tween_property(sprite, "position", _retaliation_origin, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_retaliation_tween.tween_callback(cancel_retaliation_lunge)
+
+
+func cancel_retaliation_lunge() -> void:
+	if _retaliation_tween != null:
+		_retaliation_tween.kill()
+		sprite.position = _retaliation_origin
+		_retaliation_tween = null
 
 
 func take_damage(amount: float) -> void:
@@ -147,6 +184,7 @@ func clear_damage_preview() -> void:
 ## Flashes, then dissolves the enemy into smoke. Await it to know when
 ## the enemy has fully faded.
 func play_death() -> void:
+	cancel_retaliation_lunge()
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
 	sprite.position = _sprite_rest
@@ -168,6 +206,7 @@ func play_death() -> void:
 
 # Brief white flash and shake whenever damage lands.
 func _play_hit() -> void:
+	cancel_retaliation_lunge()
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
 	sprite.position = _sprite_rest

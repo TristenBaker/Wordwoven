@@ -1,35 +1,43 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://db4pb4ibjilog"]
 
-[ext_resource type="Script" path="res://scripts/ui/run_summary.gd" id="1_summary"]
+[ext_resource type="Script" uid="uid://bf4la1dd76dyw" path="res://scripts/ui/run_summary.gd" id="1_summary"]
+[ext_resource type="Texture2D" uid="uid://b04nyp4knpk2l" path="res://art/backgrounds/Defeat.png" id="2_hppug"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
+[ext_resource type="AudioStream" uid="uid://b6bytello81qa" path="res://assets/Audio/Death.mp3" id="5_dtha5"]
+[ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
-[node name="RunLost" type="Control"]
+[node name="RunLost" type="Control" unique_id=1475486645]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_summary")
-victory = false
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=1060052193]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.12, 0.05, 0.05, 1)
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_hppug")
 
-[node name="CenterBox" type="CenterContainer" parent="."]
+[node name="CenterBox" type="CenterContainer" parent="." unique_id=165115472]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Menu" type="VBoxContainer" parent="CenterBox"]
+[node name="Menu" type="VBoxContainer" parent="CenterBox" unique_id=838602790]
 layout_mode = 2
 theme_override_constants/separation = 28
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="CenterBox/Menu"]
+[node name="TitleLabel" type="Label" parent="CenterBox/Menu" unique_id=1093796759]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.4, 0.35, 1)
 theme_override_fonts/font = ExtResource("2_title")
@@ -37,15 +45,20 @@ theme_override_font_sizes/font_size = 72
 text = "Your Tale Ends Here"
 horizontal_alignment = 1
 
-[node name="TallyLabel" type="Label" parent="CenterBox/Menu"]
+[node name="TallyLabel" type="Label" parent="CenterBox/Menu" unique_id=205386073]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = ""
 horizontal_alignment = 1
 
-[node name="MenuButton" type="Button" parent="CenterBox/Menu"]
+[node name="MenuButton" type="Button" parent="CenterBox/Menu" unique_id=1797901670]
 custom_minimum_size = Vector2(240, 52)
 layout_mode = 2
 size_flags_horizontal = 4
+theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 22
 text = "Return to Menu"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=465573242]
+stream = ExtResource("5_dtha5")
+autoplay = true
+parameters/looping = true
