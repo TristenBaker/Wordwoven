@@ -26,6 +26,9 @@ var equipped_letters: Dictionary[String, LetterStats] = {}
 # Relic identifiers, resolved by the relic system.
 var relics: Array[String] = []
 
+# The ice-fishing choice can be made only once during a run.
+var fishing_hole_chosen: int = -1
+
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
 var defeated_enemy_ids: Array[String] = []
@@ -68,6 +71,7 @@ func start_new_run() -> void:
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
 	relics = []
+	fishing_hole_chosen = -1
 	completed_encounters = []
 	defeated_enemy_ids = []
 	relic_rewards = {}
@@ -177,6 +181,11 @@ func unequip_letter(slot: String) -> bool:
 
 
 func rolled_letter_drop() -> LetterStats:
+	var maximum_level: int = mini(5, 1 + encounter_index)
+	return rolled_letter_drop_at_level(randi_range(1, maximum_level))
+
+
+func rolled_letter_drop_at_level(item_level: int) -> LetterStats:
 	var letters: Array[String] = []
 	for letter: String in LetterStats.BASE_POWER:
 		letters.append(letter)
@@ -190,9 +199,9 @@ func rolled_letter_drop() -> LetterStats:
 		LetterStats.Element.EARTH,
 	]
 	var item_element: int = elements.pick_random()
-	var maximum_level: int = mini(5, 1 + encounter_index)
-	var item_level: int = randi_range(1, maximum_level)
-	return LetterStats.create_item(letter, item_element, item_level)
+	return LetterStats.create_item(
+		letter, item_element, clampi(item_level, 1, 5)
+	)
 
 
 func _setup_itemized_starters() -> void:
@@ -214,6 +223,13 @@ func _setup_itemized_starters() -> void:
 		equipped_letters[letter] = LetterStats.create_item(
 			letter, item_element, 1
 		)
+
+
+func choose_fishing_hole(hole_index: int) -> bool:
+	if fishing_hole_chosen >= 0:
+		return false
+	fishing_hole_chosen = hole_index
+	return true
 
 
 func add_gold(amount: int) -> void:
