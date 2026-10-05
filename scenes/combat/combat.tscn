@@ -354,4 +354,5 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
-[node name="EquipmentOverlay" parent="." instance=ExtResource("12_equipment")]
+[node name="EquipmentOverlay" parent="." unique_id=3890068 instance=ExtResource("12_equipment")]
+layout_mode = 1

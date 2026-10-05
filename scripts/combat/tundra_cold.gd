@@ -35,9 +35,9 @@ func freeze_after_turn(hand: Array[LetterStats]) -> LetterStats:
 		func(tile: LetterStats) -> bool: return not frozen.has(tile))
 	if available.size() <= MIN_USABLE:
 		return null
-	var tile: LetterStats = available.pick_random()
-	frozen.append(tile)
-	return tile
+	var selected_tile: LetterStats = available.pick_random()
+	frozen.append(selected_tile)
+	return selected_tile
 
 func thaw(tile: LetterStats) -> bool:
 	if not enabled or not frozen.has(tile) or heat < THAW_COST:

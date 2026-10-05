@@ -232,15 +232,18 @@ func _on_item_gui_input(
 		var token: int = Time.get_ticks_msec()
 		button.set_meta("letter_press_token", token)
 		get_tree().create_timer(0.45).timeout.connect(
-			_open_item_inspector_if_still_held.bind(button, item, token)
+			_open_item_inspector_if_still_held.bind(weakref(button), item, token)
 		)
 		return
 	button.remove_meta("letter_press_token")
 
 
 func _open_item_inspector_if_still_held(
-	button: Button, item: LetterStats, token: int
+	button_ref: WeakRef, item: LetterStats, token: int
 ) -> void:
+	var button := button_ref.get_ref() as Button
+	if button == null or not button.is_inside_tree() or button.is_queued_for_deletion():
+		return
 	if int(button.get_meta("letter_press_token", -1)) != token:
 		return
 	button.set_meta("suppress_letter_action", true)

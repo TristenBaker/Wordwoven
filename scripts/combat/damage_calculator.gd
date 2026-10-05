@@ -43,9 +43,12 @@ func calculate(
 ) -> Dictionary:
 	var letter_rows: Array[Dictionary] = []
 	var base_power: float = 0.0
+	var gold: int = 0
 	var elemental_base: Dictionary = _empty_elemental_damage()
 	var neutral_power: float = 0.0
 	for stats: LetterStats in drawn:
+		if stats.element in [LetterStats.Element.LIGHTNING, LetterStats.Element.ICE]:
+			gold += 1
 		var contribution: float = stats.power()
 		base_power += contribution
 		var element_name: String = stats.element_name_text().to_lower()
@@ -121,6 +124,7 @@ func calculate(
 	return {
 		"word": word,
 		"damage": damage,
+		"gold": gold,
 		"base_power": base_power,
 		"letters": letter_rows,
 		"drawn_count": drawn.size(),

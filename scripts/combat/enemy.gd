@@ -295,7 +295,7 @@ func _get_matte_mask(texture: Texture2D) -> ImageTexture:
 		if mask[index] == 0:
 			continue
 		var x: int = index % width
-		var y: int = index / width
+		var y: int = floor(float(index) / width)
 		var pixel: Color = source.get_pixel(x, y)
 		if maxf(pixel.r, maxf(pixel.g, pixel.b)) > 0.10:
 			continue

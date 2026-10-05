@@ -104,6 +104,7 @@ func _ready() -> void:
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
+	party_stage.gold_stolen.connect(_on_gold_stolen)
 	heat_meter = PanelContainer.new()
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
 	$Layout/InputArea.add_child(heat_meter)
@@ -267,6 +268,11 @@ func _resolve_word(word: String) -> void:
 		_enemy_turn()
 
 
+func _on_gold_stolen(amount: int) -> void:
+	RunState.add_gold(amount)
+	_refresh_status()
+
+
 func _enemy_turn() -> void:
 	_state = State.ENEMY_TURN
 	var delay: float = ENEMY_TURN_DELAY
@@ -419,7 +425,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		enemy.affinities
 	)
 	_set_output_counters(
-		int(round(float(result["damage"]))), int(result["water_heal"]), 0
+		int(round(float(result["damage"]))), int(result["water_heal"]), int(result["gold"])
 	)
 	_set_health_previews(
 		int(round(float(result["damage"]))), int(result["water_heal"])
