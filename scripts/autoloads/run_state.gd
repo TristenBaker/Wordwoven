@@ -8,12 +8,20 @@ const STARTING_HEALTH: int = 50
 const STARTING_GOLD: int = 0
 const ENCOUNTERS_PER_RUN: int = 6
 
+# Set false to return to the original shared-deck and use-level system.
+var use_itemized_letters: bool = true
+
 var player_max_health: int = STARTING_HEALTH
 var player_health: int = STARTING_HEALTH
 var gold: int = STARTING_GOLD
 
 # The letter characters the player owns.
 var deck: Array[LetterStats] = []
+
+# ARPG letter mode: acquired items are separate from the 26 matching letter
+# slots. A slot holds at most one item whose character matches that slot.
+var letter_inventory: Array[LetterStats] = []
+var equipped_letters: Dictionary[String, LetterStats] = {}
 
 # Relic identifiers, resolved by the relic system.
 var relics: Array[String] = []
@@ -28,6 +36,7 @@ var relic_rewards: Dictionary[int, String] = {}
 var pending_victory_enemy: String = ""
 var pending_victory_gold: int = 0
 var pending_relic_choices: Array[String] = []
+var pending_victory_letter: LetterStats = null
 
 # Shop stock survives leaving and reopening the tavern.
 var recruitment_encounter: int = -1
@@ -53,7 +62,7 @@ var word_history: Array[Dictionary] = []
 var is_run_active: bool = false
 
 
-## Starts a party containing each vowel and common consonant once.
+## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
 func start_new_run() -> void:
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
@@ -65,6 +74,7 @@ func start_new_run() -> void:
 	pending_victory_enemy = ""
 	pending_victory_gold = 0
 	pending_relic_choices = []
+	pending_victory_letter = null
 	recruitment_encounter = -1
 	recruitment_stock = []
 	encounter_index = 1
@@ -73,11 +83,16 @@ func start_new_run() -> void:
 	selected_biome = ""
 	word_history = []
 	deck = []
-	var starters: String = (
-		LetterStats.VOWELS + LetterStats.COMMON_CONSONANTS
-	)
-	for letter: String in starters:
-		deck.append(LetterStats.create(letter))
+	letter_inventory = []
+	equipped_letters = {}
+	if use_itemized_letters:
+		_setup_itemized_starters()
+	else:
+		var starters: String = (
+			LetterStats.VOWELS + LetterStats.COMMON_CONSONANTS
+		)
+		for letter: String in starters:
+			deck.append(LetterStats.create(letter))
 	is_run_active = true
 	EventBus.emit_deck_changed()
 	EventBus.emit_gold_changed(gold)
@@ -104,12 +119,101 @@ func begin_victory(enemy_name: String, gold_earned: int) -> void:
 	pending_victory_enemy = enemy_name
 	pending_victory_gold = gold_earned
 	pending_relic_choices = []
+	pending_victory_letter = null
+
+
+func begin_victory_with_drop(
+	enemy_name: String, gold_earned: int, dropped_letter: LetterStats
+) -> void:
+	begin_victory(enemy_name, gold_earned)
+	pending_victory_letter = dropped_letter
 
 
 func clear_pending_victory() -> void:
 	pending_victory_enemy = ""
 	pending_victory_gold = 0
 	pending_relic_choices = []
+	pending_victory_letter = null
+
+
+func combat_letters() -> Array[LetterStats]:
+	if not use_itemized_letters:
+		return deck
+	var letters: Array[LetterStats] = []
+	for stats: LetterStats in equipped_letters.values():
+		letters.append(stats)
+	return letters
+
+
+func add_letter_item(item: LetterStats) -> void:
+	if item == null:
+		return
+	letter_inventory.append(item)
+	EventBus.emit_deck_changed()
+
+
+func equip_letter_item(item: LetterStats) -> bool:
+	if item == null or not letter_inventory.has(item):
+		return false
+	var slot: String = item.letter.to_lower()
+	var previous: LetterStats = equipped_letters.get(slot, null)
+	letter_inventory.erase(item)
+	if previous != null:
+		letter_inventory.append(previous)
+	equipped_letters[slot] = item
+	EventBus.emit_deck_changed()
+	return true
+
+
+func unequip_letter(slot: String) -> bool:
+	var normalized: String = slot.to_lower()
+	var item: LetterStats = equipped_letters.get(normalized, null)
+	if item == null:
+		return false
+	equipped_letters.erase(normalized)
+	letter_inventory.append(item)
+	EventBus.emit_deck_changed()
+	return true
+
+
+func rolled_letter_drop() -> LetterStats:
+	var letters: Array[String] = []
+	for letter: String in LetterStats.BASE_POWER:
+		letters.append(letter)
+	var letter: String = letters.pick_random()
+	var elements: Array[int] = [
+		LetterStats.Element.FIRE,
+		LetterStats.Element.LIGHTNING,
+		LetterStats.Element.WATER,
+		LetterStats.Element.ICE,
+		LetterStats.Element.NATURE,
+		LetterStats.Element.EARTH,
+	]
+	var item_element: int = elements.pick_random()
+	var maximum_level: int = mini(5, 1 + encounter_index)
+	var item_level: int = randi_range(1, maximum_level)
+	return LetterStats.create_item(letter, item_element, item_level)
+
+
+func _setup_itemized_starters() -> void:
+	var letters: Array[String] = []
+	for letter: String in LetterStats.BASE_POWER:
+		letters.append(letter)
+	letters.shuffle()
+	for index: int in range(10):
+		var letter: String = letters[index]
+		var elements: Array[int] = [
+			LetterStats.Element.FIRE,
+			LetterStats.Element.LIGHTNING,
+			LetterStats.Element.WATER,
+			LetterStats.Element.ICE,
+			LetterStats.Element.NATURE,
+			LetterStats.Element.EARTH,
+		]
+		var item_element: int = elements.pick_random()
+		equipped_letters[letter] = LetterStats.create_item(
+			letter, item_element, 1
+		)
 
 
 func add_gold(amount: int) -> void:

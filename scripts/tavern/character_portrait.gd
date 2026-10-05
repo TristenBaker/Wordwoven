@@ -37,26 +37,24 @@ func show_member(stats: LetterStats) -> void:
 	# Placeholder level readout until per-level art exists.
 	level_label.text = str(stats.level)
 	name_label.text = "%s · %s" % [
-		stats.letter.to_upper(), stats.class_name_text()
+		stats.letter.to_upper(), stats.element_name_text()
 	]
 	_play_pop()
 
 
 ## The texture for a member's class at its current level tier.
 func texture_for(stats: LetterStats) -> Texture2D:
-	var tiers: Array[Texture2D] = _tiers_for(stats.letter_class)
+	var tiers: Array[Texture2D] = _tiers_for(stats.element)
 	if tiers.is_empty():
 		return null
 	return tiers[clampi(stats.level - 1, 0, tiers.size() - 1)]
 
 
-func _tiers_for(
-	letter_class: LetterStats.LetterClass
-) -> Array[Texture2D]:
-	match letter_class:
-		LetterStats.LetterClass.WARRIOR:
+func _tiers_for(element: int) -> Array[Texture2D]:
+	match element:
+		LetterStats.Element.FIRE, LetterStats.Element.EARTH:
 			return warrior_tiers
-		LetterStats.LetterClass.ROGUE:
+		LetterStats.Element.LIGHTNING, LetterStats.Element.ICE:
 			return rogue_tiers
 	return healer_tiers
 

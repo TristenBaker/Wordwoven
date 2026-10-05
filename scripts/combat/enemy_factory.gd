@@ -80,6 +80,7 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 		"texture": definition["texture"],
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,
+		"affinities": definition.get("affinities", {}),
 		"black_matte": bool(definition.get("black_matte", false)),
 		"idle_frames": int(definition.get("idle_frames", 1)),
 		"idle_fps": float(definition.get("idle_fps", 5.0)),

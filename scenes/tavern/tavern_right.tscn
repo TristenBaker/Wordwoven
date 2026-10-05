@@ -1,17 +1,36 @@
-[gd_scene format=3 uid="uid://bcls7kddbdpsp"]
+[gd_scene load_steps=11 format=3]
 
-[ext_resource type="Script" uid="uid://dqd4sbu7pcsq7" path="res://scripts/tavern/dealer_room.gd" id="1_room"]
-[ext_resource type="Script" uid="uid://boy5wrbse1wbg" path="res://scripts/tavern/economy_system.gd" id="2_economy"]
-[ext_resource type="Texture2D" uid="uid://bkrq8ekxejoqs" path="res://art/backgrounds/inkwell_tavern.png" id="3_background"]
-[ext_resource type="Texture2D" uid="uid://b58jyg1ih0pwj" path="res://art/characters/dealer.png" id="4_dealer"]
-[ext_resource type="AudioStream" uid="uid://bhsnn27a3ao3e" path="res://assets/Audio/Tavern.mp3" id="6_2mkss"]
-[ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+[ext_resource type="Script" path="res://scripts/tavern/dealer_room.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/tavern/economy_system.gd" id="2_economy"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/inkwell_tavern.png" id="3_background"]
+[ext_resource type="Texture2D" path="res://art/characters/dealer.png" id="4_dealer"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation"]
+bg_color = Color(0.12, 0.055, 0.018, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.73, 0.28, 0.96)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation_disabled"]
+bg_color = Color(0.08, 0.06, 0.04, 0.82)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.42, 0.38, 0.3, 0.85)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wood_menu"]
-content_margin_left = 20.0
-content_margin_top = 18.0
-content_margin_right = 20.0
-content_margin_bottom = 18.0
 bg_color = Color(0.16, 0.065, 0.035, 0.97)
 border_width_left = 5
 border_width_top = 5
@@ -22,8 +41,36 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+content_margin_left = 20.0
+content_margin_top = 18.0
+content_margin_right = 20.0
+content_margin_bottom = 18.0
 
-[node name="TavernRight" type="Control" unique_id=1827841212]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_parchment_option"]
+bg_color = Color(0.76, 0.61, 0.38, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.27, 0.11, 0.06, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_parchment_hover"]
+bg_color = Color(0.96, 0.79, 0.48, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.63, 0.32, 0.09, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="TavernRight" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,34 +79,34 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_room")
 
-[node name="Background" type="TextureRect" parent="." unique_id=734969258]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 texture = ExtResource("3_background")
 expand_mode = 1
 stretch_mode = 6
+mouse_filter = 2
 
-[node name="Shade" type="ColorRect" parent="." unique_id=897412510]
+[node name="Shade" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 color = Color(0.025, 0.01, 0.04, 0.44)
+mouse_filter = 2
 
-[node name="Systems" type="Node" parent="." unique_id=601671521]
+[node name="Systems" type="Node" parent="."]
 
-[node name="EconomySystem" type="Node" parent="Systems" unique_id=2113414590]
+[node name="EconomySystem" type="Node" parent="Systems"]
 script = ExtResource("2_economy")
 
-[node name="RoomLabel" type="Label" parent="." unique_id=1551080196]
+[node name="RoomLabel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 32.0
 offset_top = 26.0
@@ -69,7 +116,7 @@ theme_override_colors/font_color = Color(0.88, 0.72, 1, 1)
 theme_override_font_sizes/font_size = 34
 text = "The Whispering Corner"
 
-[node name="StatusPanel" type="VBoxContainer" parent="." unique_id=1957447398]
+[node name="StatusPanel" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -78,54 +125,50 @@ offset_left = -180.0
 offset_top = 24.0
 offset_right = -28.0
 offset_bottom = 62.0
-grow_horizontal = 0
 
-[node name="GoldLabel" type="Label" parent="StatusPanel" unique_id=1376720966]
+[node name="GoldLabel" type="Label" parent="StatusPanel"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
 theme_override_font_sizes/font_size = 18
 text = "Gold  0"
 
-[node name="DealerPortrait" type="TextureRect" parent="." unique_id=379752220]
+[node name="DealerPortrait" type="TextureRect" parent="."]
 layout_mode = 1
-anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.12
 anchor_right = 0.98
 anchor_bottom = 0.99
-mouse_filter = 2
 texture = ExtResource("4_dealer")
 expand_mode = 1
 stretch_mode = 5
+mouse_filter = 2
 
-[node name="DealerButton" type="Button" parent="." unique_id=1988505601]
+[node name="DealerButton" type="Button" parent="."]
 layout_mode = 1
-anchors_preset = -1
 anchor_left = 0.6
 anchor_top = 0.74
 anchor_right = 0.92
 anchor_bottom = 0.84
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 21
 text = "Browse Letter Stock"
 
-[node name="GoLeftButton" type="Button" parent="." unique_id=232580605]
+[node name="GoLeftButton" type="Button" parent="."]
 layout_mode = 1
-anchors_preset = 4
+anchor_left = 0.0
 anchor_top = 0.5
+anchor_right = 0.0
 anchor_bottom = 0.5
 offset_left = 30.0
 offset_top = -36.0
 offset_right = 102.0
 offset_bottom = 36.0
-tooltip_text = "Return to the main tavern"
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
+tooltip_text = "Return to the main tavern"
 text = "<"
 
-[node name="RightArrow" type="Button" parent="." unique_id=1593158256]
+[node name="RightArrow" type="Button" parent="."]
 layout_mode = 1
-anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
@@ -134,59 +177,59 @@ offset_left = -102.0
 offset_top = -36.0
 offset_right = -30.0
 offset_bottom = 36.0
-tooltip_text = "Already at the tavern's right side"
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_navigation_disabled")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_navigation_disabled")
+tooltip_text = "Already at the tavern's right side"
 disabled = true
 text = ">"
 
-[node name="LetterShop" type="PanelContainer" parent="." unique_id=1494668510]
+[node name="LetterShop" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
 anchor_left = 0.06
 anchor_top = 0.2
 anchor_right = 0.55
 anchor_bottom = 0.82
 theme_override_styles/panel = SubResource("StyleBoxFlat_wood_menu")
 
-[node name="Menu" type="VBoxContainer" parent="LetterShop" unique_id=1142461100]
+[node name="Menu" type="VBoxContainer" parent="LetterShop"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="LetterShop/Menu" unique_id=237285979]
+[node name="Title" type="Label" parent="LetterShop/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.53, 1)
 theme_override_font_sizes/font_size = 30
-text = "The Dealer's Letter Stock"
+text = "The Dealer's Curios"
 horizontal_alignment = 1
 
-[node name="Description" type="Label" parent="LetterShop/Menu" unique_id=2013816478]
+[node name="Description" type="Label" parent="LetterShop/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.86, 0.7, 1)
 theme_override_font_sizes/font_size = 17
-text = "Fresh letters, questionable provenance."
+text = "Six new letters arrive after every victory. Price: 5 gold per level."
 horizontal_alignment = 1
 
-[node name="OffersGrid" type="GridContainer" parent="LetterShop/Menu" unique_id=67161356]
+[node name="OffersGrid" type="GridContainer" parent="LetterShop/Menu"]
 layout_mode = 2
+columns = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 3
 
-[node name="FeedbackLabel" type="Label" parent="LetterShop/Menu" unique_id=1344134027]
+[node name="FeedbackLabel" type="Label" parent="LetterShop/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
 theme_override_font_sizes/font_size = 17
+text = ""
 autowrap_mode = 2
 
-[node name="CloseButton" type="Button" parent="LetterShop/Menu" unique_id=385542766]
+[node name="CloseButton" type="Button" parent="LetterShop/Menu"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.2, 0.09, 0.03, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_parchment_option")
+theme_override_styles/hover = SubResource("StyleBoxFlat_parchment_hover")
 text = "Close"
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1897424399]
-stream = ExtResource("6_2mkss")
-autoplay = true
-parameters/looping = true
+[node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

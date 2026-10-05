@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/post_fight/power_select.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/Victory.png" id="2_background"]
 [ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
 
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
@@ -147,3 +148,5 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "View Loot"
+
+[node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

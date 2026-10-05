@@ -1,0 +1,182 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/equipment_overlay.gd" id="1_script"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="2_body"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.105, 0.05, 0.02, 0.98)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.8, 0.5, 0.18, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+content_margin_left = 22.0
+content_margin_top = 18.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+
+[node name="EquipmentOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+z_index = 100
+script = ExtResource("1_script")
+
+[node name="EquipButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -282.0
+offset_top = -72.0
+offset_right = -156.0
+offset_bottom = -22.0
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 21
+text = "Letters"
+
+[node name="PowersButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -72.0
+offset_right = -24.0
+offset_bottom = -22.0
+theme_override_colors/font_color = Color(0.78, 0.56, 1, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 21
+text = "Powers (0)"
+
+[node name="EquipmentPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -550.0
+offset_top = -350.0
+offset_right = 550.0
+offset_bottom = 350.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Content" type="VBoxContainer" parent="EquipmentPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleRow" type="HBoxContainer" parent="EquipmentPanel/Content"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="EquipmentPanel/Content/TitleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.84, 0.48, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 30
+text = "Equipment"
+
+[node name="CloseButton" type="Button" parent="EquipmentPanel/Content/TitleRow"]
+custom_minimum_size = Vector2(46, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "×"
+
+[node name="LettersTab" type="Button" parent="EquipmentPanel/Content/TitleRow"]
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+button_pressed = true
+text = "Letters"
+
+[node name="PowersTab" type="Button" parent="EquipmentPanel/Content/TitleRow"]
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+toggle_mode = true
+text = "Powers"
+
+[node name="ModeLabel" type="Label" parent="EquipmentPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.83, 0.66, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 18
+
+[node name="EquippedLabel" type="Label" parent="EquipmentPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.75, 0.35, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 20
+text = "Equipped letter slots — click an equipped item to unequip it"
+
+[node name="SlotsScroll" type="ScrollContainer" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+vertical_scroll_mode = 0
+horizontal_scroll_mode = 0
+
+[node name="SlotsGrid" type="GridContainer" parent="EquipmentPanel/Content/SlotsScroll"]
+layout_mode = 2
+columns = 13
+theme_override_constants/h_separation = 7
+theme_override_constants/v_separation = 7
+
+[node name="InventoryLabel" type="Label" parent="EquipmentPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.75, 0.35, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 20
+text = "Inventory — click an item to equip it into its matching slot"
+
+[node name="InventoryScroll" type="ScrollContainer" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+vertical_scroll_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="InventoryGrid" type="GridContainer" parent="EquipmentPanel/Content/InventoryScroll"]
+layout_mode = 2
+columns = 6
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+
+[node name="InventoryEmptyLabel" type="Label" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.83, 0.66, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 21
+autowrap_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PowersScroll" type="ScrollContainer" parent="EquipmentPanel/Content"]
+custom_minimum_size = Vector2(0, 480)
+layout_mode = 2
+vertical_scroll_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="PowersGrid" type="GridContainer" parent="EquipmentPanel/Content/PowersScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 1
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12

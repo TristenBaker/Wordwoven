@@ -80,14 +80,13 @@ func _on_word_resolved(result: Dictionary) -> void:
 		result["effectiveness"],
 		result["semantic_multiplier"],
 	])
-	lines.append("speed %.1fs -> x%.2f" % [
-		result["elapsed_seconds"],
-		result["speed_multiplier"],
-	])
-	if result["gold_bonus"] > 0:
-		lines.append("rogue gold +%d" % result["gold_bonus"])
-	if result["heal_amount"] > 0:
-		lines.append("healer restore +%d" % result["heal_amount"])
+	var elemental_damage: Dictionary = result["elemental_damage"]
+	for element_name: String in elemental_damage:
+		var amount: float = elemental_damage[element_name]
+		if amount > 0.0:
+			lines.append("%s %.1f" % [element_name, amount])
+	if result["lightning_procs"] > 0:
+		lines.append("lightning echoes %d" % result["lightning_procs"])
 	breakdown_label.text = "\n".join(lines)
 
 

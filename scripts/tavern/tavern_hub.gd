@@ -8,6 +8,7 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var leave_button: Button = $LeaveButton
 @onready var left_arrow: Button = $GoLeftButton
 @onready var right_arrow: Button = $RightArrow
+@onready var forge_button: Button = $ForgeButton
 @onready var health_label: Label = $StatusPanel/HealthLabel
 @onready var gold_label: Label = $StatusPanel/GoldLabel
 
@@ -17,6 +18,7 @@ func _ready() -> void:
 	leave_button.pressed.connect(_leave_tavern)
 	left_arrow.pressed.connect(_open_left_room)
 	right_arrow.pressed.connect(_open_right_room)
+	forge_button.pressed.connect(_open_forge)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	_refresh_status()
 
@@ -42,6 +44,10 @@ func _open_left_room() -> void:
 
 func _open_right_room() -> void:
 	get_tree().change_scene_to_file(ScenePaths.TAVERN_RIGHT)
+
+
+func _open_forge() -> void:
+	get_tree().change_scene_to_file(ScenePaths.FORGE)
 
 
 func _on_gold_changed(_new_total: int) -> void:

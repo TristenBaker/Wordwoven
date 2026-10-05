@@ -12,6 +12,7 @@ const LOOT_DROP: String = "res://scenes/post_fight/loot_drop.tscn"
 const TAVERN: String = "res://scenes/tavern/tavern_hub.tscn"
 const TAVERN_LEFT: String = "res://scenes/tavern/tavern_left.tscn"
 const TAVERN_RIGHT: String = "res://scenes/tavern/tavern_right.tscn"
+const FORGE: String = "res://scenes/tavern/forge.tscn"
 const ENCOUNTER_SELECT: String = \
 		"res://scenes/encounter_select.tscn"
 const RUN_WON: String = "res://scenes/run_won.tscn"

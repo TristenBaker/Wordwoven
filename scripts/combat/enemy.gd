@@ -19,9 +19,12 @@ var _idle_width: float = 0.0
 var attack: int = 0
 var gold_reward: int = 0
 var tags: Array[String] = []
+var affinities: Dictionary = {}
 
 var _max_health: int = 1
 var _health: int = 1
+var _burn_damage: float = 0.0
+var _poison_damage: float = 0.0
 var _hit_tween: Tween = null
 var _sprite_rest: Vector2 = Vector2.ZERO
 var _retaliation_tween: Tween
@@ -51,10 +54,13 @@ func setup(spawn_data: Dictionary) -> void:
 	attack = spawn_data["attack"]
 	gold_reward = spawn_data["gold"]
 	tags = spawn_data["tags"]
+	affinities = spawn_data.get("affinities", {})
 	_max_health = spawn_data["health"]
 	_health = _max_health
+	_burn_damage = 0.0
+	_poison_damage = 0.0
 	name_label.text = enemy_name
-	tags_label.text = " • ".join(tags)
+	tags_label.text = " • ".join(tags) + _affinity_text()
 	_apply_texture(
 		spawn_data["texture"], spawn_data["frame_width"], spawn_data
 	)
@@ -113,6 +119,49 @@ func take_damage(amount: float) -> void:
 	EventBus.emit_enemy_damaged(amount)
 	if _health <= 0:
 		died.emit()
+
+
+func add_burn(amount: float) -> void:
+	_burn_damage += maxf(amount, 0.0)
+
+
+func consume_burn() -> float:
+	var damage: float = _burn_damage
+	_burn_damage = 0.0
+	if damage > 0.0 and is_alive():
+		take_damage(damage)
+	return damage
+
+
+func add_poison(amount: float) -> void:
+	_poison_damage += maxf(amount, 0.0)
+
+
+func consume_poison() -> float:
+	var damage: float = _poison_damage
+	_poison_damage = 0.0
+	if damage > 0.0 and is_alive():
+		take_damage(damage)
+	return damage
+
+
+func _affinity_text() -> String:
+	var weak: Array[String] = []
+	var resistant: Array[String] = []
+	for element_name: String in [
+		"fire", "lightning", "water", "ice", "nature", "earth"
+	]:
+		var multiplier: float = float(affinities.get(element_name, 1.0))
+		if multiplier > 1.0:
+			weak.append(element_name.capitalize())
+		elif multiplier < 1.0:
+			resistant.append(element_name.capitalize())
+	var lines: Array[String] = []
+	if not weak.is_empty():
+		lines.append("Weak: " + ", ".join(weak))
+	if not resistant.is_empty():
+		lines.append("Resists: " + ", ".join(resistant))
+	return "\n" + " · ".join(lines) if not lines.is_empty() else ""
 
 
 func set_projected_damage(amount: float) -> void:

@@ -1,11 +1,46 @@
-[gd_scene format=3 uid="uid://3vtham4p6wk0"]
+[gd_scene load_steps=9 format=3 uid="uid://3vtham4p6wk0"]
 
 [ext_resource type="Script" uid="uid://2lece1lnnonq" path="res://scripts/tavern/tavern_hub.gd" id="1_hub"]
 [ext_resource type="Texture2D" uid="uid://bkrq8ekxejoqs" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
-[ext_resource type="AudioStream" uid="uid://bhsnn27a3ao3e" path="res://assets/Audio/Tavern.mp3" id="6_f8d1p"]
-[ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation"]
+bg_color = Color(0.12, 0.055, 0.018, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.73, 0.28, 0.96)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation_hover"]
+bg_color = Color(0.35, 0.16, 0.04, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.88, 0.53, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_interaction"]
+bg_color = Color(0.08, 0.047, 0.026, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.66, 0.28, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="TavernHub" type="Control" unique_id=1081497914]
 layout_mode = 3
@@ -102,7 +137,6 @@ offset_top = 26.0
 offset_right = -26.0
 offset_bottom = 72.0
 grow_horizontal = 0
-theme = ExtResource("ww_buttons")
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
 text = "Leave Tavern"
@@ -116,10 +150,10 @@ offset_left = 30.0
 offset_top = -36.0
 offset_right = 102.0
 offset_bottom = 36.0
-grow_vertical = 2
 tooltip_text = "Visit the barkeeper"
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
+theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
 text = "<"
 
 [node name="RightArrow" type="Button" parent="." unique_id=1741650384]
@@ -133,11 +167,10 @@ offset_left = -102.0
 offset_top = -36.0
 offset_right = -30.0
 offset_bottom = 36.0
-grow_horizontal = 0
-grow_vertical = 2
 tooltip_text = "Visit the letter dealer"
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
+theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
 text = ">"
 
 [node name="TavernPageButton" type="Button" parent="." unique_id=2122480003]
@@ -150,11 +183,28 @@ offset_top = 478.0
 offset_right = 230.0
 offset_bottom = 584.0
 grow_horizontal = 2
-theme = ExtResource("ww_buttons")
+theme_override_colors/font_color = Color(1, 0.88, 0.6, 1)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 23
+theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
 text = "Visit the Tavern Page
 Manage your letters, recruits, and provisions  [B]"
+
+[node name="ForgeButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -130.0
+offset_top = 382.0
+offset_right = 130.0
+offset_bottom = 442.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.45, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
+text = "Forge"
 
 [node name="Hint" type="Label" parent="." unique_id=1802721590]
 visible = false
@@ -175,7 +225,4 @@ theme_override_font_sizes/font_size = 17
 text = "Press B to open the Tavern Page"
 horizontal_alignment = 1
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=850164126]
-stream = ExtResource("6_f8d1p")
-autoplay = true
-parameters/looping = true
+[node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

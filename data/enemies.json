@@ -8,7 +8,8 @@
 		"frame_width": 0,
 		"tag_pool": ["filthy", "quick", "hungry", "small"],
 		"tag_count": 1,
-		"tier": 1
+    "tier": 1,
+    "affinities": {"fire": 1.2, "ice": 0.9}
 	},
 	"goblin": {
 		"name": "Goblin",
@@ -19,7 +20,8 @@
 		"frame_width": 150,
 		"tag_pool": ["greedy", "sneaky", "angry", "crafty"],
 		"tag_count": 1,
-		"tier": 1
+    "tier": 1,
+    "affinities": {"lightning": 1.2, "earth": 0.85}
 	},
 	"mushroom": {
 		"name": "Myconid",
@@ -30,7 +32,8 @@
 		"frame_width": 150,
 		"tag_pool": ["poisonous", "damp", "dark", "rooted"],
 		"tag_count": 1,
-		"tier": 2
+    "tier": 2,
+    "affinities": {"fire": 1.35, "nature": 0.7, "ice": 1.15}
 	},
 	"skeleton": {
 		"name": "Skeleton",
@@ -41,7 +44,8 @@
 		"frame_width": 150,
 		"tag_pool": ["dead", "brittle", "cold", "armed"],
 		"tag_count": 2,
-		"tier": 2
+    "tier": 2,
+    "affinities": {"lightning": 1.25, "nature": 1.2, "ice": 0.7}
 	},
 	"flying_eye": {
 		"name": "Flying Eye",
@@ -52,7 +56,8 @@
 		"frame_width": 150,
 		"tag_pool": ["watchful", "flying", "strange", "round"],
 		"tag_count": 2,
-		"tier": 3
+    "tier": 3,
+    "affinities": {"earth": 1.3, "lightning": 0.75, "ice": 1.1}
 	},
 	"dragon": {
 		"name": "Red Dragon",
@@ -63,7 +68,8 @@
 		"frame_width": 0,
 		"tag_pool": ["fiery", "huge", "ancient", "greedy"],
 		"tag_count": 2,
-		"tier": 4
+    "tier": 4,
+    "affinities": {"water": 1.35, "ice": 1.35, "fire": 0.65}
 	},
 	"frostfang_wolf": {
 		"name": "Frostfang Wolf",

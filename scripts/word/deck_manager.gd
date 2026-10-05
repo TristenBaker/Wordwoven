@@ -16,7 +16,7 @@ var frozen_letters: Array[LetterStats] = []
 ## a full hand.
 func start_encounter() -> void:
 	frozen_letters = []
-	_draw_pile = RunState.deck.duplicate()
+	_draw_pile = RunState.combat_letters().duplicate()
 	_draw_pile.shuffle()
 	_discard_pile = []
 	_hand = []
