@@ -29,7 +29,8 @@ func _ready() -> void:
 	meal_button.pressed.connect(_on_meal_pressed)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.deck_changed.connect(_on_deck_changed)
-	economy.ensure_recruitment_offers()
+	if not RunState.use_itemized_letters:
+		economy.ensure_recruitment_offers()
 	if not RunState.deck.is_empty():
 		_selected = RunState.deck[0]
 	_rebuild_deck_grids()
@@ -101,6 +102,12 @@ func _on_deck_changed() -> void:
 
 func _rebuild_recruit_buttons() -> void:
 	_clear_grid(recruit_grid)
+	if RunState.use_itemized_letters:
+		var dealer_note := Label.new()
+		dealer_note.text = "Letter tiles are sold by the dealer in the tavern's right room."
+		dealer_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		recruit_grid.add_child(dealer_note)
+		return
 	var offers: Array[Dictionary] = economy.recruitment_offers()
 	for index: int in range(offers.size()):
 		var offer: Dictionary = offers[index]
@@ -115,7 +122,7 @@ func _rebuild_recruit_buttons() -> void:
 			"Recruited" if offer["purchased"] else "%dg" % price,
 		]
 		button.disabled = offer["purchased"] or RunState.gold < price
-		button.tooltip_text = stats.effect_text()
+		button.tooltip_text = stats.information_tooltip()
 		button.pressed.connect(_on_recruit_pressed.bind(index))
 		recruit_grid.add_child(button)
 
@@ -131,9 +138,8 @@ func _rebuild_deck_grids() -> void:
 		button.button_pressed = stats == _selected
 		button.custom_minimum_size = Vector2(52, 44)
 		button.text = "%s\nLv%d" % [stats.letter.to_upper(), stats.level]
-		button.tooltip_text = "%s\n%s\n+1 level on every drawn use." % [
-			stats.describe(), stats.effect_text()
-		]
+		button.tooltip_text = stats.information_tooltip() \
+			+ "\n+1 level on every drawn use."
 		button.pressed.connect(_on_letter_selected.bind(stats))
 		_grid_for(stats).add_child(button)
 

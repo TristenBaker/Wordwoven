@@ -6,6 +6,7 @@ extends PanelContainer
 # Used letters fade from the hand while their visual copy travels to the board.
 const COLOR_IDLE: Color = Color(1.0, 1.0, 1.0, 1.0)
 const COLOR_USED: Color = Color(0.45, 0.45, 0.45, 0.35)
+const LONG_PRESS_MS: int = 450
 
 signal activated(tile: LetterTile)
 var frozen: bool = false
@@ -14,9 +15,13 @@ var _frost: Control
 var _badge: Label
 var _ice_tween: Tween
 var _feedback_tween: Tween
+var _press_started_ms: int = -1
+var _press_token: int = 0
+var _long_press_opened: bool = false
 var stats: LetterStats = null
 
 func _ready() -> void:
+	theme = LetterTooltip.transparent_shell_theme()
 	$Layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	letter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_frost = Control.new()
@@ -34,9 +39,32 @@ func _ready() -> void:
 	_badge.offset_bottom = -5
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		activated.emit(self)
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_event: InputEventMouseButton = event
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if mouse_event.pressed:
+		_press_started_ms = Time.get_ticks_msec()
+		_press_token += 1
+		_long_press_opened = false
+		get_tree().create_timer(float(LONG_PRESS_MS) / 1000.0).timeout.connect(
+			_open_inspector_if_still_held.bind(_press_token)
+		)
 		accept_event()
+		return
+	_press_started_ms = -1
+	_press_token += 1
+	if not _long_press_opened:
+		activated.emit(self)
+	accept_event()
+
+
+func _open_inspector_if_still_held(token: int) -> void:
+	if token != _press_token or _press_started_ms < 0:
+		return
+	_long_press_opened = true
+	LetterInspector.open_for(stats)
 
 func set_frozen(value: bool, affordable: bool, animate: bool = false) -> void:
 	if value == frozen and (not value or affordable == _affordable) and not animate:
@@ -55,7 +83,7 @@ func set_frozen(value: bool, affordable: bool, animate: bool = false) -> void:
 	_badge.text = ("THAW · %d" % TundraCold.THAW_COST if affordable else "FROZEN") if frozen else ""
 	_badge.add_theme_color_override("font_color", Color("ffdaaa") if affordable else Color("c5edf9"))
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if frozen and affordable else Control.CURSOR_ARROW
-	tooltip_text = "%s\n%s" % [stats.describe(), stats.effect_text()]
+	tooltip_text = stats.information_tooltip()
 	if frozen:
 		tooltip_text += "\nFrozen — click to thaw for %d Heat. Valid words grant +%d Heat." % [TundraCold.THAW_COST, TundraCold.HEAT_PER_WORD]
 	if not animate and was_frozen == frozen and _ice_tween != null and _ice_tween.is_valid():
@@ -97,7 +125,13 @@ func setup(new_stats: LetterStats) -> void:
 	letter_label.text = stats.letter.to_upper()
 	letter_label.add_theme_color_override("font_color", tile_theme.letter_color)
 	add_theme_stylebox_override("panel", _tile_style())
-	tooltip_text = "%s\n%s" % [stats.describe(), stats.effect_text()]
+	tooltip_text = stats.information_tooltip()
+
+
+func _make_custom_tooltip(_for_text: String) -> Object:
+	if stats == null:
+		return null
+	return LetterTooltip.create_for(stats)
 
 
 ## Brightens or dims the tile while a word is being typed.

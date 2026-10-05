@@ -104,5 +104,52 @@ func effect_text() -> String:
 	return "%s damage" % element_name_text()
 
 
+func throughput_text() -> String:
+	return "Base contribution: %.1f %s damage per use." % [
+		power(), element_name_text()
+	]
+
+
+func element_detail_text() -> String:
+	match element:
+		Element.FIRE:
+			return "Fire damage can ignite enemies through Burn powers."
+		Element.LIGHTNING:
+			return "Lightning damage can chain into recursive echoes."
+		Element.WATER:
+			return "Water damage can restore health through Water powers."
+		Element.ICE:
+			return "Ice damage can weaken the next enemy retaliation."
+		Element.NATURE:
+			return "Nature damage can poison enemies through Nature powers."
+		Element.EARTH:
+			return "Earth damage can grant Guard against retaliation."
+	return "Elemental damage shaped by your selected powers."
+
+
+func information_tooltip() -> String:
+	var lines: Array[String] = [
+		letter.to_upper(),
+		element_name_text().to_upper(),
+		"Level: %d" % level,
+		"",
+		element_detail_text(),
+		throughput_text(),
+		"",
+		"Affected by powers:",
+	]
+	var power_system: RelicSystem = RelicSystem.new()
+	var power_ids: Array[String] = power_system.affecting_power_ids(element)
+	if power_ids.is_empty():
+		lines.append("• None selected yet")
+	else:
+		for power_id: String in power_ids:
+			var info: Dictionary = power_system.relic_info(power_id)
+			lines.append("• %s ×%d" % [
+				info.get("name", power_id), RunState.relics.count(power_id)
+			])
+	return "\n".join(lines)
+
+
 func modifier_name_text() -> String:
 	return Modifier.keys()[modifier].capitalize()

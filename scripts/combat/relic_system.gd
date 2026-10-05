@@ -77,6 +77,24 @@ func quality_color(power_id: String) -> Color:
 	return QUALITY_COLORS.get(quality, QUALITY_COLORS["common"])
 
 
+func affecting_power_ids(element: int) -> Array[String]:
+	var ids: Array[String] = []
+	for power_id: String in RunState.relics:
+		if ids.has(power_id):
+			continue
+		var effect: String = String(relic_info(power_id).get("effect", ""))
+		if _effect_applies_to_element(effect, element):
+			ids.append(power_id)
+	return ids
+
+
+func _effect_applies_to_element(effect: String, element: int) -> bool:
+	var element_name: String = LetterStats.Element.keys()[element].to_lower()
+	return effect == "all_element_damage_multiplier" \
+		or effect == "hand_size" \
+		or effect.begins_with(element_name + "_")
+
+
 func _roll_quality(allows_common: bool = true) -> String:
 	var total: int = 0
 	for quality: String in QUALITY_WEIGHTS:

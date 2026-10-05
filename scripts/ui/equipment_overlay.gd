@@ -102,7 +102,7 @@ func _rebuild_slots() -> void:
 		var button := _item_button(item, character, true)
 		button.disabled = item == null or not RunState.use_itemized_letters
 		if item != null:
-			button.pressed.connect(_unequip.bind(character))
+			button.pressed.connect(_on_slot_pressed.bind(character, button))
 		slots_grid.add_child(button)
 
 
@@ -123,7 +123,7 @@ func _rebuild_inventory() -> void:
 	inventory_grid.columns = 6
 	for item: LetterStats in RunState.letter_inventory:
 		var button := _item_button(item, item.letter, false)
-		button.pressed.connect(_equip.bind(item))
+		button.pressed.connect(_on_inventory_pressed.bind(item, button))
 		inventory_grid.add_child(button)
 
 
@@ -183,7 +183,7 @@ func _power_style(color: Color) -> StyleBoxFlat:
 
 
 func _item_button(item: LetterStats, slot_letter: String, is_slot: bool) -> Button:
-	var button := Button.new()
+	var button := LetterInfoButton.new()
 	button.custom_minimum_size = Vector2(72, 70) if is_slot else Vector2(150, 88)
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.add_theme_font_size_override("font_size", 15 if is_slot else 16)
@@ -195,7 +195,8 @@ func _item_button(item: LetterStats, slot_letter: String, is_slot: bool) -> Butt
 	button.text = "%s\nLv%d %s" % [
 		item.letter.to_upper(), item.level, item.element_name_text()
 	]
-	button.tooltip_text = "%s\n%s" % [item.describe(), item.effect_text()]
+	button.set_letter_stats(item)
+	button.gui_input.connect(_on_item_gui_input.bind(button, item))
 	button.add_theme_color_override("font_color", TILE_THEME.letter_color)
 	button.add_theme_stylebox_override("normal", _item_style(item))
 	return button
@@ -217,6 +218,52 @@ func _empty_style() -> StyleBoxFlat:
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
 	return style
+
+
+func _on_item_gui_input(
+	event: InputEvent, button: Button, item: LetterStats
+) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_event: InputEventMouseButton = event
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if mouse_event.pressed:
+		var token: int = Time.get_ticks_msec()
+		button.set_meta("letter_press_token", token)
+		get_tree().create_timer(0.45).timeout.connect(
+			_open_item_inspector_if_still_held.bind(button, item, token)
+		)
+		return
+	button.remove_meta("letter_press_token")
+
+
+func _open_item_inspector_if_still_held(
+	button: Button, item: LetterStats, token: int
+) -> void:
+	if int(button.get_meta("letter_press_token", -1)) != token:
+		return
+	button.set_meta("suppress_letter_action", true)
+	LetterInspector.open_for(item)
+
+
+func _on_inventory_pressed(item: LetterStats, button: Button) -> void:
+	if _consume_inspector_press(button):
+		return
+	_equip(item)
+
+
+func _on_slot_pressed(letter: String, button: Button) -> void:
+	if _consume_inspector_press(button):
+		return
+	_unequip(letter)
+
+
+func _consume_inspector_press(button: Button) -> bool:
+	if not button.get_meta("suppress_letter_action", false):
+		return false
+	button.remove_meta("suppress_letter_action")
+	return true
 
 
 func _equip(item: LetterStats) -> void:
