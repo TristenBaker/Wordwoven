@@ -60,7 +60,8 @@ func _run() -> void:
 		var expected_frames: int = 8 if enemy.enemy_id == "frost_wyrm" else 4
 		check(enemy._idle_frames == expected_frames, "idle frame count")
 		check((enemy.sprite.material != null) == (enemy.enemy_id == "tundra_behemoth"), "Behemoth matte only")
-		check(combat.background.texture.resource_path.ends_with("T%d.png" % stage), "background")
+		check(combat.background.texture == null and combat.layered_background != null \
+				and combat.layered_background._layers.size() == combat.TUNDRA_LAYERS.size(), "layered background")
 		enemy.set_process(false)
 		# Legacy idles run at half speed; grid sheets keep their Aseprite timing.
 		var speed: float = 1.0 if data.cell_width > 0 else 0.5

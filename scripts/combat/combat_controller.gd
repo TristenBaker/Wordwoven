@@ -35,6 +35,18 @@ var backgrounds: Array[Texture2D] = [
 	preload("res://art/backgrounds/tundra.png"),
 	preload("res://art/backgrounds/volcano.png")
 ]
+# Tundra backdrop layers, back to front. "shake" is how far a layer jolts
+# when the player is hit and "scroll" its drift, both in art pixels.
+const TUNDRA_LAYERS_DIR: String = "res://art/backgrounds/Tundra Biome/Layers/"
+const TUNDRA_LAYERS: Array[Dictionary] = [
+	{"texture": TUNDRA_LAYERS_DIR + "0_sky.png"},
+	{"texture": TUNDRA_LAYERS_DIR + "1_clouds.png", "shake": 1.0, "scroll": 3.0},
+	{"texture": TUNDRA_LAYERS_DIR + "2_mountains.png", "shake": 1.0},
+	{"texture": TUNDRA_LAYERS_DIR + "3_midground.png", "shake": 2.0},
+	{"texture": TUNDRA_LAYERS_DIR + "4_upper_midground.png", "shake": 3.0},
+	{"texture": TUNDRA_LAYERS_DIR + "5_foreground.png", "shake": 4.0},
+]
+const TUNDRA_SHADE_ALPHA: float = 0.15
 var required_pos: String = "n"
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
@@ -45,6 +57,7 @@ var _guard: int = 0
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
 var strike_fx: EnemyStrikeFx
+var layered_background: LayeredBackground = null
 var _last_allowed_text: String = ""
 
 # Adding background variable
@@ -154,10 +167,15 @@ func _randomize_background() -> void:
 	# Keep the existing random draw so other randomized systems are unaffected.
 	background.texture = backgrounds.pick_random()
 	if RunState.selected_biome == "tundra":
-		background.texture = load(
-			"res://art/backgrounds/Tundra Biome/T%d.png"
-			% RunState.encounter_index
-		)
+		background.texture = null
+		layered_background = LayeredBackground.new()
+		add_child(layered_background)
+		# Directly above the plain backdrop, under the shade and UI.
+		move_child(layered_background, background.get_index() + 1)
+		layered_background.setup(TUNDRA_LAYERS)
+		# The pixel-art backdrop is already calm; dim it far less than the
+		# busy painted backgrounds so its colors read true.
+		$Shade.color.a = TUNDRA_SHADE_ALPHA
 
 func _pick_spawn_data() -> Dictionary:
 	var enemy_id: String = RunState.next_enemy_id
@@ -314,6 +332,8 @@ func _enemy_turn() -> void:
 	_retaliation_reduction = 0
 	_guard = 0
 	strike_fx.play(retaliation, $Layout)
+	if retaliation > 0 and layered_background != null:
+		layered_background.shake()
 	RunState.damage_player(retaliation)
 	_refresh_status()
 	if RunState.player_health <= 0:

@@ -10,9 +10,8 @@ const SLASH_TIME: float = 0.12
 const SLASH_STAGGER: float = 0.04
 const FADE_TIME: float = 0.35
 const FLASH_ALPHA: float = 0.28
-const SHAKE_OFFSETS: Array[Vector2] = [
-	Vector2(14, -6), Vector2(-11, 5), Vector2(8, -3), Vector2(-4, 2), Vector2.ZERO,
-]
+# Peak UI jolt in pixels; the swing follows the backdrop's shake pattern.
+const SHAKE_STRENGTH: float = 14.0
 const SPARK_TEXTURE: Texture2D = preload("res://art/party/effects/spark.png")
 const NUMBER_FONT: FontFile = preload("res://assets/Fonts/Junicode-Bold.ttf")
 
@@ -122,8 +121,11 @@ func _shake(target: Control) -> void:
 	_shake_target = target
 	_shake_rest = target.position
 	_shake_tween = create_tween()
-	for offset: Vector2 in SHAKE_OFFSETS:
-		_shake_tween.tween_property(target, "position", _shake_rest + offset, 0.04)
+	for jolt: Vector2 in LayeredBackground.SHAKE_PATTERN:
+		_shake_tween.tween_property(
+			target, "position", _shake_rest + (jolt * SHAKE_STRENGTH).round(),
+			LayeredBackground.SHAKE_STEP
+		)
 
 
 func _show_number(damage: int) -> void:
