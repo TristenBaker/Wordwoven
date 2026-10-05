@@ -1,0 +1,327 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/ice_fishing_controller.gd" id="1_script"]
+[ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
+
+[sub_resource type="StyleBoxFlat" id="StyleMain"]
+bg_color = Color(0.035, 0.105, 0.17, 0.97)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.45, 0.8, 0.95, 0.9)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleFish"]
+bg_color = Color(0.05, 0.16, 0.24, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.68, 0.86, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleResult"]
+bg_color = Color(0.08, 0.23, 0.28, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.74, 0.3, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="IceFishing" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Sky" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.17, 0.26, 1)
+
+[node name="Ice" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -230.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.55, 0.82, 0.9, 1)
+
+[node name="Hole" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -185.0
+offset_top = -150.0
+offset_right = 185.0
+offset_bottom = -42.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.015, 0.07, 0.11, 1)
+
+[node name="MainPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -330.0
+offset_right = 400.0
+offset_bottom = 285.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleMain")
+
+[node name="Margin" type="MarginContainer" parent="MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="MainPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="MainPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
+theme_override_fonts/font = ExtResource("2_title")
+theme_override_font_sizes/font_size = 42
+text = "Warm-Word Ice Fishing"
+horizontal_alignment = 1
+
+[node name="HoleSelectionPanel" type="PanelContainer" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleFish")
+
+[node name="HoleBox" type="VBoxContainer" parent="MainPanel/Margin/Content/HoleSelectionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HoleStatusLabel" type="Label" parent="MainPanel/Margin/Content/HoleSelectionPanel/HoleBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 21
+text = "Choose carefully. Each fishing hole can be used only once."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HoleButtons" type="HBoxContainer" parent="MainPanel/Margin/Content/HoleSelectionPanel/HoleBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="HoleOneButton" type="Button" parent="MainPanel/Margin/Content/HoleSelectionPanel/HoleBox/HoleButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 78)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 20
+text = "Hole 1\nFish Here"
+
+[node name="HoleTwoButton" type="Button" parent="MainPanel/Margin/Content/HoleSelectionPanel/HoleBox/HoleButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 78)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 20
+text = "Hole 2\nFish Here"
+
+[node name="HoleThreeButton" type="Button" parent="MainPanel/Margin/Content/HoleSelectionPanel/HoleBox/HoleButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 78)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 20
+text = "Hole 3\nFish Here"
+
+[node name="FishPanel" type="PanelContainer" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleFish")
+
+[node name="FishBox" type="VBoxContainer" parent="MainPanel/Margin/Content/FishPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="FishNameLabel" type="Label" parent="MainPanel/Margin/Content/FishPanel/FishBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 31
+text = "A fish is biting..."
+horizontal_alignment = 1
+
+[node name="RarityLabel" type="Label" parent="MainPanel/Margin/Content/FishPanel/FishBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 20
+text = "Rarity"
+horizontal_alignment = 1
+
+[node name="InstructionLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.91, 0.94, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 19
+text = "Type distinct words associated with warmth."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ProgressLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.79, 0.38, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 25
+text = "Warm words: 0 / 1"
+horizontal_alignment = 1
+
+[node name="TargetWordLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "WordNet sequence: [WARM]"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="TimerLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 19
+text = "Line tension: 8.0 seconds"
+horizontal_alignment = 1
+
+[node name="TimerBar" type="ProgressBar" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+max_value = 8.0
+value = 8.0
+show_percentage = false
+
+[node name="InputRow" type="HBoxContainer" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="WordInput" type="LineEdit" parent="MainPanel/Margin/Content/InputRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 23
+placeholder_text = "Type a warm word..."
+max_length = 24
+
+[node name="SubmitButton" type="Button" parent="MainPanel/Margin/Content/InputRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 50)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 21
+text = "Reel!"
+
+[node name="FeedbackLabel" type="Label" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.9, 0.94, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 18
+text = "Drilling through the ice..."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ResultPanel" type="PanelContainer" parent="MainPanel/Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleResult")
+
+[node name="ResultBox" type="VBoxContainer" parent="MainPanel/Margin/Content/ResultPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="ResultLabel" type="Label" parent="MainPanel/Margin/Content/ResultPanel/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 25
+text = "Caught!"
+horizontal_alignment = 1
+
+[node name="LootLabel" type="Label" parent="MainPanel/Margin/Content/ResultPanel/ResultBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.35, 1)
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 20
+text = "Common treasure"
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="MainPanel/Margin/Content/ResultPanel/ResultBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="RetryButton" type="Button" parent="MainPanel/Margin/Content/ResultPanel/ResultBox/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 18
+text = "Fish Again"
+
+[node name="ReturnButton" type="Button" parent="MainPanel/Margin/Content/ResultPanel/ResultBox/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 18
+text = "Return to Tavern"
+
+[node name="WordTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 8.0
+one_shot = true
