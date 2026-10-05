@@ -44,6 +44,7 @@ var _retaliation_reduction: int = 0
 var _guard: int = 0
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
+var strike_fx: EnemyStrikeFx
 var _last_allowed_text: String = ""
 
 # Adding background variable
@@ -109,6 +110,10 @@ func _ready() -> void:
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
 	$Layout/InputArea.add_child(heat_meter)
 	$Layout/InputArea.move_child(heat_meter, 1)
+	# Above the battlefield, below the fade and overlays.
+	strike_fx = EnemyStrikeFx.new()
+	add_child(strike_fx)
+	move_child(strike_fx, $Layout.get_index() + 1)
 	_start_encounter()
 
 
@@ -296,6 +301,10 @@ func _enemy_turn() -> void:
 		])
 	if not enemy.is_alive():
 		return
+	# The retaliation lands on the attack animation's contact frame.
+	await enemy.play_attack()
+	if _state != State.ENEMY_TURN:
+		return
 	var retaliation: int = maxi(
 		enemy.attack - _retaliation_reduction - _guard, 0
 	)
@@ -304,6 +313,7 @@ func _enemy_turn() -> void:
 	])
 	_retaliation_reduction = 0
 	_guard = 0
+	strike_fx.play(retaliation, $Layout)
 	RunState.damage_player(retaliation)
 	_refresh_status()
 	if RunState.player_health <= 0:

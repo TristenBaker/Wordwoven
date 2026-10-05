@@ -84,9 +84,13 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 		"black_matte": bool(definition.get("black_matte", false)),
 		"idle_frames": int(definition.get("idle_frames", 1)),
 		"idle_fps": float(definition.get("idle_fps", 5.0)),
+		"idle_ping_pong": bool(definition.get("idle_ping_pong", false)),
 		"idle_top": int(definition.get("idle_top", 0)),
 		"idle_height": int(definition.get("idle_height", 0)),
 		"display_size": float(definition.get("display_size", 0.0)),
+		"cell_width": int(definition.get("cell_width", 0)),
+		"cell_height": int(definition.get("cell_height", 0)),
+		"animations": definition.get("animations", {}),
 	}
 
 

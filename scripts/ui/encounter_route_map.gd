@@ -237,14 +237,14 @@ func _draw_dotted_line(
 
 
 func _draw_centered_text(
-	position: Vector2, text: String, color: Color, font_size: int
+	local_position: Vector2, text: String, color: Color, font_size: int
 ) -> void:
 	var font: Font = ThemeDB.fallback_font
 	var text_size: Vector2 = font.get_string_size(
 		text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size
 	)
 	draw_string(
-		font, position - Vector2(text_size.x * 0.5, -text_size.y * 0.32),
+		font, local_position - Vector2(text_size.x * 0.5, -text_size.y * 0.32),
 		text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color
 	)
 
@@ -297,6 +297,8 @@ func _enemy_icon(data: Dictionary) -> Texture2D:
 	var idle_frames: int = maxi(int(data.get("idle_frames", 1)), 1)
 	var frame_width: float = float(texture.get_width()) / idle_frames \
 			if idle_frames > 1 else float(data.get("frame_width", 0))
+	if idle_frames > 1 and int(data.get("cell_width", 0)) > 0:
+		frame_width = float(data["cell_width"])
 	if frame_width <= 0.0:
 		frame_width = texture.get_width()
 	var top: float = float(data.get("idle_top", 0)) if idle_frames > 1 else 0.0
