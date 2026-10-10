@@ -1,5 +1,7 @@
 [gd_scene load_steps=9 format=3 uid="uid://3vtham4p6wk0"]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [ext_resource type="Script" uid="uid://2lece1lnnonq" path="res://scripts/tavern/tavern_hub.gd" id="1_hub"]
 [ext_resource type="Texture2D" uid="uid://bkrq8ekxejoqs" path="res://art/backgrounds/inkwell_tavern.png" id="2_background"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
@@ -128,6 +130,8 @@ theme_override_font_sizes/font_size = 18
 text = "Gold  0"
 
 [node name="LeaveButton" type="Button" parent="." unique_id=1477876439]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -137,11 +141,12 @@ offset_top = 26.0
 offset_right = -26.0
 offset_bottom = 72.0
 grow_horizontal = 0
-theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
 text = "Leave Tavern"
 
 [node name="GoLeftButton" type="Button" parent="." unique_id=2015612367]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -152,11 +157,11 @@ offset_right = 102.0
 offset_bottom = 36.0
 tooltip_text = "Visit the barkeeper"
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
-theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
 text = "<"
 
 [node name="RightArrow" type="Button" parent="." unique_id=1741650384]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -169,11 +174,11 @@ offset_right = -30.0
 offset_bottom = 36.0
 tooltip_text = "Visit the letter dealer"
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
-theme_override_styles/hover = SubResource("StyleBoxFlat_navigation_hover")
 text = ">"
 
 [node name="TavernPageButton" type="Button" parent="." unique_id=2122480003]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -183,14 +188,13 @@ offset_top = 478.0
 offset_right = 230.0
 offset_bottom = 584.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.88, 0.6, 1)
-theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 23
-theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
 text = "Visit the Tavern Page
 Manage your letters, recruits, and provisions  [B]"
 
 [node name="ForgeButton" type="Button" parent="."]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -200,10 +204,7 @@ offset_top = 382.0
 offset_right = 130.0
 offset_bottom = 442.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 0.82, 0.45, 1)
-theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
 text = "Forge"
 
 [node name="Hint" type="Label" parent="." unique_id=1802721590]
@@ -228,23 +229,22 @@ horizontal_alignment = 1
 [node name="DebugIceFishingButton" type="Button" parent="."]
 visible = false
 z_index = 100
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -250.0
-offset_top = -72.0
-offset_right = -30.0
-offset_bottom = -24.0
+offset_left = -244.0
+offset_top = -130.0
+offset_right = -24.0
+offset_bottom = -82.0
 grow_horizontal = 0
 grow_vertical = 0
 tooltip_text = "Debug shortcut to the ice-fishing minigame"
-theme_override_colors/font_color = Color(0.7, 0.92, 1, 1)
-theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 18
-theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
 text = "Debug: Ice Fishing  [I]"
 
 [node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

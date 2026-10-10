@@ -58,6 +58,8 @@ func _build_layout() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	var close := Button.new()
+	close.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+	close.theme_type_variation = &"WordWovenActionButton"
 	close.text = "Return to Tavern"
 	close.pressed.connect(_return_to_tavern)
 	header.add_child(close)
@@ -136,6 +138,8 @@ func _build_layout() -> void:
 	chance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	forge_box.add_child(chance_label)
 	forge_button = Button.new()
+	forge_button.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+	forge_button.theme_type_variation = &"WordWovenActionButton"
 	forge_button.text = "Forge"
 	forge_button.custom_minimum_size = Vector2(0, 42)
 	forge_button.pressed.connect(_forge)

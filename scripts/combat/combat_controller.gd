@@ -5,6 +5,9 @@ extends Control
 ## DamageCalculator, and EnemyFactory child nodes and keeps only
 ## the flow and the screen updates here.
 
+const ENCOUNTER_MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+var _encounter_modifier: Dictionary = {}
+
 enum State {
 	PLAYER_INPUT,
 	RESOLVING,
@@ -46,6 +49,9 @@ var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
 var strike_fx: EnemyStrikeFx
 var _last_allowed_text: String = ""
+var _turn_elapsed_seconds: float = 0.0
+var _preview_refresh_accumulator: float = 0.0
+var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -59,7 +65,7 @@ var _last_allowed_text: String = ""
 @onready var hand_box: HBoxContainer = \
 		$Layout/HandArea/HandBox
 @onready var word_input: LineEdit = \
-		$Layout/InputArea/InputRow/WordInput
+		$Layout/WordInput
 @onready var submit_button: Button = \
 		$Layout/InputArea/InputRow/SubmitButton
 @onready var word_tile_board: WordTileBoard = \
@@ -74,8 +80,10 @@ var _last_allowed_text: String = ""
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var dev_kill_button: Button = $Layout/DevKillButton
 @onready var feedback_label: Label = \
-		$Layout/InputArea/FeedbackLabel
-@onready var prompt_label: Label = $Layout/InputArea/PromptLabel
+		$Layout/FeedbackBanner/Content/FeedbackLabel
+@onready var prompt_label: Label = $Layout/FeedbackBanner/Content/PromptLabel
+@onready var feedback_banner: PanelContainer = $Layout/FeedbackBanner
+@onready var effectiveness_indicator: PanelContainer = $Layout/EffectivenessIndicator
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
 @onready var side_panel: PanelContainer = $Layout/SidePanel
@@ -88,6 +96,7 @@ var _last_allowed_text: String = ""
 		$Layout/StatusArea/PlayerHealthBar/PlayerHealthLabel
 @onready var player_heal_preview: ColorRect = \
 		$Layout/StatusArea/PlayerHealthBar/HealPreview
+@onready var timer_label: Label = $Layout/StatusArea/TimerLabel
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
 
@@ -114,7 +123,28 @@ func _ready() -> void:
 	strike_fx = EnemyStrikeFx.new()
 	add_child(strike_fx)
 	move_child(strike_fx, $Layout.get_index() + 1)
+	submit_button.item_rect_changed.connect(_queue_feedback_layout)
+	$Layout/InputArea.item_rect_changed.connect(_queue_feedback_layout)
+	feedback_banner.minimum_size_changed.connect(_queue_feedback_layout)
+	effectiveness_indicator.minimum_size_changed.connect(_queue_feedback_layout)
 	_start_encounter()
+	_queue_feedback_layout()
+
+
+func _exit_tree() -> void:
+	_health_bar_shake.cancel()
+
+
+func _process(delta: float) -> void:
+	if _state != State.PLAYER_INPUT:
+		return
+	_turn_elapsed_seconds += delta
+	_preview_refresh_accumulator += delta
+	_update_timer_display()
+	if _preview_refresh_accumulator >= 0.1:
+		_preview_refresh_accumulator = 0.0
+		if not word_input.text.strip_edges().is_empty():
+			_refresh_word_composer(word_input.text)
 
 
 func _start_encounter() -> void:
@@ -138,7 +168,16 @@ func _start_encounter() -> void:
 		$Layout/InputArea.offset_bottom -= 48.0
 	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
+	# Consume the matching preparation once; the applied fate lives with this scene.
+	var preparation: Dictionary = RunState.take_encounter_modifier(spawn_data["id"])
+	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
+	var base_spawn: Dictionary = spawn_data
+	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)
 	enemy.setup(spawn_data)
+	$Layout/ActiveModifierPanel.show_modifier(
+		String(preparation.get("word", "")), _encounter_modifier,
+		base_spawn, spawn_data, ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	)
 	EventBus.emit_encounter_started(spawn_data)
 	_rebuild_hand_tiles()
 	_refresh_status()
@@ -179,8 +218,12 @@ func _pick_spawn_data() -> Dictionary:
 
 # --- Turn flow -----------------------------------------------------
 
-func _enter_player_input() -> void:
+func _enter_player_input(reset_timer: bool = true) -> void:
 	_state = State.PLAYER_INPUT
+	if reset_timer:
+		_turn_elapsed_seconds = 0.0
+		_preview_refresh_accumulator = 0.0
+	_update_timer_display()
 	word_input.editable = true
 	submit_button.disabled = false
 	_refresh_cold()
@@ -203,19 +246,20 @@ func _on_text_submitted(_text: String) -> void:
 func _on_submit() -> void:
 	if _state != State.PLAYER_INPUT:
 		return
+	effectiveness_indicator.clear()
 	var word: String = word_input.text.strip_edges().to_lower()
 	var verdict: Dictionary = validator.validate(word, required_pos)
 	var blocked: String = cold.blocked_letter(word, deck_manager.hand())
 	if not blocked.is_empty():
 		verdict = {"valid": false, "reason": "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]}
 	if not verdict["valid"]:
-		feedback_label.text = verdict["reason"]
+		_set_player_feedback(verdict["reason"])
 		EventBus.emit_word_rejected(word, verdict["reason"])
 		# A rejected word never starts a turn. Reset the composer immediately,
 		# then defer focus restoration so Enter/button submission cannot leave
 		# the visually hidden LineEdit unfocused.
 		word_input.clear()
-		_enter_player_input()
+		_enter_player_input(false)
 		call_deferred("_focus_word_input")
 		return
 	cold.accept_word()
@@ -223,7 +267,7 @@ func _on_submit() -> void:
 	_state = State.RESOLVING
 	word_input.editable = false
 	submit_button.disabled = true
-	feedback_label.text = ""
+	_set_player_feedback("")
 	_resolve_word(word)
 
 
@@ -242,8 +286,10 @@ func _resolve_word(word: String) -> void:
 	var undrawn: Array[String] = split["undrawn"]
 	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos,
-		enemy.affinities, true
+		enemy.affinities, true, _turn_elapsed_seconds
 	)
+	# Restore the original encounter-only final damage factor.
+	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
@@ -265,6 +311,7 @@ func _resolve_word(word: String) -> void:
 	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
+	effectiveness_indicator.show_result(result)
 	if performing:
 		await party_stage.impact_landed
 	_show_damage_popup(result["damage"])
@@ -302,9 +349,14 @@ func _enemy_turn() -> void:
 	if not enemy.is_alive():
 		return
 	# The retaliation lands on the attack animation's contact frame.
+	enemy.begin_retaliation_lunge(
+		party_stage.get_global_transform() * Vector2(party_stage.line_start_x, party_stage.ground_y)
+	)
 	await enemy.play_attack()
 	if _state != State.ENEMY_TURN:
+		enemy.cancel_retaliation_lunge()
 		return
+	enemy.finish_retaliation_lunge()
 	var retaliation: int = maxi(
 		enemy.attack - _retaliation_reduction - _guard, 0
 	)
@@ -316,6 +368,8 @@ func _enemy_turn() -> void:
 	strike_fx.play(retaliation, $Layout)
 	RunState.damage_player(retaliation)
 	_refresh_status()
+	if retaliation > 0:
+		_health_bar_shake.play(player_health_bar)
 	if RunState.player_health <= 0:
 		_on_player_died()
 		return
@@ -386,6 +440,37 @@ func _advance_prompt() -> void:
 	_refresh_prompt()
 
 
+func _queue_feedback_layout() -> void:
+	_layout_feedback_banner.call_deferred()
+
+
+func _layout_feedback_banner() -> void:
+	if not is_inside_tree():
+		return
+	var input_area: VBoxContainer = $Layout/InputArea
+	var area: Rect2 = input_area.get_global_rect()
+	var cast: Rect2 = submit_button.get_global_rect()
+	var gap: float = input_area.get_theme_constant("separation") * input_area.scale.y
+	var cast_gap: float = $Layout/InputArea/InputRow.get_theme_constant("separation") * input_area.scale.x
+	# Match the heat column, reserving its right-hand lane for the existing Cast button.
+	var width: float = cast.position.x - area.position.x - cast_gap
+	var top: float = cast.position.y
+	if heat_meter.visible:
+		top = heat_meter.get_global_rect().end.y + gap
+	for banner: PanelContainer in [feedback_banner, effectiveness_indicator]:
+		banner.scale = input_area.scale
+		var banner_width: float = cast.end.x - area.position.x if banner == effectiveness_indicator else width
+		banner.size = Vector2(banner_width / banner.scale.x, banner.get_combined_minimum_size().y)
+		banner.global_position = Vector2(area.position.x, top)
+		top = banner.get_global_rect().end.y + gap
+
+
+func _set_player_feedback(message: String) -> void:
+	feedback_label.text = message
+	feedback_label.visible = not message.is_empty()
+	prompt_label.visible = message.is_empty()
+
+
 func _refresh_prompt() -> void:
 	var article: String = "an" if required_pos in ["a", "r"] else "a"
 	prompt_label.text = "Write %s %s to shape your tale" % [
@@ -400,7 +485,7 @@ func _refresh_prompt() -> void:
 func _on_text_changed(new_text: String) -> void:
 	var blocked: String = cold.blocked_letter(new_text, deck_manager.hand())
 	if not blocked.is_empty():
-		feedback_label.text = "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]
+		_set_player_feedback("%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST])
 		var caret: int = word_input.caret_column
 		word_input.text = _last_allowed_text
 		word_input.caret_column = mini(caret, _last_allowed_text.length())
@@ -429,17 +514,31 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 	if word.is_empty() or enemy == null or not enemy.is_alive():
 		_set_output_counters(0, 0, 0)
 		_set_health_previews(0, 0)
+		effectiveness_indicator.clear(_state != State.PLAYER_INPUT)
 		return
 	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos,
-		enemy.affinities
+		enemy.affinities, false, _turn_elapsed_seconds
 	)
+	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	if _state == State.PLAYER_INPUT:
+		if validator.validate(word, required_pos).get("valid", false):
+			effectiveness_indicator.show_preview(result)
+		else:
+			effectiveness_indicator.clear()
 	_set_output_counters(
 		int(round(float(result["damage"]))), int(result["water_heal"]), int(result["gold"])
 	)
 	_set_health_previews(
 		int(round(float(result["damage"]))), int(result["water_heal"])
 	)
+
+
+func _update_timer_display() -> void:
+	var remaining: float = maxf(DamageCalculator.SPEED_BONUS_DURATION - _turn_elapsed_seconds, 0.0)
+	timer_label.text = "Quick-cast: %.1fs  •  Damage ×%.2f" % [
+		remaining, calculator.speed_multiplier(_turn_elapsed_seconds),
+	]
 
 
 func _set_output_counters(damage: int, healing: int, gold: int) -> void:
@@ -545,12 +644,12 @@ func _on_hand_tile_activated(tile: LetterTile) -> void:
 		if cold.thaw(tile.stats):
 			tile.set_frozen(false, false, true)
 			_refresh_cold()
-			feedback_label.text = ""
+			_set_player_feedback("")
 			_on_text_changed(word_input.text)
 		else:
 			tile.deny_thaw()
 			heat_meter.pulse(true)
-			feedback_label.text = "Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD]
+			_set_player_feedback("Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD])
 	_focus_word_input()
 
 
@@ -576,12 +675,13 @@ func _describe_result(result: Dictionary) -> String:
 		result["word"].to_upper(), result["damage"]
 	])
 	lines.append(
-		"  power %.1f × length %.1f × %s %.2f × tag %.2f" % [
+		"  power %.1f × length %.1f × %s %.2f × tag %.2f × speed %.2f" % [
 			result["base_power"],
 			result["length_multiplier"],
 			WordNet.pos_name(result["pos"]),
 			result["pos_multiplier"],
 			result["semantic_multiplier"],
+			result["speed_multiplier"],
 		]
 	)
 	if not String(counter.get("tag", "")).is_empty():
