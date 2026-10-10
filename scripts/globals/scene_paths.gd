@@ -20,3 +20,5 @@ const RUN_WON: String = "res://scenes/run_won.tscn"
 const RUN_LOST: String = "res://scenes/run_lost.tscn"
 
 const ENCOUNTER_MODIFIER: String = "res://scenes/pre_fight/encounter_modifier.tscn"
+
+const TUNDRA_EVENT: String = "res://scenes/encounters/tundra_event.tscn"

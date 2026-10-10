@@ -1,11 +1,14 @@
 class_name EncounterRouteMap
 extends Control
+
+const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 ## Draws a horizontal expedition route and places interactive enemy
 ## cards at the current fork. The visual language is intentionally
 ## map-like: dotted trails, cleared waypoints, fogged future nodes,
 ## and a dominant boss destination.
 
 signal enemy_selected(enemy_id: String)
+signal optional_selected(encounter_id: String)
 
 const STAGE_COUNT: int = 6
 const MAP_PADDING_X: float = 72.0
@@ -135,7 +138,8 @@ func _add_enemy_button(data: Dictionary, is_boss: bool) -> void:
 
 
 func _add_card_content(
-	button: Button, data: Dictionary, compact: bool, is_boss: bool
+	button: Button, data: Dictionary, compact: bool, is_boss: bool,
+	show_tags: bool = true
 ) -> void:
 	# The card remains the sole input target; its children are presentation only.
 	var row := HBoxContainer.new()
@@ -158,7 +162,7 @@ func _add_card_content(
 	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	preview.texture = _preview_texture(data)
+	preview.texture = data.get("preview_texture") if data.has("preview_texture") else _preview_texture(data)
 	row.add_child(preview)
 
 	var text_box := VBoxContainer.new()
@@ -176,6 +180,8 @@ func _add_card_content(
 	name_label.add_theme_font_size_override("font_size", 16 if compact else (18 if not is_boss else 20))
 	name_label.add_theme_color_override("font_color", Color(0.94, 0.9, 0.76, 1.0))
 	text_box.add_child(name_label)
+	if not show_tags:
+		return
 	var tags_label := Label.new()
 	tags_label.name = "EnemyTags"
 	tags_label.text = " • ".join(data.get("tags", []))
@@ -310,3 +316,32 @@ func _enemy_icon(data: Dictionary) -> Texture2D:
 	atlas.filter_clip = true
 	atlas.region = Rect2(0, top, frame_width, height)
 	return atlas
+
+
+func setup_optional(container: VBoxContainer, ids: Array[String]) -> void:
+	for child: Node in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+	for id: String in ids:
+		var data: Dictionary = TundraEventScript.definition(id)
+		data["preview_texture"] = TundraEventScript.frame_texture(data, 0)
+		if id == "treasure_chest":
+			data["name"] = "Treasure Chest"
+		var button := Button.new()
+		button.name = "Event_" + id
+		button.custom_minimum_size = Vector2(240, 94)
+		button.tooltip_text = "Optional detour. Your next monster fight remains unchanged."
+		button.theme = Theme.new()
+		button.theme.set_font("font", "Label", preload("res://assets/Fonts/Junicode.ttf"))
+		var normal: StyleBoxFlat = _card_style(false, false)
+		normal.bg_color = Color(0.055, 0.095, 0.18, 0.95)
+		normal.border_color = Color(0.48, 0.67, 0.82)
+		var hover: StyleBoxFlat = normal.duplicate()
+		hover.bg_color = normal.bg_color.lightened(0.08)
+		hover.border_color = normal.border_color.lightened(0.12)
+		button.add_theme_stylebox_override("normal", normal)
+		for state: String in ["hover", "pressed", "hover_pressed", "focus"]:
+			button.add_theme_stylebox_override(state, hover)
+		button.pressed.connect(optional_selected.emit.bind(id))
+		container.add_child(button)
+		_add_card_content(button, data, true, false, false)

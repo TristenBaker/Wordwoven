@@ -166,12 +166,16 @@ theme_override_constants/separation = 10
 
 [node name="DropButton" type="Button" parent="Layout/ShopPanel/ShopMargin/ShopBox/ActionRow" unique_id=370712252]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Dismiss (10g)"
 
 [node name="MealButton" type="Button" parent="Layout/ShopPanel/ShopMargin/ShopBox/ActionRow" unique_id=496203819]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Hot Meal (15g): heal 10"
@@ -206,6 +210,8 @@ layout_mode = 2
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1212310021]
 visible = false
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -218,11 +224,12 @@ offset_right = -24.0
 offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 22
 text = "Set Out"
 
 [node name="CloseButton" type="Button" parent="." unique_id=810238793]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -233,7 +240,6 @@ offset_right = -18.0
 offset_bottom = 60.0
 grow_horizontal = 0
 tooltip_text = "Return to the tavern"
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 30
 text = "×"
 

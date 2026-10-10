@@ -1,5 +1,12 @@
 [gd_scene format=3 uid="uid://dj6n5sbhsws67"]
 
+[ext_resource type="StyleBox" path="res://assets/Themes/Combat_Log_Panel.tres" id="log_panel"]
+[ext_resource type="StyleBox" path="res://assets/Themes/Feedback_Banner_Panel.tres" id="feedback_frame"]
+[ext_resource type="Script" path="res://scripts/ui/word_effectiveness.gd" id="effectiveness_script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/active_modifier_panel.tscn" id="modifier_panel"]
+
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [ext_resource type="Script" uid="uid://ce3e4vfgwfu4o" path="res://scripts/combat/combat_controller.gd" id="1_combat"]
 [ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="2_4a6i5"]
 [ext_resource type="PackedScene" uid="uid://ve6fkfdb6uot" path="res://scenes/combat/enemy_display.tscn" id="3_enemy"]
@@ -153,23 +160,40 @@ theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 22
 text = "Gold: 0"
 
+[node name="TimerLabel" type="Label" parent="Layout/StatusArea"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 18
+text = "Quick-cast: 20.0s  •  Damage ×1.50"
+
 [node name="EnemyArea" type="CenterContainer" parent="Layout" unique_id=1732673650]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.45
 anchor_top = 0.02
-anchor_right = 0.95
+anchor_right = 0.80
 anchor_bottom = 0.56
 
 [node name="Enemy" parent="Layout/EnemyArea" unique_id=121372541 instance=ExtResource("3_enemy")]
 layout_mode = 2
 
-[node name="DevKillButton" type="Button" parent="Layout" unique_id=515990117]
+[node name="ActiveModifierPanel" parent="Layout" instance=ExtResource("modifier_panel")]
 layout_mode = 1
 offset_left = 16.0
-offset_top = 150.0
+offset_top = 141.0
 offset_right = 280.0
-offset_bottom = 190.0
+offset_bottom = 141.0
+
+[node name="DevKillButton" type="Button" parent="Layout" unique_id=515990117]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 1
+offset_left = 16.0
+offset_top = 194.0
+offset_right = 280.0
+offset_bottom = 234.0
 tooltip_text = "Development only: immediately defeat the current enemy."
 theme_override_font_sizes/font_size = 16
 text = "DEV: Auto Kill"
@@ -202,17 +226,24 @@ anchors_preset = -1
 anchor_left = 0.81
 anchor_top = 0.02
 anchor_right = 0.99
-anchor_bottom = 0.72
+anchor_bottom = 0.60
 offset_top = 44.0
+theme_override_styles/panel = ExtResource("log_panel")
 
 [node name="LogLabel" type="RichTextLabel" parent="Layout/SidePanel" unique_id=678540740]
 layout_mode = 2
-theme_override_font_sizes/normal_font_size = 15
-theme_override_font_sizes/bold_font_size = 17
+theme_override_colors/default_color = Color(0.92, 0.85, 0.69, 1)
+theme_override_fonts/normal_font = ExtResource("4_body")
+theme_override_fonts/bold_font = ExtResource("4_body")
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 18
+theme_override_constants/line_separation = 5
 bbcode_enabled = true
 scroll_following = true
 
 [node name="LogToggleButton" type="Button" parent="Layout" unique_id=128742266]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -299,33 +330,72 @@ vertical_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="WordInput" type="LineEdit" parent="Layout/InputArea/InputRow" unique_id=2135745102]
+[node name="WordInput" type="LineEdit" parent="Layout" unique_id=2135745102]
 modulate = Color(1, 1, 1, 0)
-custom_minimum_size = Vector2(0, 1)
-layout_mode = 2
-size_flags_horizontal = 3
+offset_right = 1.0
+offset_bottom = 1.0
+mouse_filter = 2
+layout_mode = 0
 theme_override_font_sizes/font_size = 28
 placeholder_text = "spell a word..."
 max_length = 24
 
+[node name="CastSpacer" type="Control" parent="Layout/InputArea/InputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="FeedbackBanner" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("feedback_frame")
+
+[node name="Content" type="VBoxContainer" parent="Layout/FeedbackBanner"]
+layout_mode = 2
+mouse_filter = 2
+alignment = 1
+
 [node name="SubmitButton" type="Button" parent="Layout/InputArea/InputRow" unique_id=757434732]
 custom_minimum_size = Vector2(140, 48)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Cast"
 
-[node name="FeedbackLabel" type="Label" parent="Layout/InputArea" unique_id=1846545061]
+[node name="FeedbackLabel" type="Label" parent="Layout/FeedbackBanner/Content" unique_id=1846545061]
+visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="PromptLabel" type="Label" parent="Layout/InputArea" unique_id=99701348]
+[node name="PromptLabel" type="Label" parent="Layout/FeedbackBanner/Content" unique_id=99701348]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
 text = "Write a noun to shape your tale"
 horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="EffectivenessIndicator" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("feedback_frame")
+script = ExtResource("effectiveness_script")
+
+[node name="Label" type="Label" parent="Layout/EffectivenessIndicator"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HandArea" type="CenterContainer" parent="Layout" unique_id=1963770266]
 layout_mode = 1

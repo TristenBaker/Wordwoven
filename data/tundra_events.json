@@ -1,0 +1,38 @@
+{
+  "frozen_traveler": {
+    "name": "Frozen Traveler", "pos": "n",
+    "texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Frozen Traveler.png",
+    "frame_width": 543, "frames": 4, "fps": 2.5,
+    "description": "A traveler shivers beside a lantern. 'Bring me a NOUN before my toes become permanent icicles!'",
+    "templates": [
+      "You offer a {word}. The traveler declares it the latest in thermal fashion and shares a warming sip of soup.",
+      "The traveler hugs your {word}. 'Exactly what my grandmother prescribed!' You decide not to ask about her medical qualifications.",
+      "Armed with a {word}, the traveler announces that winter has been defeated. Winter declines to comment."
+    ],
+    "rewards": [{"type": "heal", "amount": 6}]
+  },
+  "treasure_chest": {
+    "name": "Mysterious Treasure Chest", "pos": "a",
+    "texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Treasure Chest.png",
+    "frame_width": 539, "frames": 4, "fps": 2.5, "animate": false,
+    "description": "A chest pokes out of the snow. Describe it with an ADJECTIVE. Its lock has surprisingly strong opinions.",
+    "templates": [
+      "You describe the chest as {word}. Its lock clicks open in reluctant agreement.",
+      "'This chest is {word},' you announce. Flattered beyond reason, it opens and tips you for the review.",
+      "The {word} chest insists that beauty is on the inside. You agree, especially when the inside contains gold."
+    ],
+    "rewards": [{"type": "gold", "amount": 12}]
+  },
+  "icy_portal": {
+    "name": "Mysterious Portal", "pos": "r",
+    "texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Icy Portal.png",
+    "frame_width": 543, "frames": 4, "fps": 2.5, "animate": false,
+    "description": "A portal wobbles like enchanted jelly. Enter an ADVERB to describe how you approach it. Results may vary.",
+    "templates": [
+      "You approach the portal {word}. Reality asks whether you have filled out the appropriate form.",
+      "You wave {word} at the portal. It waves back, despite having neither hands nor social skills.",
+      "You step {word} toward the portal. Somewhere, a wizard drops his sandwich. The portal insists this was intentional."
+    ],
+    "rewards": [{"type": "heal", "amount": 5}, {"type": "gold", "amount": 8}, {"type": "damage", "amount": 3}]
+  }
+}

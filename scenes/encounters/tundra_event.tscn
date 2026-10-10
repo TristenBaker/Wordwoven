@@ -1,0 +1,144 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/encounters/tundra_event.gd" id="script"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="font"]
+[ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="title_font"]
+[ext_resource type="Texture2D" path="res://art/backgrounds/tundra.png" id="background"]
+[ext_resource type="StyleBox" path="res://assets/Themes/Feedback_Banner_Panel.tres" id="panel"]
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="buttons"]
+[ext_resource type="Script" path="res://scripts/word/word_validator.gd" id="validator"]
+
+[node name="TundraEvent" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_filter = 1
+script = ExtResource("script")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("background")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.025, 0.045, 0.09, 0.48)
+mouse_filter = 2
+
+[node name="WordValidator" type="Node" parent="."]
+script = ExtResource("validator")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.2
+anchor_top = 0.04
+anchor_right = 0.8
+anchor_bottom = 0.96
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Margin/Content"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("title_font")
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0.94, 0.84, 0.64, 1)
+horizontal_alignment = 1
+
+[node name="Sprite" type="TextureRect" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Description" type="PanelContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_styles/panel = ExtResource("panel")
+
+[node name="Text" type="Label" parent="Margin/Content/Description"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.91, 0.9, 0.86, 1)
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="InputRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="WordInput" type="LineEdit" parent="Margin/Content/InputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 24
+max_length = 24
+
+[node name="Submit" type="Button" parent="Margin/Content/InputRow"]
+custom_minimum_size = Vector2(130, 48)
+layout_mode = 2
+theme = ExtResource("buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "Interact"
+
+[node name="Skip" type="Button" parent="Margin/Content/InputRow"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+theme = ExtResource("buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "Skip"
+
+[node name="Feedback" type="Label" parent="Margin/Content"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.95, 0.7, 0.65, 1)
+horizontal_alignment = 1
+
+[node name="Result" type="PanelContainer" parent="Margin/Content"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = ExtResource("panel")
+
+[node name="Lines" type="VBoxContainer" parent="Margin/Content/Result"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Dialogue" type="Label" parent="Margin/Content/Result/Lines"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="Reward" type="Label" parent="Margin/Content/Result/Lines"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("font")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.83, 0.88, 0.96, 1)
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="Continue" type="Button" parent="Margin/Content"]
+visible = false
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "Return to Map"

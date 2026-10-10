@@ -12,6 +12,11 @@ const UNDRAWN_POWER_FACTOR: float = 0.2
 # Bonus multiplier per letter beyond a three-letter word.
 const LENGTH_BONUS_STEP: float = 0.1
 
+# Restored quick-cast bonus: +50% falls linearly to normal over a 20-second turn.
+const SPEED_BONUS_DURATION: float = 20.0
+const SPEED_MULTIPLIER_MAX: float = 1.5
+const SPEED_MULTIPLIER_MIN: float = 1.0
+
 # Damage multiplier for the word's best part of speech.
 const POS_MULTIPLIERS: Dictionary[String, float] = {
 	"v": 1.25,
@@ -39,7 +44,8 @@ func calculate(
 	enemy_tags: Array[String],
 	required_pos: String = "",
 	affinities: Dictionary = {},
-	roll_lightning: bool = false
+	roll_lightning: bool = false,
+	elapsed_seconds: float = SPEED_BONUS_DURATION
 ) -> Dictionary:
 	var letter_rows: Array[Dictionary] = []
 	var base_power: float = 0.0
@@ -121,7 +127,13 @@ func calculate(
 		if elemental_damage["earth"] > 0.0 else 0
 	var nature_poison: float = elemental_damage["nature"] \
 		* relic_system.total_effect("nature_poison_ratio")
+	# The historical bonus multiplies final direct damage once. Elemental proc,
+	# healing, guard, poison and gold rules retain their current calculations.
+	var speed_bonus_multiplier: float = speed_multiplier(elapsed_seconds)
+	damage *= speed_bonus_multiplier
 	return {
+		"elapsed_seconds": elapsed_seconds,
+		"speed_multiplier": speed_bonus_multiplier,
 		"word": word,
 		"damage": damage,
 		"gold": gold,
@@ -146,6 +158,11 @@ func calculate(
 		"earth_guard": earth_guard,
 		"nature_poison": nature_poison,
 	}
+
+
+func speed_multiplier(elapsed_seconds: float) -> float:
+	var progress: float = clampf(elapsed_seconds / SPEED_BONUS_DURATION, 0.0, 1.0)
+	return lerpf(SPEED_MULTIPLIER_MAX, SPEED_MULTIPLIER_MIN, progress)
 
 
 func _empty_elemental_damage() -> Dictionary:

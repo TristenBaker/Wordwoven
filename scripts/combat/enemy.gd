@@ -42,6 +42,14 @@ var _sprite_rest: Vector2 = Vector2.ZERO
 var _retaliation_tween: Tween
 var _retaliation_origin: Vector2
 var _retaliation_peak: Vector2
+var _retaliation_offset: Vector2 = Vector2.ZERO:
+	set(value):
+		_retaliation_offset = value
+		sprite.position = _sprite_rest + Vector2(_hit_offset, 0.0) + _retaliation_offset
+var _hit_offset: float = 0.0:
+	set(value):
+		_hit_offset = value
+		sprite.position = _sprite_rest + Vector2(_hit_offset, 0.0) + _retaliation_offset
 
 @onready var sprite: TextureRect = $Sprite
 @onready var name_label: Label = $InfoBox/NameLabel
@@ -92,34 +100,30 @@ func strike_point() -> Vector2:
 ## Presentation only: texture-region idle playback continues during the lunge.
 func begin_retaliation_lunge(target_global: Vector2) -> void:
 	cancel_retaliation_lunge()
-	if _hit_tween != null and _hit_tween.is_valid():
-		_hit_tween.kill()
-		sprite.position = _sprite_rest
-		sprite.modulate = Color.WHITE
 	_retaliation_origin = sprite.position
 	var center: Vector2 = sprite.get_global_rect().get_center()
 	var global_offset: Vector2 = center.direction_to(target_global) * 32.0
 	var inverse: Transform2D = sprite.get_parent().get_global_transform().affine_inverse()
 	_retaliation_peak = _retaliation_origin + (inverse * (center + global_offset) - inverse * center)
 	_retaliation_tween = create_tween()
-	_retaliation_tween.tween_property(sprite, "position", _retaliation_peak, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_retaliation_tween.tween_property(self, "_retaliation_offset", _retaliation_peak - _retaliation_origin, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
 func finish_retaliation_lunge() -> void:
 	if _retaliation_tween == null:
 		return
-	_retaliation_tween.kill()
-	# Snap to the contact point at the authoritative damage event, then recoil.
-	sprite.position = _retaliation_peak
-	_retaliation_tween = create_tween()
-	_retaliation_tween.tween_property(sprite, "position", _retaliation_origin, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Instant attacks keep their original damage timing while the forward tween
+	# finishes visually. Animated attacks recoil from the position already reached.
+	if not _retaliation_tween.is_running():
+		_retaliation_tween = create_tween()
+	_retaliation_tween.tween_property(self, "_retaliation_offset", Vector2.ZERO, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_retaliation_tween.tween_callback(cancel_retaliation_lunge)
 
 
 func cancel_retaliation_lunge() -> void:
 	if _retaliation_tween != null:
 		_retaliation_tween.kill()
-		sprite.position = _retaliation_origin
+		_retaliation_offset = Vector2.ZERO
 		_retaliation_tween = null
 
 
@@ -233,12 +237,13 @@ func _play_hit() -> void:
 	cancel_retaliation_lunge()
 	if _hit_tween != null and _hit_tween.is_valid():
 		_hit_tween.kill()
+	_hit_offset = 0.0
 	sprite.position = _sprite_rest
 	sprite.modulate = Color(2.5, 2.5, 2.5)
 	_hit_tween = create_tween()
 	for offset: float in [8.0, -6.0, 4.0, 0.0]:
 		_hit_tween.tween_property(
-			sprite, "position:x", _sprite_rest.x + offset, 0.04
+			self, "_hit_offset", offset, 0.04
 		)
 	_hit_tween.parallel().tween_property(
 		sprite, "modulate", Color.WHITE, 0.12
@@ -413,6 +418,10 @@ func _land_attack() -> void:
 
 
 func _show_frame(row: int, frame: int) -> void:
+	# Idle-only art can supply poses for existing one-shot timelines.
+	var frame_indices: Array = _animations.get(_anim, {}).get("frame_indices", [])
+	if not frame_indices.is_empty():
+		frame = int(frame_indices[clampi(frame, 0, frame_indices.size() - 1)])
 	var region: Rect2 = _idle_atlas.region
 	region.position = Vector2(frame * _idle_width, row * _cell_height + _region_top)
 	_idle_atlas.region = region

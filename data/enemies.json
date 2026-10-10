@@ -98,27 +98,29 @@
 		"health": 29,
 		"attack": 5,
 		"gold": 38,
-		"texture": "res://assets/Art/Enemies/Tundra Monsters/Bear/Glacier Bear Sheet.png",
+		"texture": "res://assets/Art/Enemies/Tundra Monsters/Bear/Glacier Bear Idle.png",
 		"frame_width": 0,
 		"idle_frames": 4,
-		"idle_fps": 10.0,
+		"idle_fps": 2.5,
 		"idle_ping_pong": true,
-		"idle_top": 6,
-		"idle_height": 50,
+		"idle_top": 240,
+		"idle_height": 410,
 		"display_size": 320,
-		"cell_width": 64,
-		"cell_height": 64,
+		"cell_width": 543,
+		"cell_height": 724,
 		"animations": {
 			"attack": {
-				"row": 1,
+				"row": 0,
 				"frames": 9,
 				"fps": 10.0,
-				"hit_frame": 5
+				"hit_frame": 5,
+				"frame_indices": [0, 1, 2, 3, 2, 1, 0, 1, 0]
 			},
 			"hurt": {
-				"row": 2,
+				"row": 0,
 				"frames": 3,
-				"fps": 10.0
+				"fps": 10.0,
+				"frame_indices": [1, 2, 0]
 			}
 		},
 		"tag_pool": [

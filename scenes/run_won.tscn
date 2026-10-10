@@ -58,6 +58,7 @@ horizontal_alignment = 1
 [node name="MenuButton" type="Button" parent="CenterBox/Menu" unique_id=711482985]
 custom_minimum_size = Vector2(240, 52)
 theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22

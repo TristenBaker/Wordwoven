@@ -1,5 +1,7 @@
 [gd_scene load_steps=7 format=3]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [ext_resource type="Script" path="res://scripts/ice_fishing_controller.gd" id="1_script"]
 [ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
 [ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="3_body"]
@@ -135,6 +137,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
 theme_override_fonts/font = ExtResource("3_body")
+theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 21
 text = "Choose carefully. Each fishing hole can be used only once."
 horizontal_alignment = 1
@@ -257,8 +260,9 @@ max_length = 24
 [node name="SubmitButton" type="Button" parent="MainPanel/Margin/Content/InputRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 50)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 21
 text = "Reel!"
 
@@ -308,16 +312,18 @@ theme_override_constants/separation = 12
 [node name="RetryButton" type="Button" parent="MainPanel/Margin/Content/ResultPanel/ResultBox/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 42)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 18
 text = "Fish Again"
 
 [node name="ReturnButton" type="Button" parent="MainPanel/Margin/Content/ResultPanel/ResultBox/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 42)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 18
 text = "Return to Tavern"
 

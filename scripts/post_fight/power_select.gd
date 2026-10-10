@@ -55,12 +55,23 @@ func _refresh() -> void:
 			info.get("name", relic_id), info.get("description", ""),
 			RunState.relics.count(relic_id),
 		]
-		button.add_theme_color_override(
-			"font_color", relic_system.quality_color(relic_id)
-		)
-		button.add_theme_stylebox_override(
-			"normal", _quality_style(relic_system.quality_color(relic_id))
-		)
+		var color: Color = relic_system.quality_color(relic_id)
+		for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color", "font_disabled_color"]:
+			button.add_theme_color_override(state, color)
+		var normal: StyleBoxFlat = _quality_style(color)
+		var highlighted: StyleBoxFlat = normal.duplicate()
+		highlighted.bg_color = Color(0.18, 0.105, 0.26, 0.98)
+		highlighted.border_color = color.lightened(0.08)
+		for state: String in ["normal", "disabled"]:
+			button.add_theme_stylebox_override(state, normal)
+		for state: String in ["hover", "pressed", "hover_pressed"]:
+			button.add_theme_stylebox_override(state, highlighted)
+		var focus: StyleBoxFlat = highlighted.duplicate()
+		focus.draw_center = false
+		focus.border_color = Color(0.78, 0.66, 0.9, 1.0)
+		focus.set_border_width_all(2)
+		focus.set_expand_margin_all(2.0)
+		button.add_theme_stylebox_override("focus", focus)
 		button.disabled = not claimed.is_empty()
 	if claimed.is_empty():
 		status_label.text = "Choose one power. Quality affects its rarity; copies stack."
