@@ -87,6 +87,12 @@ func setup(spawn_data: Dictionary) -> void:
 	_refresh_health()
 
 
+## Chameleon changes meaning only, without reinitializing stats or animation.
+func set_semantic_tags(new_tags: Array[String]) -> void:
+	tags = new_tags.duplicate()
+	tags_label.text = " • ".join(tags) + _affinity_text()
+
+
 func is_alive() -> bool:
 	return _health > 0
 

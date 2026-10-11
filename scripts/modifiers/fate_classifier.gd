@@ -8,6 +8,13 @@ const CONCEPTS: Dictionary = {
 	"spirit_broken": ["timid", "fearful", "cowardly", "meek"],
 	"fate_exposed": ["vulnerable", "exposed", "defenseless", "unprotected"],
 	"spellwarden": ["protected", "guarded", "armored", "warded"],
+	"drowsy": ["drowsy", "sleepy", "somnolent"],
+	"clumsy": ["clumsy", "awkward", "uncoordinated"],
+	"long_winded": ["verbose", "wordy", "prolix"],
+	"echo_bound": ["resonant", "echoing", "reverberant"],
+	"chameleon": ["fickle", "changeable", "mercurial"],
+	"greedy": ["greedy", "avaricious", "covetous"],
+	"frostbite_tax": ["frigid", "wintry", "icy"],
 }
 const MIN_CONFIDENCE: float = 0.8
 const MIN_MARGIN: float = 0.1
@@ -24,6 +31,8 @@ static func classify(adjective: String) -> Dictionary:
 		return {"modifier_id": "", "score": 0.0, "margin": 0.0}
 	var relations: Dictionary = _relations(word)
 	for id: String in CONCEPTS:
+		if not MODIFIERS.eligible(MODIFIERS.definition(id), RunState.selected_biome):
+			continue
 		var score: float = 0.0
 		for anchor: String in CONCEPTS[id]:
 			if word == anchor:
@@ -51,9 +60,10 @@ static func select_modifier(adjective: String, rng: RandomNumberGenerator = null
 	if not String(classification.modifier_id).is_empty():
 		return MODIFIERS.definition(classification.modifier_id)
 	# Roll only here; the caller keeps the existing encounter outcome cache.
+	var pool: Array[Dictionary] = MODIFIERS.eligible_entries(RunState.selected_biome)
 	if rng != null:
-		return MODIFIERS.ENTRIES[rng.randi_range(0, MODIFIERS.ENTRIES.size() - 1)].duplicate(true)
-	return MODIFIERS.ENTRIES.pick_random().duplicate(true)
+		return pool[rng.randi_range(0, pool.size() - 1)].duplicate(true)
+	return pool.pick_random().duplicate(true)
 
 static func _relations(word: String) -> Dictionary:
 	if not _relations_cache.has(word):

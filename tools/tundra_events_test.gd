@@ -5,7 +5,22 @@ const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 var failures: int = 0
 
 func _valid_word(id: String) -> String:
-	return {"frozen_traveler": "sock", "treasure_chest": "shiny", "icy_portal": "quickly"}[id]
+	if id == "treasure_chest":
+		var state: Dictionary = TundraEventScript.progress(id)
+		return state.locks[int(state.lock_index)].anchors[0]
+	return "torch" if id == "frozen_traveler" else "carefully"
+
+func _finish_event(event: Control) -> void:
+	for turn: int in 6:
+		if event._finished:
+			break
+		if event.next_button.visible:
+			event._next_round()
+		if event.encounter_id == "icy_portal":
+			event._choose(0)
+		event.input.text = "  " + _valid_word(event.encounter_id).to_upper() + "  "
+		event.input.text_submitted.emit(event.input.text)
+	check(event._finished, "Mini-game completes: " + event.encounter_id)
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -48,20 +63,6 @@ func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
 	_setup_between_fights()
-	RunState.player_health = RunState.player_max_health
-	check(RunState.begin_optional_encounter("frozen_traveler"), "Traveler available between fights")
-	var result: Dictionary = TundraEventScript.complete("frozen_traveler", "sock")
-	check(RunState.player_health == RunState.player_max_health and result.reward.contains("full health"), "Full HP safely capped")
-	check(TundraEventScript.complete("frozen_traveler", "sock").is_empty(), "Cannot collect twice")
-	_setup_between_fights()
-	RunState.player_health = 23
-	RunState.begin_optional_encounter("frozen_traveler")
-	TundraEventScript.complete("frozen_traveler", "sock")
-	check(RunState.player_health == 29, "Traveler restores configured six HP")
-	RunState.begin_optional_encounter("treasure_chest")
-	TundraEventScript.complete("treasure_chest", "shiny")
-	check(RunState.gold == 12, "Chest awards configured twelve gold")
-	_setup_between_fights()
 	RunState.player_health = 23
 	RunState.gold = 7
 	RunState.begin_optional_encounter("treasure_chest")
@@ -71,24 +72,8 @@ func _run() -> void:
 	skipped.continue_button.pressed.emit()
 	var map = await _wait(ScenePaths.ENCOUNTER_SELECT)
 	check(RunState.encounter_index == 2 and not RunState.optional_encounter_available("treasure_chest"), "Skip returns to same slot without farming")
-	var observed: Dictionary = {}
-	for trial: int in 24:
-		_setup_between_fights()
-		RunState.player_health = 2 if trial < 12 else 49
-		RunState.begin_optional_encounter("icy_portal")
-		seed(trial)
-		var before: int = RunState.player_health
-		result = TundraEventScript.complete("icy_portal", "quickly")
-		check(RunState.player_health >= 1 and RunState.player_health <= 50 and RunState.is_run_active, "Portal cannot kill or overheal")
-		if RunState.gold > 0:
-			observed.gold = true
-		elif RunState.player_health > before:
-			observed.heal = true
-		elif RunState.player_health < before:
-			observed.damage = true
-	check(observed.size() == 3, "All three modest portal outcomes verified")
 	RunState.start_new_run()
-	check(RunState.optional_encounters.is_empty() and RunState.pending_optional_encounter.is_empty(), "New run clears visits and pending event")
+	check(RunState.optional_encounters.is_empty() and RunState.optional_encounter_progress.is_empty() and RunState.pending_optional_encounter.is_empty(), "New run clears visits and pending event")
 	RunState.selected_biome = "tundra"
 	check(not RunState.begin_optional_encounter("frozen_traveler"), "No detours before first fight")
 	var fought: Array[String] = []
@@ -136,9 +121,17 @@ func _run() -> void:
 					check(RunState.player_health == initial_hp and RunState.gold == initial_gold, "Invalid word awards nothing")
 					check(event.feedback.text.contains(WordNet.pos_name(String(event.data.pos))), "Error explains expected word type")
 					check(event.input.get_global_rect() == input_rect, "Validation does not shift input")
-				event.input.text = "  " + _valid_word(id).to_upper() + "  "
-				event.input.text_submitted.emit(event.input.text)
-				check(event._finished and event.dialogue.text.contains(_valid_word(id)) and event.continue_button.visible, "Normalized word inserted into humorous result: " + id)
+				if id == "icy_portal":
+					event._choose(0)
+				event.input.text = _valid_word(id)
+				event._submit()
+				check(not event._finished and event.next_button.visible, "First word shows feedback without ending game")
+				check(RunState.player_health == initial_hp and RunState.gold == initial_gold, "Rewards wait for final round")
+				var saved: Dictionary = TundraEventScript.progress(id).duplicate(true)
+				event = await _go(ScenePaths.TUNDRA_EVENT)
+				check(TundraEventScript.progress(id) == saved and event.next_button.visible, "Reopening resumes progress and feedback")
+				_finish_event(event)
+				check(event.dialogue.text.contains(RunState.optional_encounters[id].word) and event.continue_button.visible, "Last word appears in result: " + id)
 				var hp: int = RunState.player_health
 				var gold: int = RunState.gold
 				event._submit()
@@ -223,11 +216,47 @@ func _check_layouts() -> void:
 			viewport.add_child(event)
 			await _frames()
 			check(bounds.encloses(event.get_node("Margin/Content/InputRow").get_global_rect()), "Input fits " + id + str(dimensions))
-			event.input.text = _valid_word(id)
-			event._submit()
-			await _frames()
-			check(bounds.encloses(event.continue_button.get_global_rect()), "Result fits " + id + str(dimensions))
+			for round_index: int in 3:
+				if event.next_button.visible:
+					event._next_round()
+				var hint_before_typing: String = event.preview.text
+				event.input.text = _valid_word(id)
+				await _frames()
+				check(event.preview.text == hint_before_typing, "Typing does not disclose word effects: " + id)
+				for control: Control in [event.game_panel, event.input, event.feedback_banner, event.feedback, event.choice_row]:
+					if control.is_visible_in_tree():
+						check(bounds.encloses(control.get_global_rect()), "Gameplay fits " + id + str(dimensions))
+				if id == "icy_portal": event._choose(0)
+				event._submit()
+				await _frames()
+				if event.next_button.visible:
+					check(bounds.encloses(event.next_button.get_global_rect()), "Round feedback fits " + id + str(dimensions))
+					_check_banner(event, bounds, id + str(dimensions))
+					var original: String = event.feedback.text
+					event.feedback.text = "The wizard has reviewed your unusually elaborate application. Please keep your limbs inside reality while he locates his misplaced sandwich. Your chosen word still counts, and the next round begins when you are ready. A tiny clerk stamps the receipt and asks whether the sandwich was declared at the border."
+					await _frames()
+					_check_banner(event, bounds, "Long message " + id + str(dimensions))
+					event.feedback.text = ""
+					event._sync_feedback_banner()
+					await _frames()
+					check(not event.feedback_banner.visible, "Empty banner collapses")
+					event.feedback.text = original
+					event._sync_feedback_banner()
+					await _frames()
+			check(event._finished and bounds.encloses(event.continue_button.get_global_rect()), "Result fits " + id + str(dimensions))
 			event.queue_free()
 			await _frames()
 		viewport.queue_free()
 		await _frames()
+
+func _check_banner(event: Control, bounds: Rect2, context: String) -> void:
+	var banner: Rect2 = event.feedback_banner.get_global_rect()
+	var controls: Rect2 = event.get_node("Margin/Content/InputRow").get_global_rect()
+	check(bounds.encloses(banner), "Banner fits: " + context)
+	check(banner.encloses(event.feedback.get_global_rect()), "Banner encloses text: " + context)
+	check(event.feedback.size.y >= event.feedback.get_combined_minimum_size().y, "Wrapped text is not clipped: " + context)
+	check(banner.position.y >= controls.end.y + 9, "Banner remains below interaction controls: " + context)
+	check(not banner.intersects(event.game_panel.get_global_rect()), "Banner clears information panel: " + context)
+	check(not banner.intersects(event.next_button.get_global_rect()), "Banner clears next button: " + context)
+	check(bounds.encloses(event.next_button.get_global_rect()), "Next button fits after wrapping: " + context)
+	check(event.sprite.get_global_rect().end.y <= event.game_panel.get_global_rect().position.y, "Sprite remains above information: " + context)

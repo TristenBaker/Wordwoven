@@ -57,6 +57,7 @@ var pending_encounter_modifier: Dictionary = {}
 
 # Optional detours never consume a monster slot; skipped visits also count as used.
 var optional_encounters: Dictionary = {}
+var optional_encounter_progress: Dictionary = {}
 var pending_optional_encounter: String = ""
 
 # Biome used by encounter selection and combat backgrounds.
@@ -89,6 +90,7 @@ func start_new_run() -> void:
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
 	optional_encounters.clear()
+	optional_encounter_progress.clear()
 	pending_optional_encounter = ""
 	selected_biome = ""
 	word_history = []

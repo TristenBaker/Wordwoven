@@ -1,0 +1,122 @@
+{
+  "rat": [
+    [
+      "filthy",
+      "quick"
+    ],
+    [
+      "hungry",
+      "small"
+    ]
+  ],
+  "goblin": [
+    [
+      "greedy",
+      "sneaky"
+    ],
+    [
+      "angry",
+      "crafty"
+    ]
+  ],
+  "mushroom": [
+    [
+      "poisonous",
+      "damp"
+    ],
+    [
+      "dark",
+      "rooted"
+    ]
+  ],
+  "skeleton": [
+    [
+      "dead",
+      "brittle"
+    ],
+    [
+      "cold",
+      "armed"
+    ]
+  ],
+  "flying_eye": [
+    [
+      "watchful",
+      "flying"
+    ],
+    [
+      "strange",
+      "round"
+    ]
+  ],
+  "dragon": [
+    [
+      "fiery",
+      "huge"
+    ],
+    [
+      "ancient",
+      "greedy"
+    ]
+  ],
+  "frostfang_wolf": [
+    [
+      "cold",
+      "quick"
+    ],
+    [
+      "hungry",
+      "wild"
+    ]
+  ],
+  "glacier_bear": [
+    [
+      "cold",
+      "strong"
+    ],
+    [
+      "wild",
+      "heavy"
+    ]
+  ],
+  "frozen_revenant": [
+    [
+      "cold",
+      "dead"
+    ],
+    [
+      "brittle",
+      "angry"
+    ]
+  ],
+  "winter_wraith": [
+    [
+      "cold",
+      "ghostly"
+    ],
+    [
+      "flying",
+      "dark"
+    ]
+  ],
+  "tundra_behemoth": [
+    [
+      "cold",
+      "huge"
+    ],
+    [
+      "heavy",
+      "strong"
+    ]
+  ],
+  "frost_wyrm": [
+    [
+      "cold",
+      "ancient"
+    ],
+    [
+      "huge",
+      "flying"
+    ]
+  ]
+}

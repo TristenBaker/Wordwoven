@@ -44,9 +44,9 @@ func _ready() -> void:
 	hint.add_theme_color_override("font_color", Color("c0dce5"))
 	row.add_child(hint)
 
-func refresh(heat: int, turns: int, has_frozen: bool) -> void:
+func refresh(heat: int, turns: int, has_frozen: bool, freeze_every: int = RULES.FREEZE_EVERY) -> void:
 	title.text = "🔥 Heat: %d/%d" % [heat, RULES.MAX_HEAT]
-	hint.text = "Frost in %d • Thaw: %d Heat" % [RULES.FREEZE_EVERY - turns % RULES.FREEZE_EVERY, RULES.THAW_COST]
+	hint.text = "Frost in %d • Thaw: %d Heat" % [freeze_every - turns % freeze_every, RULES.THAW_COST]
 	if has_frozen:
 		hint.text = "Click ice to thaw • %d Heat" % RULES.THAW_COST if heat >= RULES.THAW_COST else "Thaw needs %d Heat • Cast to warm up" % RULES.THAW_COST
 	for i in pips.size():
