@@ -11,6 +11,7 @@ func _ready() -> void:
 func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
+	RunState.selected_biome = "tundra"
 	var cases: Dictionary = {
 		"weak": "doommarked", "frail": "doommarked", "strong": "titanbound", "tough": "titanbound",
 		"angry": "war_blessed", "ferocious": "war_blessed", "timid": "spirit_broken", "cowardly": "spirit_broken",
@@ -18,6 +19,9 @@ func _run() -> void:
 		# Not concept anchors: these must generalize using WordNet synonyms.
 		"irate": "war_blessed", "robust": "titanbound", "delicate": "doommarked", "afraid": "spirit_broken",
 		"vicious": "war_blessed", "armoured": "spellwarden",
+		"drowsy": "drowsy", "sleepy": "drowsy", "clumsy": "clumsy",
+		"verbose": "long_winded", "resonant": "echo_bound", "fickle": "chameleon",
+		"greedy": "greedy", "frigid": "frostbite_tax", "wooden": "clumsy",
 	}
 	for word: String in cases:
 		var result: Dictionary = CLASSIFIER.classify(word)
@@ -25,7 +29,7 @@ func _run() -> void:
 		check(result.modifier_id == cases[word], "logical fate: " + word)
 		for attempt: int in range(3):
 			check(CLASSIFIER.select_modifier(word).id == cases[word], "reliable selection: " + word)
-	for word: String in ["purple", "beautiful", "ancient", "strange", "wooden", "triangular"]:
+	for word: String in ["purple", "beautiful", "ancient", "strange", "triangular"]:
 		var result: Dictionary = CLASSIFIER.classify(word)
 		print(word, " fallback -> ", result)
 		check(result.modifier_id == "", "unrelated falls back: " + word)
@@ -37,7 +41,27 @@ func _run() -> void:
 			check(not MODIFIERS.definition(selected.id).is_empty(), "fallback is an existing fate")
 			outcomes[selected.id] = true
 		check(outcomes.size() > 1, "fallback actually random: " + word)
+	RunState.selected_biome = "forest"
+	check(CLASSIFIER.classify("frigid").modifier_id != "frostbite_tax", "Tundra classification excluded elsewhere")
+	var pool: Dictionary = {}
+	var seeded := RandomNumberGenerator.new()
+	seeded.seed = 42
+	for attempt in range(500):
+		pool[CLASSIFIER.select_modifier("purple", seeded).id] = true
+	check(pool.size() == 12 and not pool.has("frostbite_tax"), "fallback contains twelve eligible fates")
+	RunState.selected_biome = "tundra"
+	pool.clear()
+	for attempt in range(500):
+		pool[CLASSIFIER.select_modifier("purple", seeded).id] = true
+	check(pool.size() == 13, "Tundra fallback contains all thirteen fates")
 	check(CLASSIFIER.classify("  WEAK  ").modifier_id == "doommarked", "case and whitespace")
+	# Equal semantic scores retain the existing ambiguity-to-random rule.
+	var cached_relations: Dictionary = CLASSIFIER._relations_cache.duplicate(true)
+	for word: String in ["purple", "drowsy", "clumsy"]:
+		CLASSIFIER._relations_cache[word] = {"synsets": [-1], "similar": []}
+	var ambiguous: Dictionary = CLASSIFIER.classify("purple")
+	check(ambiguous.modifier_id == "" and ambiguous.margin == 0.0, "ambiguous semantic match uses fallback")
+	CLASSIFIER._relations_cache = cached_relations
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
 	var screen = load(ScenePaths.ENCOUNTER_MODIFIER).instantiate()

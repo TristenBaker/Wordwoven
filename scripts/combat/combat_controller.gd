@@ -7,6 +7,7 @@ extends Control
 
 const ENCOUNTER_MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
 var _encounter_modifier: Dictionary = {}
+var _modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
 
 enum State {
 	PLAYER_INPUT,
@@ -171,6 +172,14 @@ func _start_encounter() -> void:
 	# Consume the matching preparation once; the applied fate lives with this scene.
 	var preparation: Dictionary = RunState.take_encounter_modifier(spawn_data["id"])
 	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
+	if not ENCOUNTER_MODIFIERS.eligible(_encounter_modifier, RunState.selected_biome):
+		_encounter_modifier = {}
+	_modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+	_modifier_runtime.configure(_encounter_modifier, int(spawn_data.attack), String(spawn_data.id))
+	if _modifier_runtime.id == "frostbite_tax" and cold.enabled:
+		cold.freeze_every = 2
+		cold.heat_per_word = 2
+		_refresh_cold()
 	var base_spawn: Dictionary = spawn_data
 	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)
 	enemy.setup(spawn_data)
@@ -178,6 +187,7 @@ func _start_encounter() -> void:
 		String(preparation.get("word", "")), _encounter_modifier,
 		base_spawn, spawn_data, ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
 	)
+	_update_modifier_status()
 	EventBus.emit_encounter_started(spawn_data)
 	_rebuild_hand_tiles()
 	_refresh_status()
@@ -290,6 +300,12 @@ func _resolve_word(word: String) -> void:
 	)
 	# Restore the original encounter-only final damage factor.
 	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	_modifier_runtime.modify_result(result, word)
+	var bonus_gold: int = _modifier_runtime.accept_cast(word)
+	if bonus_gold > 0:
+		RunState.add_gold(bonus_gold)
+		_log("GREEDY: +1 cast gold (%d/5). The monster charges a consultation fee." % _modifier_runtime.gold_gained)
+	_update_modifier_status()
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
@@ -314,6 +330,8 @@ func _resolve_word(word: String) -> void:
 	effectiveness_indicator.show_result(result)
 	if performing:
 		await party_stage.impact_landed
+	if _state != State.RESOLVING:
+		return
 	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
@@ -326,6 +344,8 @@ func _on_gold_stolen(amount: int) -> void:
 
 
 func _enemy_turn() -> void:
+	if _state != State.RESOLVING:
+		return
 	_state = State.ENEMY_TURN
 	var delay: float = ENEMY_TURN_DELAY
 	if party_stage.is_performing():
@@ -348,25 +368,36 @@ func _enemy_turn() -> void:
 		])
 	if not enemy.is_alive():
 		return
-	# The retaliation lands on the attack animation's contact frame.
-	enemy.begin_retaliation_lunge(
-		party_stage.get_global_transform() * Vector2(party_stage.line_start_x, party_stage.ground_y)
-	)
-	await enemy.play_attack()
-	if _state != State.ENEMY_TURN:
-		enemy.cancel_retaliation_lunge()
-		return
-	enemy.finish_retaliation_lunge()
-	var retaliation: int = maxi(
-		enemy.attack - _retaliation_reduction - _guard, 0
-	)
-	_log("The %s retaliates for %d damage!" % [
-		enemy.enemy_name, retaliation
-	])
+	var plan: Dictionary = _modifier_runtime.retaliation_plan(enemy.attack)
+	# Sleeping skips only the attack; burn, poison, turn completion and cold still run.
+	if plan.kind != "sleep":
+		enemy.begin_retaliation_lunge(
+			party_stage.get_global_transform() * Vector2(party_stage.line_start_x, party_stage.ground_y)
+		)
+		await enemy.play_attack()
+		if _state != State.ENEMY_TURN:
+			enemy.cancel_retaliation_lunge()
+			return
+		enemy.finish_retaliation_lunge()
+	var stolen: int = _modifier_runtime.complete_retaliation(RunState.gold)
+	if stolen > 0:
+		RunState.spend_gold(stolen)
+		_log("GREEDY: the monster steals %d gold (%d/4 total). 'Administrative expenses!'" % [stolen, _modifier_runtime.gold_stolen])
+	var retaliation: int = maxi(int(plan.attack) - _retaliation_reduction - _guard, 0) if plan.kind == "attack" else 0
 	_retaliation_reduction = 0
 	_guard = 0
-	strike_fx.play(retaliation, $Layout)
-	RunState.damage_player(retaliation)
+	if plan.kind == "sleep":
+		_log("DROWSY: the %s snores through its turn. 'Five more minutes of villainy...'" % enemy.enemy_name)
+	elif plan.kind == "self_hit":
+		_log("CLUMSY: the %s trips over its own threat and hits itself for %d damage!" % [enemy.enemy_name, int(round(float(plan.self_damage)))])
+		enemy.take_damage(float(plan.self_damage))
+	else:
+		_log("The %s retaliates for %d damage!" % [enemy.enemy_name, retaliation])
+		strike_fx.play(retaliation, $Layout)
+		RunState.damage_player(retaliation)
+	_update_modifier_status()
+	if not enemy.is_alive():
+		return
 	_refresh_status()
 	if retaliation > 0:
 		_health_bar_shake.play(player_health_bar)
@@ -375,6 +406,10 @@ func _enemy_turn() -> void:
 		return
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
+		var new_tags: Array[String] = _modifier_runtime.next_tags(enemy.tags)
+		if not new_tags.is_empty():
+			enemy.set_semantic_tags(new_tags)
+			_log("CHAMELEON: new counter targets: %s. 'I contain multitudes. Mostly problems.'" % " • ".join(new_tags))
 		var newly_frozen: LetterStats = cold.freeze_after_turn(deck_manager.hand())
 		_refresh_cold(newly_frozen)
 		if newly_frozen != null:
@@ -388,7 +423,7 @@ func _on_enemy_died() -> void:
 	if _state == State.WON:
 		return
 	_state = State.WON
-	var earned: int = enemy.gold_reward
+	var earned: int = enemy.gold_reward + _modifier_runtime.victory_bonus()
 	# Newly selected Quills begin paying on the next victory.
 	earned += int(_relic_system.total_effect("victory_gold"))
 	RunState.add_gold(earned)
@@ -510,6 +545,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		split = deck_manager.split_word(word)
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
+	_update_modifier_status(word)
 	word_tile_board.set_word(word, drawn)
 	if word.is_empty() or enemy == null or not enemy.is_alive():
 		_set_output_counters(0, 0, 0)
@@ -521,6 +557,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		enemy.affinities, false, _turn_elapsed_seconds
 	)
 	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	_modifier_runtime.modify_result(result, word)
 	if _state == State.PLAYER_INPUT:
 		if validator.validate(word, required_pos).get("valid", false):
 			effectiveness_indicator.show_preview(result)
@@ -631,7 +668,7 @@ func _refresh_cold(newly_frozen: LetterStats = null) -> void:
 	deck_manager.frozen_letters = cold.frozen
 	if heat_meter == null:
 		return
-	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty())
+	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty(), cold.freeze_every)
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_frozen(cold.frozen.has(tile.stats), cold.heat >= cold.THAW_COST,
 			tile.stats == newly_frozen)
@@ -649,7 +686,7 @@ func _on_hand_tile_activated(tile: LetterTile) -> void:
 		else:
 			tile.deny_thaw()
 			heat_meter.pulse(true)
-			_set_player_feedback("Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD])
+			_set_player_feedback("Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.heat_per_word])
 	_focus_word_input()
 
 
@@ -704,6 +741,8 @@ func _describe_result(result: Dictionary) -> String:
 		lines.append("  ice weakens retaliation by %d." % result["ice_slow"])
 	if result["earth_guard"] > 0:
 		lines.append("  earth grants %d Guard." % result["earth_guard"])
+	if int(result.get("modifier_guard", 0)) > 0:
+		lines.append("  LONG-WINDED grants 2 Guard for this retaliation.")
 	return "\n".join(lines)
 
 
@@ -720,8 +759,11 @@ func _apply_elemental_effects(result: Dictionary) -> void:
 	if water_heal > 0:
 		RunState.heal_player(water_heal)
 	_retaliation_reduction = result["ice_slow"]
-	_guard = result["earth_guard"]
+	_guard = int(result["earth_guard"]) + int(result.get("modifier_guard", 0))
 
 
 func _log(message: String) -> void:
 	log_label.append_text(message + "\n")
+
+func _update_modifier_status(word: String = "") -> void:
+	$Layout/ActiveModifierPanel.show_status(_encounter_modifier, _modifier_runtime.status(word))

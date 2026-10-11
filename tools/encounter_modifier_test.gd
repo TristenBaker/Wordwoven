@@ -46,7 +46,9 @@ func _run() -> void:
 			check(combat.enemy.attack == (int(round(base.attack * entry.factor)) if entry.stat == "attack" else base.attack), "combat attack")
 			check(combat.get_node("Layout/ActiveModifierPanel/Content/ModifierName").text == "Modifier: " + entry.name, "indicator")
 			var panel = combat.get_node("Layout/ActiveModifierPanel")
-			check(panel.effect_label.text == entry.effect, "panel displays catalogue effect only")
+			check(panel.effect_label.text.begins_with(entry.effect), "panel displays catalogue effect")
+			if entry.stat != "behavior":
+				check(panel.effect_label.text == entry.effect, "original panel text unchanged")
 			await get_tree().process_frame
 			check(is_equal_approx(panel.get_global_rect().position.y, combat.timer_label.get_global_rect().end.y + 10.0), "panel directly below quick-cast timer")
 			check(is_equal_approx(panel.get_global_rect().end.y + 8.0, combat.dev_kill_button.get_global_rect().position.y), "Dev Auto Kill directly below banner")
@@ -107,5 +109,5 @@ func _run() -> void:
 		check(RunState.pending_encounter_modifier.is_empty(), "invalid preparation discarded: " + scenario)
 		combat.queue_free()
 		await get_tree().process_frame
-	print("Encounter modifiers: ", failures, " failures; all six effects at first/normal/boss stages")
+	print("Encounter modifiers: ", failures, " failures; all thirteen effects at first/normal/boss stages")
 	get_tree().quit(1 if failures else 0)

@@ -45,6 +45,7 @@ func _fit_below_timer() -> void:
 
 
 func show_modifier(_word: String, modifier: Dictionary, _base: Dictionary, _applied: Dictionary, _player_factor: float) -> void:
+	effect_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	if modifier.is_empty():
 		name_label.text = "No Active Modifier"
 		name_label.add_theme_color_override("font_color", NEUTRAL)
@@ -59,4 +60,13 @@ func show_modifier(_word: String, modifier: Dictionary, _base: Dictionary, _appl
 		name_label.add_theme_color_override("font_color", accent)
 		effect_label.add_theme_color_override("font_color", accent)
 		tooltip_text = ""
+	_queue_fit()
+
+## Existing two-label panel; only new fates append a compact live status.
+func show_status(modifier: Dictionary, status: String) -> void:
+	if status.is_empty(): return
+	var text: String = "%s\n%s" % [modifier.effect, status]
+	if effect_label.text == text: return
+	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effect_label.text = text
 	_queue_fit()

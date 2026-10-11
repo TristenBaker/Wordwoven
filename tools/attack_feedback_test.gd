@@ -34,6 +34,8 @@ func _run() -> void:
 		var saw_shake: bool = false
 		var saw_idle_advance: bool = false
 		var idle_before: float = enemy._idle_elapsed
+		# Retaliation follows a resolved cast in live combat.
+		combat._state = combat.State.RESOLVING
 		combat._enemy_turn()
 		var deadline: int = Time.get_ticks_msec() + 6000
 		while combat._state != combat.State.PLAYER_INPUT and Time.get_ticks_msec() < deadline:
@@ -76,6 +78,7 @@ func _run() -> void:
 		if id == "frost_wyrm":
 			hp_before = RunState.player_health
 			combat._guard = enemy.attack
+			combat._state = combat.State.RESOLVING
 			combat._enemy_turn()
 			deadline = Time.get_ticks_msec() + 6000
 			while combat._state != combat.State.PLAYER_INPUT and Time.get_ticks_msec() < deadline:
