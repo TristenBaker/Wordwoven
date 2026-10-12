@@ -179,9 +179,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -230.0
-offset_top = 478.0
+offset_top = 530.0
 offset_right = 230.0
-offset_bottom = 584.0
+offset_bottom = 636.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.6, 1)
 theme_override_fonts/font = ExtResource("4_body")
@@ -205,6 +205,22 @@ theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
 text = "Forge"
+
+[node name="WordGameButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -130.0
+offset_top = 452.0
+offset_right = 130.0
+offset_bottom = 512.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 0.96, 1)
+theme_override_fonts/font = ExtResource("4_body")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_interaction")
+text = "The Inkwell Word"
 
 [node name="Hint" type="Label" parent="." unique_id=1802721590]
 visible = false

@@ -8,8 +8,7 @@ const TILE_THEME: LetterTileTheme = preload(
 	"res://assets/Themes/letter_tiles/default_letter_tile_theme.tres"
 )
 
-@onready var toggle_button: Button = $EquipButton
-@onready var powers_button: Button = $PowersButton
+@onready var toggle_button: TextureButton = $EquipButton
 @onready var panel: PanelContainer = $EquipmentPanel
 @onready var title_label: Label = $EquipmentPanel/Content/TitleRow/Title
 @onready var letters_tab: Button = $EquipmentPanel/Content/TitleRow/LettersTab
@@ -35,7 +34,6 @@ var _showing_powers: bool = false
 
 func _ready() -> void:
 	toggle_button.pressed.connect(_toggle_panel)
-	powers_button.pressed.connect(_open_powers)
 	close_button.pressed.connect(panel.hide)
 	letters_tab.pressed.connect(_show_letters)
 	powers_tab.pressed.connect(_show_powers)
@@ -54,14 +52,7 @@ func _toggle_panel() -> void:
 		_refresh()
 
 
-func _open_powers() -> void:
-	panel.show()
-	_show_powers()
-	_refresh()
-
-
 func _refresh() -> void:
-	powers_button.text = "Powers (%d)" % RunState.relics.size()
 	mode_label.text = "Itemized letters mode" if RunState.use_itemized_letters \
 		else "Legacy deck mode — item equipment is inactive"
 	_rebuild_slots()
