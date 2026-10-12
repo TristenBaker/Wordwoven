@@ -23,6 +23,7 @@ func _ready() -> void:
 		RunState.ENCOUNTERS_PER_RUN,
 	]
 	route_map.enemy_selected.connect(_on_choice_pressed)
+	route_map.treasure_selected.connect(_on_treasure_selected)
 	route_map.optional_selected.connect(_on_optional_pressed)
 	var optional_ids: Array[String] = []
 	for id: String in TundraEventScript.IDS:
@@ -48,12 +49,18 @@ func _ready() -> void:
 	var choices: Array[Dictionary] = []
 	for i: int in count:
 		choices.append(factory.build_spawn_data(ids[i]))
+	# Debug phase: guarantee one non-combat route at every regular stage.
+	choices.append({"type": "treasure"})
 	route_map.setup(stage, choices, {})
 
 
 func _on_choice_pressed(enemy_id: String) -> void:
 	RunState.next_enemy_id = enemy_id
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)
+
+
+func _on_treasure_selected() -> void:
+	get_tree().change_scene_to_file(ScenePaths.TREASURE_ROOM)
 
 
 func _on_optional_pressed(id: String) -> void:

@@ -127,6 +127,12 @@ func complete_encounter(enemy_id: String = "") -> void:
 		completed_encounters.append(encounter_index)
 
 
+## Treasure rooms occupy an encounter stage without recording a defeated foe.
+func complete_treasure_room() -> void:
+	if not completed_encounters.has(encounter_index):
+		completed_encounters.append(encounter_index)
+
+
 func begin_victory(enemy_name: String, gold_earned: int) -> void:
 	pending_victory_enemy = enemy_name
 	pending_victory_gold = gold_earned

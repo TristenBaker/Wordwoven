@@ -2,12 +2,16 @@ class_name EncounterRouteMap
 extends Control
 
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
+const TREASURE_CHEST: Texture2D = preload(
+	"res://assets/Art/Events/WW_chestclosed.png"
+)
 ## Draws a horizontal expedition route and places interactive enemy
 ## cards at the current fork. The visual language is intentionally
 ## map-like: dotted trails, cleared waypoints, fogged future nodes,
 ## and a dominant boss destination.
 
 signal enemy_selected(enemy_id: String)
+signal treasure_selected()
 signal optional_selected(encounter_id: String)
 
 const STAGE_COUNT: int = 6
@@ -108,7 +112,10 @@ func _rebuild_buttons() -> void:
 		_add_enemy_button(_boss, true)
 	else:
 		for data: Dictionary in _choices:
-			_add_enemy_button(data, false)
+			if data.get("type", "enemy") == "treasure":
+				_add_treasure_button()
+			else:
+				_add_enemy_button(data, false)
 	_layout_buttons.call_deferred()
 
 
@@ -134,6 +141,52 @@ func _add_enemy_button(data: Dictionary, is_boss: bool) -> void:
 	)
 	add_child(button)
 	_add_card_content(button, data, compact, is_boss)
+	_buttons.append(button)
+
+
+func _add_treasure_button() -> void:
+	var button := Button.new()
+	var compact: bool = _choices.size() > 2
+	button.custom_minimum_size = Vector2(240, 72) if compact else Vector2(260, 96)
+	button.tooltip_text = "A quiet chamber. No combat—only a word and whatever answers it."
+	button.add_theme_font_size_override("font_size", 16 if compact else 18)
+	button.add_theme_color_override("font_color", Color("fff0ad"))
+	button.add_theme_stylebox_override("normal", _treasure_style(false))
+	button.add_theme_stylebox_override("hover", _treasure_style(true))
+	button.add_theme_stylebox_override("pressed", _treasure_style(true))
+	button.pressed.connect(treasure_selected.emit)
+	add_child(button)
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 12.0
+	row.offset_right = -12.0
+	row.offset_top = 8.0
+	row.offset_bottom = -8.0
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 10)
+	button.add_child(row)
+	var icon := TextureRect.new()
+	var icon_extent := 40.0 if compact else 54.0
+	icon.custom_minimum_size = Vector2(icon_extent, icon_extent)
+	icon.texture = _treasure_chest_icon()
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(icon)
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(text_box)
+	var title := Label.new()
+	title.text = "TREASURE ROOM"
+	title.add_theme_font_size_override("font_size", 16 if compact else 18)
+	title.add_theme_color_override("font_color", Color("fff0ad"))
+	text_box.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = "No combat · Shape the find"
+	subtitle.add_theme_font_size_override("font_size", 13 if compact else 15)
+	subtitle.add_theme_color_override("font_color", Color("dec88a"))
+	text_box.add_child(subtitle)
 	_buttons.append(button)
 
 
@@ -272,6 +325,28 @@ func _card_style(is_boss: bool, highlighted: bool) -> StyleBoxFlat:
 	style.content_margin_top = 10.0
 	style.content_margin_bottom = 10.0
 	return style
+
+
+func _treasure_style(highlighted: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("302214", 0.98)
+	style.border_color = Color("d9ae45")
+	if highlighted:
+		style.bg_color = style.bg_color.lightened(0.16)
+		style.border_color = Color("ffe58a")
+	style.set_border_width_all(3 if highlighted else 2)
+	style.set_corner_radius_all(14)
+	style.shadow_color = Color("000000", 0.5)
+	style.shadow_size = 9 if highlighted else 5
+	return style
+
+
+func _treasure_chest_icon() -> AtlasTexture:
+	var icon := AtlasTexture.new()
+	icon.atlas = TREASURE_CHEST
+	icon.region = Rect2(180, 180, 920, 820)
+	icon.filter_clip = true
+	return icon
 
 
 func _preview_texture(data: Dictionary) -> Texture2D:
