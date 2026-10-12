@@ -6,6 +6,7 @@ extends Control
 
 ## Emitted once per cast, at the first member's key moment.
 signal impact_landed()
+signal gold_stolen(amount: int)
 ## Emitted when every member of the last cast has finished.
 signal performance_finished()
 
@@ -67,7 +68,7 @@ func perform_word(target_global: Vector2) -> bool:
 	for index: int in range(_members.size()):
 		var member: PartyMember = _members[index]
 		_performers.append(member)
-		member.struck.connect(_on_member_struck)
+		member.struck.connect(_on_member_struck.bind(member), CONNECT_ONE_SHOT)
 		member.finished.connect(_on_member_finished.bind(member))
 		member.perform(target, exit_x, PERFORM_STAGGER * float(index))
 	_members = []
@@ -94,7 +95,9 @@ func _slot_x(index: int) -> float:
 	return line_start_x + slot_spacing * float(index)
 
 
-func _on_member_struck() -> void:
+func _on_member_struck(member: PartyMember) -> void:
+	if member.stats.element in [LetterStats.Element.LIGHTNING, LetterStats.Element.ICE]:
+		gold_stolen.emit(1)
 	if _impact_pending:
 		_impact_pending = false
 		impact_landed.emit()

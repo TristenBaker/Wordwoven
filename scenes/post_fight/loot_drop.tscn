@@ -1,5 +1,7 @@
 [gd_scene load_steps=8 format=3]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [ext_resource type="Script" path="res://scripts/post_fight/loot_drop.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/Victory.png" id="2_background"]
 [ext_resource type="FontFile" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
@@ -128,6 +130,8 @@ horizontal_alignment = 1
 
 [node name="ContinueButton" type="Button" parent="CenterBox/LootPanel/Content"]
 custom_minimum_size = Vector2(270, 54)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22

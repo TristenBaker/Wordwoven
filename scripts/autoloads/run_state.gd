@@ -26,6 +26,9 @@ var equipped_letters: Dictionary[String, LetterStats] = {}
 # Relic identifiers, resolved by the relic system.
 var relics: Array[String] = []
 
+# The ice-fishing choice can be made only once during a run.
+var fishing_hole_chosen: int = -1
+
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
 var defeated_enemy_ids: Array[String] = []
@@ -52,6 +55,11 @@ var next_enemy_id: String = ""
 # Cached preparation outcome, keyed to exactly one upcoming enemy/encounter.
 var pending_encounter_modifier: Dictionary = {}
 
+# Optional detours never consume a monster slot; skipped visits also count as used.
+var optional_encounters: Dictionary = {}
+var optional_encounter_progress: Dictionary = {}
+var pending_optional_encounter: String = ""
+
 # Biome used by encounter selection and combat backgrounds.
 var selected_biome: String = ""
 
@@ -68,6 +76,7 @@ func start_new_run() -> void:
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
 	relics = []
+	fishing_hole_chosen = -1
 	completed_encounters = []
 	defeated_enemy_ids = []
 	relic_rewards = {}
@@ -80,6 +89,9 @@ func start_new_run() -> void:
 	encounter_index = 1
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
+	optional_encounters.clear()
+	optional_encounter_progress.clear()
+	pending_optional_encounter = ""
 	selected_biome = ""
 	word_history = []
 	deck = []
@@ -183,6 +195,11 @@ func unequip_letter(slot: String) -> bool:
 
 
 func rolled_letter_drop() -> LetterStats:
+	var maximum_level: int = mini(5, 1 + encounter_index)
+	return rolled_letter_drop_at_level(randi_range(1, maximum_level))
+
+
+func rolled_letter_drop_at_level(item_level: int) -> LetterStats:
 	var letters: Array[String] = []
 	for letter: String in LetterStats.BASE_POWER:
 		letters.append(letter)
@@ -196,9 +213,9 @@ func rolled_letter_drop() -> LetterStats:
 		LetterStats.Element.EARTH,
 	]
 	var item_element: int = elements.pick_random()
-	var maximum_level: int = mini(5, 1 + encounter_index)
-	var item_level: int = randi_range(1, maximum_level)
-	return LetterStats.create_item(letter, item_element, item_level)
+	return LetterStats.create_item(
+		letter, item_element, clampi(item_level, 1, 5)
+	)
 
 
 func _setup_itemized_starters() -> void:
@@ -220,6 +237,13 @@ func _setup_itemized_starters() -> void:
 		equipped_letters[letter] = LetterStats.create_item(
 			letter, item_element, 1
 		)
+
+
+func choose_fishing_hole(hole_index: int) -> bool:
+	if fishing_hole_chosen >= 0:
+		return false
+	fishing_hole_chosen = hole_index
+	return true
 
 
 func add_gold(amount: int) -> void:
@@ -284,3 +308,22 @@ func take_encounter_modifier(enemy_id: String) -> Dictionary:
 	if pending.get("encounter", -1) != encounter_index or pending.get("enemy_id", "") != enemy_id:
 		return {}
 	return pending
+
+
+func optional_encounter_available(id: String) -> bool:
+	# Load at runtime: the reward helper itself depends on this autoload.
+	var event_script: GDScript = load("res://scripts/encounters/tundra_events.gd")
+	return (
+		is_run_active and selected_biome == "tundra"
+		and encounter_index > 1 and encounter_index <= ENCOUNTERS_PER_RUN
+		and completed_encounters.has(encounter_index - 1)
+		and not completed_encounters.has(ENCOUNTERS_PER_RUN)
+		and event_script.IDS.has(id) and not optional_encounters.has(id)
+	)
+
+
+func begin_optional_encounter(id: String) -> bool:
+	if not optional_encounter_available(id):
+		return false
+	pending_optional_encounter = id
+	return true

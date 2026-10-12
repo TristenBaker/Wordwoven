@@ -84,6 +84,8 @@ func _build() -> void:
 	title.add_theme_color_override("font_color", Color("f6d797"))
 	heading.add_child(title)
 	var close: Button = Button.new()
+	close.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+	close.theme_type_variation = &"WordWovenActionButton"
 	close.text = "×"
 	close.custom_minimum_size = Vector2(42.0, 36.0)
 	close.add_theme_font_size_override("font_size", 24)

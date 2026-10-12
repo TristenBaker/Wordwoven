@@ -7,6 +7,9 @@ const MAX_HEAT: int = 5
 const THAW_COST: int = 2
 const MIN_USABLE: int = 5
 
+var freeze_every: int = FREEZE_EVERY
+var heat_per_word: int = HEAT_PER_WORD
+
 var enabled: bool = false
 var heat: int = 0
 var turns: int = 0
@@ -15,6 +18,8 @@ var frozen: Array[LetterStats] = []
 
 func reset(active: bool) -> void:
 	enabled = active
+	freeze_every = FREEZE_EVERY
+	heat_per_word = HEAT_PER_WORD
 	heat = 0
 	turns = 0
 	_last_freeze_turn = -1
@@ -23,21 +28,21 @@ func reset(active: bool) -> void:
 func accept_word() -> void:
 	if enabled:
 		turns += 1
-		heat = mini(MAX_HEAT, heat + HEAT_PER_WORD)
+		heat = mini(MAX_HEAT, heat + heat_per_word)
 
 func freeze_after_turn(hand: Array[LetterStats]) -> LetterStats:
 	# Also handles debug hands being replaced wholesale.
 	frozen = frozen.filter(func(tile: LetterStats) -> bool: return hand.has(tile))
-	if not enabled or turns == 0 or turns % FREEZE_EVERY != 0 or turns == _last_freeze_turn:
+	if not enabled or turns == 0 or turns % freeze_every != 0 or turns == _last_freeze_turn:
 		return null
 	_last_freeze_turn = turns
 	var available: Array[LetterStats] = hand.filter(
 		func(tile: LetterStats) -> bool: return not frozen.has(tile))
 	if available.size() <= MIN_USABLE:
 		return null
-	var tile: LetterStats = available.pick_random()
-	frozen.append(tile)
-	return tile
+	var selected_tile: LetterStats = available.pick_random()
+	frozen.append(selected_tile)
+	return selected_tile
 
 func thaw(tile: LetterStats) -> bool:
 	if not enabled or not frozen.has(tile) or heat < THAW_COST:

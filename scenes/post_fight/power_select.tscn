@@ -113,25 +113,19 @@ theme_override_constants/separation = 14
 [node name="ChoiceOne" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
 autowrap_mode = 2
 
 [node name="ChoiceTwo" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
 autowrap_mode = 2
 
 [node name="ChoiceThree" type="Button" parent="CenterBox/PowerPanel/Content/Choices"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.16, 0.06, 0.22, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("StyleBoxFlat_choice")
 autowrap_mode = 2
 
 [node name="Status" type="Label" parent="CenterBox/PowerPanel/Content"]
@@ -144,6 +138,7 @@ horizontal_alignment = 1
 [node name="ContinueButton" type="Button" parent="CenterBox/PowerPanel/Content"]
 custom_minimum_size = Vector2(250, 52)
 theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22

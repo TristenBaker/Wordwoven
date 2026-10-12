@@ -66,6 +66,8 @@ func _run() -> void:
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
 	tile._gui_input(click)
+	click.pressed = false
+	tile._gui_input(click)
 	check(combat.cold.heat == 0 and not tile.frozen, "click spends exactly two and thaws immediately")
 	check(combat.deck_manager.split_word(frozen.letter).drawn.has(frozen), "thawed letter usable immediately")
 	var rules := TundraCold.new()

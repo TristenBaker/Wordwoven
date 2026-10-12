@@ -10,6 +10,7 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var right_arrow: Button = $RightArrow
 @onready var forge_button: Button = $ForgeButton
 @onready var word_game_button: Button = $WordGameButton
+@onready var ice_fishing_button: Button = $DebugIceFishingButton
 @onready var health_label: Label = $StatusPanel/HealthLabel
 @onready var gold_label: Label = $StatusPanel/GoldLabel
 
@@ -21,15 +22,21 @@ func _ready() -> void:
 	right_arrow.pressed.connect(_open_right_room)
 	forge_button.pressed.connect(_open_forge)
 	word_game_button.pressed.connect(_open_word_game)
+	ice_fishing_button.visible = OS.is_debug_build()
+	ice_fishing_button.pressed.connect(_open_ice_fishing)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	_refresh_status()
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo \
-			and event.keycode == KEY_B:
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	if event.keycode == KEY_B:
 		get_viewport().set_input_as_handled()
 		_open_tavern_page()
+	elif OS.is_debug_build() and event.keycode == KEY_I:
+		get_viewport().set_input_as_handled()
+		_open_ice_fishing()
 
 
 func _open_tavern_page() -> void:
@@ -54,6 +61,10 @@ func _open_forge() -> void:
 
 func _open_word_game() -> void:
 	get_tree().change_scene_to_file(ScenePaths.WORD_GAME)
+
+
+func _open_ice_fishing() -> void:
+	get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
 
 
 func _on_gold_changed(_new_total: int) -> void:

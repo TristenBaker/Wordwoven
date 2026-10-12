@@ -1,5 +1,7 @@
 [gd_scene load_steps=11 format=3]
 
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
 [ext_resource type="Script" path="res://scripts/tavern/dealer_room.gd" id="1_room"]
 [ext_resource type="Script" path="res://scripts/tavern/economy_system.gd" id="2_economy"]
 [ext_resource type="Texture2D" path="res://art/backgrounds/inkwell_tavern.png" id="3_background"]
@@ -144,6 +146,8 @@ stretch_mode = 5
 mouse_filter = 2
 
 [node name="DealerButton" type="Button" parent="."]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchor_left = 0.6
 anchor_top = 0.74
@@ -153,6 +157,8 @@ theme_override_font_sizes/font_size = 21
 text = "Browse Letter Stock"
 
 [node name="GoLeftButton" type="Button" parent="."]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchor_left = 0.0
 anchor_top = 0.5
@@ -163,11 +169,12 @@ offset_top = -36.0
 offset_right = 102.0
 offset_bottom = 36.0
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_navigation")
 tooltip_text = "Return to the main tavern"
 text = "<"
 
 [node name="RightArrow" type="Button" parent="."]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
 anchor_left = 1.0
 anchor_top = 0.5
@@ -178,8 +185,6 @@ offset_top = -36.0
 offset_right = -30.0
 offset_bottom = 36.0
 theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_navigation_disabled")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_navigation_disabled")
 tooltip_text = "Already at the tavern's right side"
 disabled = true
 text = ">"
@@ -225,11 +230,10 @@ autowrap_mode = 2
 
 [node name="CloseButton" type="Button" parent="LetterShop/Menu"]
 custom_minimum_size = Vector2(0, 42)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.2, 0.09, 0.03, 1)
-theme_override_styles/normal = SubResource("StyleBoxFlat_parchment_option")
-theme_override_styles/hover = SubResource("StyleBoxFlat_parchment_hover")
 text = "Close"
 
 [node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

@@ -1,5 +1,10 @@
 class_name EncounterRouteMap
 extends Control
+
+const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
+const TREASURE_CHEST: Texture2D = preload(
+	"res://assets/Art/Events/WW_chestclosed.png"
+)
 ## Draws a horizontal expedition route and places interactive enemy
 ## cards at the current fork. The visual language is intentionally
 ## map-like: dotted trails, cleared waypoints, fogged future nodes,
@@ -7,6 +12,7 @@ extends Control
 
 signal enemy_selected(enemy_id: String)
 signal treasure_selected()
+signal optional_selected(encounter_id: String)
 
 const STAGE_COUNT: int = 6
 const MAP_PADDING_X: float = 72.0
@@ -159,13 +165,13 @@ func _add_treasure_button() -> void:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override("separation", 10)
 	button.add_child(row)
-	var icon := Label.new()
-	icon.text = "✦"
-	icon.custom_minimum_size = Vector2(38, 0)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 28 if not compact else 23)
-	icon.add_theme_color_override("font_color", Color("ffe08a"))
+	var icon := TextureRect.new()
+	var icon_extent := 40.0 if compact else 54.0
+	icon.custom_minimum_size = Vector2(icon_extent, icon_extent)
+	icon.texture = _treasure_chest_icon()
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(icon)
 	var text_box := VBoxContainer.new()
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -185,7 +191,8 @@ func _add_treasure_button() -> void:
 
 
 func _add_card_content(
-	button: Button, data: Dictionary, compact: bool, is_boss: bool
+	button: Button, data: Dictionary, compact: bool, is_boss: bool,
+	show_tags: bool = true
 ) -> void:
 	# The card remains the sole input target; its children are presentation only.
 	var row := HBoxContainer.new()
@@ -208,7 +215,7 @@ func _add_card_content(
 	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	preview.texture = _preview_texture(data)
+	preview.texture = data.get("preview_texture") if data.has("preview_texture") else _preview_texture(data)
 	row.add_child(preview)
 
 	var text_box := VBoxContainer.new()
@@ -226,6 +233,8 @@ func _add_card_content(
 	name_label.add_theme_font_size_override("font_size", 16 if compact else (18 if not is_boss else 20))
 	name_label.add_theme_color_override("font_color", Color(0.94, 0.9, 0.76, 1.0))
 	text_box.add_child(name_label)
+	if not show_tags:
+		return
 	var tags_label := Label.new()
 	tags_label.name = "EnemyTags"
 	tags_label.text = " • ".join(data.get("tags", []))
@@ -287,14 +296,14 @@ func _draw_dotted_line(
 
 
 func _draw_centered_text(
-	position: Vector2, text: String, color: Color, font_size: int
+	local_position: Vector2, text: String, color: Color, font_size: int
 ) -> void:
 	var font: Font = ThemeDB.fallback_font
 	var text_size: Vector2 = font.get_string_size(
 		text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size
 	)
 	draw_string(
-		font, position - Vector2(text_size.x * 0.5, -text_size.y * 0.32),
+		font, local_position - Vector2(text_size.x * 0.5, -text_size.y * 0.32),
 		text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color
 	)
 
@@ -332,6 +341,14 @@ func _treasure_style(highlighted: bool) -> StyleBoxFlat:
 	return style
 
 
+func _treasure_chest_icon() -> AtlasTexture:
+	var icon := AtlasTexture.new()
+	icon.atlas = TREASURE_CHEST
+	icon.region = Rect2(180, 180, 920, 820)
+	icon.filter_clip = true
+	return icon
+
+
 func _preview_texture(data: Dictionary) -> Texture2D:
 	var frame: Texture2D = _enemy_icon(data)
 	if frame == null:
@@ -361,6 +378,8 @@ func _enemy_icon(data: Dictionary) -> Texture2D:
 	var idle_frames: int = maxi(int(data.get("idle_frames", 1)), 1)
 	var frame_width: float = float(texture.get_width()) / idle_frames \
 			if idle_frames > 1 else float(data.get("frame_width", 0))
+	if idle_frames > 1 and int(data.get("cell_width", 0)) > 0:
+		frame_width = float(data["cell_width"])
 	if frame_width <= 0.0:
 		frame_width = texture.get_width()
 	var top: float = float(data.get("idle_top", 0)) if idle_frames > 1 else 0.0
@@ -372,3 +391,32 @@ func _enemy_icon(data: Dictionary) -> Texture2D:
 	atlas.filter_clip = true
 	atlas.region = Rect2(0, top, frame_width, height)
 	return atlas
+
+
+func setup_optional(container: VBoxContainer, ids: Array[String]) -> void:
+	for child: Node in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+	for id: String in ids:
+		var data: Dictionary = TundraEventScript.definition(id)
+		data["preview_texture"] = TundraEventScript.frame_texture(data, 0)
+		if id == "treasure_chest":
+			data["name"] = "Treasure Chest"
+		var button := Button.new()
+		button.name = "Event_" + id
+		button.custom_minimum_size = Vector2(240, 94)
+		button.tooltip_text = "Optional detour. Your next monster fight remains unchanged."
+		button.theme = Theme.new()
+		button.theme.set_font("font", "Label", preload("res://assets/Fonts/Junicode.ttf"))
+		var normal: StyleBoxFlat = _card_style(false, false)
+		normal.bg_color = Color(0.055, 0.095, 0.18, 0.95)
+		normal.border_color = Color(0.48, 0.67, 0.82)
+		var hover: StyleBoxFlat = normal.duplicate()
+		hover.bg_color = normal.bg_color.lightened(0.08)
+		hover.border_color = normal.border_color.lightened(0.12)
+		button.add_theme_stylebox_override("normal", normal)
+		for state: String in ["hover", "pressed", "hover_pressed", "focus"]:
+			button.add_theme_stylebox_override(state, hover)
+		button.pressed.connect(optional_selected.emit.bind(id))
+		container.add_child(button)
+		_add_card_content(button, data, true, false, false)

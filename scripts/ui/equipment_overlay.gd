@@ -23,6 +23,7 @@ const TILE_THEME: LetterTileTheme = preload(
 @onready var inventory_grid: GridContainer = $EquipmentPanel/Content/InventoryScroll/InventoryGrid
 @onready var inventory_empty_label: Label = \
 		$EquipmentPanel/Content/InventoryEmptyLabel
+@onready var powers_empty_label: Label = $EquipmentPanel/Content/PowersEmptyLabel
 @onready var powers_scroll: ScrollContainer = \
 		$EquipmentPanel/Content/PowersScroll
 @onready var powers_grid: GridContainer = \
@@ -38,10 +39,15 @@ func _ready() -> void:
 	letters_tab.pressed.connect(_show_letters)
 	powers_tab.pressed.connect(_show_powers)
 	EventBus.deck_changed.connect(_refresh)
+	EventBus.relic_gained.connect(_on_relic_gained)
 	$EquipmentPanel/Content/TitleRow.move_child(letters_tab, 1)
 	$EquipmentPanel/Content/TitleRow.move_child(powers_tab, 2)
 	$EquipmentPanel/Content/TitleRow.move_child(close_button, 3)
 	panel.hide()
+	_refresh()
+
+
+func _on_relic_gained(_power_id: String) -> void:
 	_refresh()
 
 
@@ -83,7 +89,8 @@ func _refresh_tab() -> void:
 		and inventory_empty_label.text.is_empty()
 	inventory_empty_label.visible = not _showing_powers \
 		and not inventory_empty_label.text.is_empty()
-	powers_scroll.visible = _showing_powers
+	powers_scroll.visible = _showing_powers and not RunState.relics.is_empty()
+	powers_empty_label.visible = _showing_powers and RunState.relics.is_empty()
 
 
 func _rebuild_slots() -> void:
@@ -126,7 +133,6 @@ func _show_inventory_empty(message: String) -> void:
 func _rebuild_powers() -> void:
 	_clear(powers_grid)
 	if RunState.relics.is_empty():
-		_add_power_message("No powers yet. Defeat an enemy to choose one.")
 		return
 	var power_system: RelicSystem = RelicSystem.new()
 	var counts: Dictionary[String, int] = {}
@@ -149,15 +155,6 @@ func _rebuild_powers() -> void:
 		button.add_theme_stylebox_override("normal", _power_style(color))
 		button.focus_mode = Control.FOCUS_NONE
 		powers_grid.add_child(button)
-
-
-func _add_power_message(message: String) -> void:
-	var label: Label = Label.new()
-	label.text = message
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size = Vector2(0, 58)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	powers_grid.add_child(label)
 
 
 func _power_style(color: Color) -> StyleBoxFlat:
@@ -223,15 +220,18 @@ func _on_item_gui_input(
 		var token: int = Time.get_ticks_msec()
 		button.set_meta("letter_press_token", token)
 		get_tree().create_timer(0.45).timeout.connect(
-			_open_item_inspector_if_still_held.bind(button, item, token)
+			_open_item_inspector_if_still_held.bind(weakref(button), item, token)
 		)
 		return
 	button.remove_meta("letter_press_token")
 
 
 func _open_item_inspector_if_still_held(
-	button: Button, item: LetterStats, token: int
+	button_ref: WeakRef, item: LetterStats, token: int
 ) -> void:
+	var button := button_ref.get_ref() as Button
+	if button == null or not button.is_inside_tree() or button.is_queued_for_deletion():
+		return
 	if int(button.get_meta("letter_press_token", -1)) != token:
 		return
 	button.set_meta("suppress_letter_action", true)

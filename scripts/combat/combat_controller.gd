@@ -5,6 +5,10 @@ extends Control
 ## DamageCalculator, and EnemyFactory child nodes and keeps only
 ## the flow and the screen updates here.
 
+const ENCOUNTER_MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+var _encounter_modifier: Dictionary = {}
+var _modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+
 enum State {
 	PLAYER_INPUT,
 	RESOLVING,
@@ -44,7 +48,11 @@ var _retaliation_reduction: int = 0
 var _guard: int = 0
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
+var strike_fx: EnemyStrikeFx
 var _last_allowed_text: String = ""
+var _turn_elapsed_seconds: float = 0.0
+var _preview_refresh_accumulator: float = 0.0
+var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 
 # Adding background variable
 @onready var background: TextureRect = $Background
@@ -58,7 +66,7 @@ var _last_allowed_text: String = ""
 @onready var hand_box: HBoxContainer = \
 		$Layout/HandArea/HandBox
 @onready var word_input: LineEdit = \
-		$Layout/InputArea/InputRow/WordInput
+		$Layout/WordInput
 @onready var submit_button: Button = \
 		$Layout/InputArea/InputRow/SubmitButton
 @onready var word_tile_board: WordTileBoard = \
@@ -73,8 +81,10 @@ var _last_allowed_text: String = ""
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var dev_kill_button: Button = $Layout/DevKillButton
 @onready var feedback_label: Label = \
-		$Layout/InputArea/FeedbackLabel
-@onready var prompt_label: Label = $Layout/InputArea/PromptLabel
+		$Layout/FeedbackBanner/Content/FeedbackLabel
+@onready var prompt_label: Label = $Layout/FeedbackBanner/Content/PromptLabel
+@onready var feedback_banner: PanelContainer = $Layout/FeedbackBanner
+@onready var effectiveness_indicator: PanelContainer = $Layout/EffectivenessIndicator
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
 @onready var side_panel: PanelContainer = $Layout/SidePanel
@@ -87,6 +97,7 @@ var _last_allowed_text: String = ""
 		$Layout/StatusArea/PlayerHealthBar/PlayerHealthLabel
 @onready var player_heal_preview: ColorRect = \
 		$Layout/StatusArea/PlayerHealthBar/HealPreview
+@onready var timer_label: Label = $Layout/StatusArea/TimerLabel
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
 
@@ -104,11 +115,37 @@ func _ready() -> void:
 	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
+	party_stage.gold_stolen.connect(_on_gold_stolen)
 	heat_meter = PanelContainer.new()
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
 	$Layout/InputArea.add_child(heat_meter)
 	$Layout/InputArea.move_child(heat_meter, 1)
+	# Above the battlefield, below the fade and overlays.
+	strike_fx = EnemyStrikeFx.new()
+	add_child(strike_fx)
+	move_child(strike_fx, $Layout.get_index() + 1)
+	submit_button.item_rect_changed.connect(_queue_feedback_layout)
+	$Layout/InputArea.item_rect_changed.connect(_queue_feedback_layout)
+	feedback_banner.minimum_size_changed.connect(_queue_feedback_layout)
+	effectiveness_indicator.minimum_size_changed.connect(_queue_feedback_layout)
 	_start_encounter()
+	_queue_feedback_layout()
+
+
+func _exit_tree() -> void:
+	_health_bar_shake.cancel()
+
+
+func _process(delta: float) -> void:
+	if _state != State.PLAYER_INPUT:
+		return
+	_turn_elapsed_seconds += delta
+	_preview_refresh_accumulator += delta
+	_update_timer_display()
+	if _preview_refresh_accumulator >= 0.1:
+		_preview_refresh_accumulator = 0.0
+		if not word_input.text.strip_edges().is_empty():
+			_refresh_word_composer(word_input.text)
 
 
 func _start_encounter() -> void:
@@ -132,7 +169,25 @@ func _start_encounter() -> void:
 		$Layout/InputArea.offset_bottom -= 48.0
 	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
+	# Consume the matching preparation once; the applied fate lives with this scene.
+	var preparation: Dictionary = RunState.take_encounter_modifier(spawn_data["id"])
+	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
+	if not ENCOUNTER_MODIFIERS.eligible(_encounter_modifier, RunState.selected_biome):
+		_encounter_modifier = {}
+	_modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+	_modifier_runtime.configure(_encounter_modifier, int(spawn_data.attack), String(spawn_data.id))
+	if _modifier_runtime.id == "frostbite_tax" and cold.enabled:
+		cold.freeze_every = 2
+		cold.heat_per_word = 2
+		_refresh_cold()
+	var base_spawn: Dictionary = spawn_data
+	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)
 	enemy.setup(spawn_data)
+	$Layout/ActiveModifierPanel.show_modifier(
+		String(preparation.get("word", "")), _encounter_modifier,
+		base_spawn, spawn_data, ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	)
+	_update_modifier_status()
 	EventBus.emit_encounter_started(spawn_data)
 	_rebuild_hand_tiles()
 	_refresh_status()
@@ -173,8 +228,12 @@ func _pick_spawn_data() -> Dictionary:
 
 # --- Turn flow -----------------------------------------------------
 
-func _enter_player_input() -> void:
+func _enter_player_input(reset_timer: bool = true) -> void:
 	_state = State.PLAYER_INPUT
+	if reset_timer:
+		_turn_elapsed_seconds = 0.0
+		_preview_refresh_accumulator = 0.0
+	_update_timer_display()
 	word_input.editable = true
 	submit_button.disabled = false
 	_refresh_cold()
@@ -197,19 +256,20 @@ func _on_text_submitted(_text: String) -> void:
 func _on_submit() -> void:
 	if _state != State.PLAYER_INPUT:
 		return
+	effectiveness_indicator.clear()
 	var word: String = word_input.text.strip_edges().to_lower()
 	var verdict: Dictionary = validator.validate(word, required_pos)
 	var blocked: String = cold.blocked_letter(word, deck_manager.hand())
 	if not blocked.is_empty():
 		verdict = {"valid": false, "reason": "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]}
 	if not verdict["valid"]:
-		feedback_label.text = verdict["reason"]
+		_set_player_feedback(verdict["reason"])
 		EventBus.emit_word_rejected(word, verdict["reason"])
 		# A rejected word never starts a turn. Reset the composer immediately,
 		# then defer focus restoration so Enter/button submission cannot leave
 		# the visually hidden LineEdit unfocused.
 		word_input.clear()
-		_enter_player_input()
+		_enter_player_input(false)
 		call_deferred("_focus_word_input")
 		return
 	cold.accept_word()
@@ -217,7 +277,7 @@ func _on_submit() -> void:
 	_state = State.RESOLVING
 	word_input.editable = false
 	submit_button.disabled = true
-	feedback_label.text = ""
+	_set_player_feedback("")
 	_resolve_word(word)
 
 
@@ -236,8 +296,16 @@ func _resolve_word(word: String) -> void:
 	var undrawn: Array[String] = split["undrawn"]
 	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos,
-		enemy.affinities, true
+		enemy.affinities, true, _turn_elapsed_seconds
 	)
+	# Restore the original encounter-only final damage factor.
+	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	_modifier_runtime.modify_result(result, word)
+	var bonus_gold: int = _modifier_runtime.accept_cast(word)
+	if bonus_gold > 0:
+		RunState.add_gold(bonus_gold)
+		_log("GREEDY: +1 cast gold (%d/5). The monster charges a consultation fee." % _modifier_runtime.gold_gained)
+	_update_modifier_status()
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
@@ -259,15 +327,25 @@ func _resolve_word(word: String) -> void:
 	_rebuild_hand_tiles()
 	word_input.clear()
 	_refresh_status()
+	effectiveness_indicator.show_result(result)
 	if performing:
 		await party_stage.impact_landed
+	if _state != State.RESOLVING:
+		return
 	_show_damage_popup(result["damage"])
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
 		_enemy_turn()
 
 
+func _on_gold_stolen(amount: int) -> void:
+	RunState.add_gold(amount)
+	_refresh_status()
+
+
 func _enemy_turn() -> void:
+	if _state != State.RESOLVING:
+		return
 	_state = State.ENEMY_TURN
 	var delay: float = ENEMY_TURN_DELAY
 	if party_stage.is_performing():
@@ -290,21 +368,48 @@ func _enemy_turn() -> void:
 		])
 	if not enemy.is_alive():
 		return
-	var retaliation: int = maxi(
-		enemy.attack - _retaliation_reduction - _guard, 0
-	)
-	_log("The %s retaliates for %d damage!" % [
-		enemy.enemy_name, retaliation
-	])
+	var plan: Dictionary = _modifier_runtime.retaliation_plan(enemy.attack)
+	# Sleeping skips only the attack; burn, poison, turn completion and cold still run.
+	if plan.kind != "sleep":
+		enemy.begin_retaliation_lunge(
+			party_stage.get_global_transform() * Vector2(party_stage.line_start_x, party_stage.ground_y)
+		)
+		await enemy.play_attack()
+		if _state != State.ENEMY_TURN:
+			enemy.cancel_retaliation_lunge()
+			return
+		enemy.finish_retaliation_lunge()
+	var stolen: int = _modifier_runtime.complete_retaliation(RunState.gold)
+	if stolen > 0:
+		RunState.spend_gold(stolen)
+		_log("GREEDY: the monster steals %d gold (%d/4 total). 'Administrative expenses!'" % [stolen, _modifier_runtime.gold_stolen])
+	var retaliation: int = maxi(int(plan.attack) - _retaliation_reduction - _guard, 0) if plan.kind == "attack" else 0
 	_retaliation_reduction = 0
 	_guard = 0
-	RunState.damage_player(retaliation)
+	if plan.kind == "sleep":
+		_log("DROWSY: the %s snores through its turn. 'Five more minutes of villainy...'" % enemy.enemy_name)
+	elif plan.kind == "self_hit":
+		_log("CLUMSY: the %s trips over its own threat and hits itself for %d damage!" % [enemy.enemy_name, int(round(float(plan.self_damage)))])
+		enemy.take_damage(float(plan.self_damage))
+	else:
+		_log("The %s retaliates for %d damage!" % [enemy.enemy_name, retaliation])
+		strike_fx.play(retaliation, $Layout)
+		RunState.damage_player(retaliation)
+	_update_modifier_status()
+	if not enemy.is_alive():
+		return
 	_refresh_status()
+	if retaliation > 0:
+		_health_bar_shake.play(player_health_bar)
 	if RunState.player_health <= 0:
 		_on_player_died()
 		return
 	await get_tree().create_timer(ENEMY_TURN_DELAY).timeout
 	if _state == State.ENEMY_TURN:
+		var new_tags: Array[String] = _modifier_runtime.next_tags(enemy.tags)
+		if not new_tags.is_empty():
+			enemy.set_semantic_tags(new_tags)
+			_log("CHAMELEON: new counter targets: %s. 'I contain multitudes. Mostly problems.'" % " • ".join(new_tags))
 		var newly_frozen: LetterStats = cold.freeze_after_turn(deck_manager.hand())
 		_refresh_cold(newly_frozen)
 		if newly_frozen != null:
@@ -318,7 +423,7 @@ func _on_enemy_died() -> void:
 	if _state == State.WON:
 		return
 	_state = State.WON
-	var earned: int = enemy.gold_reward
+	var earned: int = enemy.gold_reward + _modifier_runtime.victory_bonus()
 	# Newly selected Quills begin paying on the next victory.
 	earned += int(_relic_system.total_effect("victory_gold"))
 	RunState.add_gold(earned)
@@ -370,6 +475,37 @@ func _advance_prompt() -> void:
 	_refresh_prompt()
 
 
+func _queue_feedback_layout() -> void:
+	_layout_feedback_banner.call_deferred()
+
+
+func _layout_feedback_banner() -> void:
+	if not is_inside_tree():
+		return
+	var input_area: VBoxContainer = $Layout/InputArea
+	var area: Rect2 = input_area.get_global_rect()
+	var cast: Rect2 = submit_button.get_global_rect()
+	var gap: float = input_area.get_theme_constant("separation") * input_area.scale.y
+	var cast_gap: float = $Layout/InputArea/InputRow.get_theme_constant("separation") * input_area.scale.x
+	# Match the heat column, reserving its right-hand lane for the existing Cast button.
+	var width: float = cast.position.x - area.position.x - cast_gap
+	var top: float = cast.position.y
+	if heat_meter.visible:
+		top = heat_meter.get_global_rect().end.y + gap
+	for banner: PanelContainer in [feedback_banner, effectiveness_indicator]:
+		banner.scale = input_area.scale
+		var banner_width: float = cast.end.x - area.position.x if banner == effectiveness_indicator else width
+		banner.size = Vector2(banner_width / banner.scale.x, banner.get_combined_minimum_size().y)
+		banner.global_position = Vector2(area.position.x, top)
+		top = banner.get_global_rect().end.y + gap
+
+
+func _set_player_feedback(message: String) -> void:
+	feedback_label.text = message
+	feedback_label.visible = not message.is_empty()
+	prompt_label.visible = message.is_empty()
+
+
 func _refresh_prompt() -> void:
 	var article: String = "an" if required_pos in ["a", "r"] else "a"
 	prompt_label.text = "Write %s %s to shape your tale" % [
@@ -384,7 +520,7 @@ func _refresh_prompt() -> void:
 func _on_text_changed(new_text: String) -> void:
 	var blocked: String = cold.blocked_letter(new_text, deck_manager.hand())
 	if not blocked.is_empty():
-		feedback_label.text = "%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST]
+		_set_player_feedback("%s is frozen — thaw it for %d Heat" % [blocked, cold.THAW_COST])
 		var caret: int = word_input.caret_column
 		word_input.text = _last_allowed_text
 		word_input.caret_column = mini(caret, _last_allowed_text.length())
@@ -409,21 +545,37 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 		split = deck_manager.split_word(word)
 	var drawn: Array[LetterStats] = split["drawn"]
 	var undrawn: Array[String] = split["undrawn"]
+	_update_modifier_status(word)
 	word_tile_board.set_word(word, drawn)
 	if word.is_empty() or enemy == null or not enemy.is_alive():
 		_set_output_counters(0, 0, 0)
 		_set_health_previews(0, 0)
+		effectiveness_indicator.clear(_state != State.PLAYER_INPUT)
 		return
 	var result: Dictionary = calculator.calculate(
 		word, drawn, undrawn, enemy.tags, required_pos,
-		enemy.affinities
+		enemy.affinities, false, _turn_elapsed_seconds
 	)
+	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
+	_modifier_runtime.modify_result(result, word)
+	if _state == State.PLAYER_INPUT:
+		if validator.validate(word, required_pos).get("valid", false):
+			effectiveness_indicator.show_preview(result)
+		else:
+			effectiveness_indicator.clear()
 	_set_output_counters(
-		int(round(float(result["damage"]))), int(result["water_heal"]), 0
+		int(round(float(result["damage"]))), int(result["water_heal"]), int(result["gold"])
 	)
 	_set_health_previews(
 		int(round(float(result["damage"]))), int(result["water_heal"])
 	)
+
+
+func _update_timer_display() -> void:
+	var remaining: float = maxf(DamageCalculator.SPEED_BONUS_DURATION - _turn_elapsed_seconds, 0.0)
+	timer_label.text = "Quick-cast: %.1fs  •  Damage ×%.2f" % [
+		remaining, calculator.speed_multiplier(_turn_elapsed_seconds),
+	]
 
 
 func _set_output_counters(damage: int, healing: int, gold: int) -> void:
@@ -516,7 +668,7 @@ func _refresh_cold(newly_frozen: LetterStats = null) -> void:
 	deck_manager.frozen_letters = cold.frozen
 	if heat_meter == null:
 		return
-	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty())
+	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty(), cold.freeze_every)
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_frozen(cold.frozen.has(tile.stats), cold.heat >= cold.THAW_COST,
 			tile.stats == newly_frozen)
@@ -529,12 +681,12 @@ func _on_hand_tile_activated(tile: LetterTile) -> void:
 		if cold.thaw(tile.stats):
 			tile.set_frozen(false, false, true)
 			_refresh_cold()
-			feedback_label.text = ""
+			_set_player_feedback("")
 			_on_text_changed(word_input.text)
 		else:
 			tile.deny_thaw()
 			heat_meter.pulse(true)
-			feedback_label.text = "Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.HEAT_PER_WORD]
+			_set_player_feedback("Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.heat_per_word])
 	_focus_word_input()
 
 
@@ -560,12 +712,13 @@ func _describe_result(result: Dictionary) -> String:
 		result["word"].to_upper(), result["damage"]
 	])
 	lines.append(
-		"  power %.1f × length %.1f × %s %.2f × tag %.2f" % [
+		"  power %.1f × length %.1f × %s %.2f × tag %.2f × speed %.2f" % [
 			result["base_power"],
 			result["length_multiplier"],
 			WordNet.pos_name(result["pos"]),
 			result["pos_multiplier"],
 			result["semantic_multiplier"],
+			result["speed_multiplier"],
 		]
 	)
 	if not String(counter.get("tag", "")).is_empty():
@@ -588,6 +741,8 @@ func _describe_result(result: Dictionary) -> String:
 		lines.append("  ice weakens retaliation by %d." % result["ice_slow"])
 	if result["earth_guard"] > 0:
 		lines.append("  earth grants %d Guard." % result["earth_guard"])
+	if int(result.get("modifier_guard", 0)) > 0:
+		lines.append("  LONG-WINDED grants 2 Guard for this retaliation.")
 	return "\n".join(lines)
 
 
@@ -604,8 +759,11 @@ func _apply_elemental_effects(result: Dictionary) -> void:
 	if water_heal > 0:
 		RunState.heal_player(water_heal)
 	_retaliation_reduction = result["ice_slow"]
-	_guard = result["earth_guard"]
+	_guard = int(result["earth_guard"]) + int(result.get("modifier_guard", 0))
 
 
 func _log(message: String) -> void:
 	log_label.append_text(message + "\n")
+
+func _update_modifier_status(word: String = "") -> void:
+	$Layout/ActiveModifierPanel.show_status(_encounter_modifier, _modifier_runtime.status(word))

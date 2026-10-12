@@ -62,21 +62,29 @@ func _run() -> void:
 		check((enemy.sprite.material != null) == (enemy.enemy_id == "tundra_behemoth"), "Behemoth matte only")
 		check(combat.background.texture.resource_path.ends_with("T%d.png" % stage), "background")
 		enemy.set_process(false)
-		check(is_equal_approx(enemy._idle_fps, data.idle_fps * 0.5), "half original idle FPS")
+		# Legacy idles run at half speed; grid sheets keep their Aseprite timing.
+		var speed: float = 1.0 if data.cell_width > 0 else 0.5
+		check(is_equal_approx(enemy._idle_fps, data.idle_fps * speed), "idle FPS")
+		var step: float = 1.0 / enemy._idle_fps
 		var rest_position: Vector2 = enemy.sprite.position
 		var rest_scale: Vector2 = enemy.sprite.scale
 		var rest_size: Vector2 = enemy.sprite.size
 		enemy._idle_elapsed = 0.0
-		enemy._process(0.201)
-		check(is_zero_approx(enemy._idle_atlas.region.position.x), "frame held twice as long")
+		enemy._process(step * 0.5)
+		check(is_zero_approx(enemy._idle_atlas.region.position.x), "frame held for its full duration")
 		enemy._idle_elapsed = 0.0
-		for frame in range(1, expected_frames * 2 + 1):
-			enemy._process(0.401)
-			check(is_equal_approx(enemy._idle_atlas.region.position.x, (frame % expected_frames) * enemy._idle_width), "two complete loops")
+		# Ping-pong idles turn around at the last frame instead of wrapping.
+		var cycle: int = expected_frames * 2 - 2 if data.idle_ping_pong else expected_frames
+		for frame in range(1, cycle * 2 + 1):
+			enemy._process(step + 0.001)
+			var index: int = frame % cycle
+			if index >= expected_frames:
+				index = cycle - index
+			check(is_equal_approx(enemy._idle_atlas.region.position.x, index * enemy._idle_width), "two complete loops")
 		check(enemy.sprite.position == rest_position and enemy.sprite.scale == rest_scale and enemy.sprite.size == rest_size, "idle preserves placement and size")
 		enemy.set_process(true)
 		var old_x: float = enemy._idle_atlas.region.position.x
-		await get_tree().create_timer(0.42).timeout
+		await get_tree().create_timer(step * 1.05).timeout
 		check(enemy._idle_atlas.region.position.x != old_x, "idle advances during combat")
 		check(combat.hand_box.get_child_count() == 8 and combat.word_input.editable, "word input and hand")
 		enemy.set_projected_damage(3)

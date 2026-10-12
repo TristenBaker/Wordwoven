@@ -3,7 +3,7 @@ extends Node
 const CONFIG_PATH: String = "user://settings.cfg"
 const DEFAULTS: Dictionary = {
 	"display_mode": 2, "resolution": Vector2i(1280, 720),
-	"master_volume": 100.0, "music_volume": 100.0, "sfx_volume": 100.0,
+	"master_volume": 50.0, "music_volume": 50.0, "sfx_volume": 50.0,
 }
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 var preferences: Dictionary = DEFAULTS.duplicate(true)
@@ -116,5 +116,5 @@ func _apply_display() -> void:
 		var requested: Vector2i = preferences.resolution
 		var fitted := Vector2i(mini(requested.x, usable.size.x), mini(requested.y, usable.size.y))
 		# Move off the maximized frame first: macOS ignores resizing that frame.
-		window.position = usable.position + (usable.size - fitted) / 2
+		window.position = usable.position + Vector2i(Vector2(usable.size - fitted) / 2.0)
 		window.size = fitted

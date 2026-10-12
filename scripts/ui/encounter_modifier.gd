@@ -102,6 +102,7 @@ func _build_screen() -> void:
 	_submit.text = "REVEAL YOUR FATE"
 	_submit.custom_minimum_size.y = 44
 	_submit.theme = BUTTON_THEME
+	_submit.theme_type_variation = &"WordWovenActionButton"
 	_submit.pressed.connect(_on_submit)
 	content.add_child(_submit)
 	_flavor = _label("", 24)
@@ -114,6 +115,7 @@ func _build_screen() -> void:
 	_continue.text = "FACE YOUR FATE"
 	_continue.custom_minimum_size.y = 44
 	_continue.theme = BUTTON_THEME
+	_continue.theme_type_variation = &"WordWovenActionButton"
 	_continue.visible = false
 	_continue.pressed.connect(_on_continue)
 	content.add_child(_continue)

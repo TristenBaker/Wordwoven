@@ -101,16 +101,12 @@ custom_minimum_size = Vector2(165, 0)
 
 [node name="DisplayMode" type="OptionButton" parent="Center/Panel/Settings/DisplayGrid"]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenOptionButton"
 layout_mode = 2
 custom_minimum_size = Vector2(350, 42)
 size_flags_horizontal = 3
-theme = ExtResource("ww_buttons")
-theme_override_fonts/font = ExtResource("body")
 theme_override_font_sizes/font_size = 22
-theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
-theme_override_styles/normal = SubResource("option")
-theme_override_styles/hover = SubResource("option")
-theme_override_styles/pressed = SubResource("option")
 item_count = 3
 selected = 2
 popup/item_0/text = "Fullscreen"
@@ -130,16 +126,12 @@ custom_minimum_size = Vector2(165, 0)
 
 [node name="Resolution" type="OptionButton" parent="Center/Panel/Settings/DisplayGrid"]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenOptionButton"
 layout_mode = 2
 custom_minimum_size = Vector2(350, 42)
 size_flags_horizontal = 3
-theme = ExtResource("ww_buttons")
-theme_override_fonts/font = ExtResource("body")
 theme_override_font_sizes/font_size = 22
-theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
-theme_override_styles/normal = SubResource("option")
-theme_override_styles/hover = SubResource("option")
-theme_override_styles/pressed = SubResource("option")
 
 [node name="DisplayHint" type="Label" parent="Center/Panel/Settings"]
 unique_name_in_owner = true
@@ -270,16 +262,18 @@ theme_override_constants/separation = 16
 
 [node name="ApplyButton" type="Button" parent="Center/Panel/Settings/Buttons"]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 custom_minimum_size = Vector2(185, 44)
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 22
 text = "APPLY"
 
 [node name="BackButton" type="Button" parent="Center/Panel/Settings/Buttons"]
 unique_name_in_owner = true
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 custom_minimum_size = Vector2(185, 44)
-theme = ExtResource("ww_buttons")
 theme_override_font_sizes/font_size = 22
 text = "BACK"
