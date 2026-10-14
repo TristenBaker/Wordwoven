@@ -136,7 +136,7 @@ func _check_card_isolation() -> void:
 	map.setup(1, choices, {"id": "dragon", "name": "Dragon", "texture": "res://art/red_dragon.png"})
 	map.enemy_selected.connect(_on_test_enemy_selected)
 	var card: Button = map._buttons[0]
-	_check(card.get_theme_stylebox("normal") is StyleBoxFlat and card.get_theme_stylebox("normal").bg_color == Color(0.075, 0.18, 0.15, 0.98), "Monster card retains original green style")
+	_check(card.get_theme_stylebox("normal") is StyleBoxFlat and card.get_theme_stylebox("normal").bg_color == Color(0.105, 0.12, 0.12, 0.98), "Monster card uses the neutral combat style")
 	card.pressed.emit()
 	_check(selected_enemy == "goblin", "Monster selection signal still carries enemy ID")
 	map.setup(6, choices, {"id": "dragon", "name": "Dragon", "texture": "res://art/red_dragon.png"})

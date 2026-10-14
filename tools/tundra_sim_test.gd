@@ -108,9 +108,15 @@ func _run() -> void:
 			var selection = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 			add_child(selection)
 			check(
-				selection.route_map._buttons.size() \
-						== (1 if stage == 5 else 5 - stage),
-				"selection map nodes"
+				selection.route_map._buttons.size() == 11,
+				"the complete combat and activity route is pre-drawn"
+			)
+			check(
+				selection.route_map.has_node("Activity_ice_fishing") \
+						and selection.route_map.has_node("Activity_frozen_traveler") \
+						and selection.route_map.has_node("Activity_icy_portal") \
+						and selection.route_map.has_node("Activity_treasure_chest"),
+				"all non-combat branches are visible ahead of time"
 			)
 			selection.queue_free()
 			await get_tree().process_frame

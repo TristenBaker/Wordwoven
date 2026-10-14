@@ -31,6 +31,21 @@ var relics: Array[String] = []
 
 # The ice-fishing choice can be made only once during a run.
 var fishing_hole_chosen: int = -1
+var pending_route_activity: String = ""
+var pending_route_key: String = ""
+var route_depth: int = 1
+# Shuffled once per run so the expedition map does not rearrange when the
+# player returns from a detour or reopens the route screen.
+var route_enemy_order: Array[String] = []
+var route_combat_slots: Dictionary = {}
+var route_activity_stages: Dictionary = {}
+var route_required_activity: String = ""
+var route_node_order: Dictionary = {}
+var route_bypassed_activities: Dictionary = {}
+var route_graph_columns: Array = []
+var route_edges: Dictionary = {}
+var route_chosen_nodes: Dictionary = {}
+var _last_route_signature: String = ""
 
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
@@ -82,6 +97,18 @@ func start_new_run() -> void:
 	gold = STARTING_GOLD
 	relics = []
 	fishing_hole_chosen = -1
+	pending_route_activity = ""
+	pending_route_key = ""
+	route_depth = 1
+	route_enemy_order = []
+	route_combat_slots.clear()
+	route_activity_stages.clear()
+	route_required_activity = ""
+	route_node_order.clear()
+	route_bypassed_activities.clear()
+	route_graph_columns.clear()
+	route_edges.clear()
+	route_chosen_nodes.clear()
 	completed_encounters = []
 	defeated_enemy_ids = []
 	relic_rewards = {}
@@ -118,11 +145,15 @@ func start_new_run() -> void:
 
 ## True when the next encounter is the final boss.
 func is_boss_next() -> bool:
+	if selected_biome == "tundra" and not route_graph_columns.is_empty():
+		return route_depth >= route_graph_columns.size()
 	return encounter_index >= ENCOUNTERS_PER_RUN
 
 
 func advance_encounter() -> void:
 	encounter_index += 1
+	if selected_biome == "tundra" and not route_graph_columns.is_empty():
+		route_depth = mini(route_depth + 1, route_graph_columns.size())
 
 
 ## Records a victory once before its relic can be claimed.
@@ -254,6 +285,156 @@ func choose_fishing_hole(hole_index: int) -> bool:
 	return true
 
 
+func fishing_route_available() -> bool:
+	return (
+		is_run_active and selected_biome == "tundra"
+		and route_depth > 1 and not is_boss_next()
+		and fishing_hole_chosen < 0
+		and pending_route_activity.is_empty()
+	)
+
+
+func begin_fishing_route(route_key: String = "") -> bool:
+	if not fishing_route_available():
+		return false
+	pending_route_activity = "ice_fishing"
+	pending_route_key = route_key
+	return true
+
+
+func finish_route_activity() -> void:
+	if pending_route_activity.is_empty():
+		return
+	if not pending_route_key.is_empty():
+		record_route_choice(route_depth, pending_route_key)
+	pending_route_activity = ""
+	pending_route_key = ""
+	route_depth = mini(route_depth + 1, route_graph_columns.size())
+
+
+func ensure_route_enemy_order() -> void:
+	ensure_tundra_route_plan()
+
+
+func ensure_tundra_route_plan() -> void:
+	if not route_graph_columns.is_empty():
+		return
+	route_enemy_order = Balance.ENEMY_FACTORY_TUNDRA_REGULARS.duplicate()
+	route_enemy_order.shuffle()
+	var activity_ids: Array[String] = [
+		"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
+	]
+	activity_ids.shuffle()
+	# Route depth is separate from fight count. Combat-only layers 1, 3, 5,
+	# and 7 guarantee four fights, while an activity consumes its own room and
+	# advances the expedition instead of returning to a battle at the same depth.
+	route_graph_columns = [
+		["combat_1_0"],
+		["activity_" + activity_ids[0], "activity_" + activity_ids[1]],
+		["combat_3_0", "combat_3_1"],
+		["combat_4_0", "activity_" + activity_ids[2]],
+		["combat_5_0", "combat_5_1"],
+		["activity_" + activity_ids[3]],
+		["combat_7_0", "combat_7_1"],
+		["boss"],
+	]
+	for column_index: int in route_graph_columns.size():
+		for key: String in route_graph_columns[column_index]:
+			if key.begins_with("activity_"):
+				route_activity_stages[key.trim_prefix("activity_")] = column_index + 1
+	_build_route_graph()
+	var signature: String = "%s|%s" % [str(route_graph_columns), str(route_enemy_order)]
+	if signature == _last_route_signature:
+		route_enemy_order.reverse()
+		signature = "%s|%s" % [str(route_graph_columns), str(route_enemy_order)]
+	_last_route_signature = signature
+
+
+func _build_route_graph() -> void:
+	route_edges.clear()
+	for column_index: int in range(route_graph_columns.size() - 1):
+		var sources: Array = route_graph_columns[column_index]
+		var destinations: Array = route_graph_columns[column_index + 1]
+		for source_index: int in sources.size():
+			var source: String = String(sources[source_index])
+			if sources.size() == 1:
+				route_edges[source] = destinations.duplicate()
+			else:
+				route_edges[source] = [String(
+					destinations[source_index % destinations.size()]
+				)]
+	# The opening room always visibly fans into the complete first decision.
+	route_edges["combat_1_0"] = route_graph_columns[1].duplicate()
+
+
+func record_route_choice(depth: int, route_key: String) -> void:
+	route_chosen_nodes[depth] = route_key
+
+
+func route_predecessor_for_stage(stage: int) -> String:
+	ensure_tundra_route_plan()
+	if stage <= 1:
+		return ""
+	return String(route_chosen_nodes.get(stage - 1, ""))
+
+
+func required_route_activity_at(stage: int) -> String:
+	ensure_tundra_route_plan()
+	var column: Array = route_graph_columns[stage - 1] if stage > 0 \
+			and stage <= route_graph_columns.size() else []
+	if column.size() == 1 and String(column[0]).begins_with("activity_"):
+		return String(column[0]).trim_prefix("activity_")
+	return ""
+
+
+func route_activity_completed(id: String) -> bool:
+	if id == "ice_fishing":
+		return fishing_hole_chosen >= 0
+	return optional_encounters.has(id)
+
+
+func route_activity_resolved(id: String) -> bool:
+	return route_activity_completed(id) or route_bypassed_activities.has(id)
+
+
+func bypass_route_activity(id: String) -> bool:
+	ensure_tundra_route_plan()
+	if id == route_required_activity or route_activity_resolved(id):
+		return false
+	if int(route_activity_stages.get(id, -1)) != encounter_index:
+		return false
+	route_bypassed_activities[id] = true
+	return true
+
+
+func route_activity_for_stage(stage: int) -> String:
+	ensure_tundra_route_plan()
+	for id: String in route_activity_stages:
+		if int(route_activity_stages[id]) == stage:
+			return id
+	return ""
+
+
+func route_key_available(route_key: String) -> bool:
+	ensure_tundra_route_plan()
+	if route_depth <= 1:
+		return route_key == "combat_1_0"
+	var predecessor: String = route_predecessor_for_stage(route_depth)
+	return route_edges.get(predecessor, []).has(route_key)
+
+
+func available_route_enemies(limit: int = 2) -> Array[String]:
+	ensure_route_enemy_order()
+	var available: Array[String] = []
+	for enemy_id: String in route_enemy_order:
+		if defeated_enemy_ids.has(enemy_id):
+			continue
+		available.append(enemy_id)
+		if available.size() >= limit:
+			break
+	return available
+
+
 func add_gold(amount: int) -> void:
 	gold += amount
 	EventBus.emit_gold_changed(gold)
@@ -328,15 +509,17 @@ func optional_encounter_available(id: String) -> bool:
 	var event_script: GDScript = load("res://scripts/encounters/tundra_events.gd")
 	return (
 		is_run_active and selected_biome == "tundra"
-		and encounter_index > 1 and encounter_index <= ENCOUNTERS_PER_RUN
-		and completed_encounters.has(encounter_index - 1)
+		and route_depth > 1 and not is_boss_next()
 		and not completed_encounters.has(ENCOUNTERS_PER_RUN)
 		and event_script.IDS.has(id) and not optional_encounters.has(id)
+		and (pending_route_activity.is_empty() or pending_route_activity == id)
 	)
 
 
-func begin_optional_encounter(id: String) -> bool:
+func begin_optional_encounter(id: String, route_key: String = "") -> bool:
 	if not optional_encounter_available(id):
 		return false
 	pending_optional_encounter = id
+	pending_route_activity = id
+	pending_route_key = route_key
 	return true
