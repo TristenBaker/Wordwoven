@@ -17,7 +17,7 @@ Fight → draw letters → write a noun, base-form verb, adjective,
 or adverb as prompted → counter the enemy's tags for bonus damage
 → survive retaliation → read your victory story and choose a free
 power → recruit or dismiss letters and hear the bard at the tavern
-→ choose the next encounter → defeat the boss.
+→ follow a newly rolled route of combats and word-minigame gates → defeat the boss.
 
 ## Gameplay rules
 

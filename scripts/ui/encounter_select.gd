@@ -1,6 +1,10 @@
 extends Control
 
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
+const FISHING_ICON: Texture2D = preload("res://assets/Art/Items/dead fish.png")
+const ROUTE_ACTIVITY_ORDER: Array[String] = [
+	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
+]
 ## Presents the run as a left-to-right expedition map. Completed
 ## encounters remain visible, the current stage branches into enemy
 ## choices, and every route converges on the final boss. Tundra runs
@@ -23,15 +27,27 @@ func _ready() -> void:
 		RunState.ENCOUNTERS_PER_RUN,
 	]
 	route_map.enemy_selected.connect(_on_choice_pressed)
-	route_map.treasure_selected.connect(_on_treasure_selected)
-	route_map.optional_selected.connect(_on_optional_pressed)
-	var optional_ids: Array[String] = []
-	for id: String in TundraEventScript.IDS:
-		if RunState.optional_encounter_available(id):
-			optional_ids.append(id)
+	route_map.activity_selected.connect(_on_activity_pressed)
+	route_map.route_node_selected.connect(_on_route_node_selected)
 	var detours: VBoxContainer = $MapPanel/Margin/Content/OptionalChoices
-	detours.visible = not optional_ids.is_empty()
-	route_map.setup_optional(detours.get_node("Cards"), optional_ids)
+	# Activities now live on the route itself instead of in a separate sidebar.
+	detours.visible = false
+	if RunState.selected_biome == "tundra":
+		RunState.ensure_tundra_route_plan()
+		progress_label.text = "ROOM %d / %d   •   %d FIGHTS WON" % [
+			RunState.route_depth, RunState.route_graph_columns.size(),
+			RunState.encounter_index - 1,
+		]
+		if RunState.is_boss_next():
+			title_label.text = "The End of the Road"
+			subtitle_label.text = \
+					"One final gate remains. Defeat its guardian to finish the run."
+		else:
+			title_label.text = "Chart Your Course"
+			subtitle_label.text = \
+					"Each room advances the journey. Your route closes paths behind you."
+		route_map.setup_full(RunState.route_depth, _build_tundra_route())
+		return
 	if RunState.is_boss_next():
 		title_label.text = "The End of the Road"
 		subtitle_label.text = \
@@ -44,14 +60,152 @@ func _ready() -> void:
 		return
 	var ids: Array[String] = factory.ids_for_stage(stage)
 	ids.shuffle()
-	var count: int = ids.size() if RunState.selected_biome == "tundra" \
-			else mini(CHOICE_COUNT, ids.size())
+	var count: int = mini(CHOICE_COUNT, ids.size())
 	var choices: Array[Dictionary] = []
 	for i: int in count:
 		choices.append(factory.build_spawn_data(ids[i]))
-	# Debug phase: guarantee one non-combat route at every regular stage.
-	choices.append({"type": "treasure"})
+	choices.append_array(_route_activity_choices(stage))
 	route_map.setup(stage, choices, {})
+
+
+func _build_tundra_route() -> Array[Dictionary]:
+	var nodes: Array[Dictionary] = []
+	for column_index: int in RunState.route_graph_columns.size():
+		var depth: int = column_index + 1
+		var column_nodes: Array[Dictionary] = []
+		for route_key: String in RunState.route_graph_columns[column_index]:
+			if route_key == "boss":
+				column_nodes.append(_boss_node(depth))
+			elif route_key.begins_with("activity_"):
+				column_nodes.append(_activity_node(
+					route_key.trim_prefix("activity_"), depth
+				))
+			else:
+				column_nodes.append(_combat_node(route_key, depth))
+		_append_column(nodes, column_nodes, depth, "")
+	for node: Dictionary in nodes:
+		node["next_keys"] = RunState.route_edges.get(
+				String(node.get("route_key", "")), []
+		).duplicate()
+	return nodes
+
+
+func _append_column(
+	nodes: Array[Dictionary], column_nodes: Array[Dictionary],
+	column: int, label: String
+) -> void:
+	for lane: int in column_nodes.size():
+		column_nodes[lane]["column"] = column
+		column_nodes[lane]["column_count"] = RunState.route_graph_columns.size()
+		column_nodes[lane]["column_label"] = label
+		column_nodes[lane]["lane"] = lane
+		column_nodes[lane]["lane_count"] = column_nodes.size()
+		nodes.append(column_nodes[lane])
+
+
+func _combat_node(route_key: String, depth: int) -> Dictionary:
+	var slot: int = int(route_key.get_slice("_", 2))
+	var node: Dictionary = {
+		"type": "enemy", "stage": depth, "slot": slot,
+		"route_key": route_key,
+		"id": "", "name": "Unknown Foe", "tags": ["Combat"],
+		"state": "locked",
+	}
+	if depth < RunState.route_depth:
+		var chosen_key: String = String(RunState.route_chosen_nodes.get(
+				depth, ""
+		))
+		var history_index: int = _combat_history_index(depth)
+		if route_key == chosen_key and history_index < RunState.defeated_enemy_ids.size():
+			var enemy_id: String = RunState.defeated_enemy_ids[history_index]
+			node = factory.build_spawn_data(enemy_id)
+			node.merge({
+				"type": "enemy", "stage": depth, "slot": slot,
+				"route_key": route_key,
+				"state": "completed",
+			}, true)
+		else:
+			node["name"] = "Path Not Taken"
+			node["tags"] = ["Bypassed"]
+			node["state"] = "bypassed"
+		return node
+	if depth > RunState.route_depth:
+		return node
+	var ids: Array[String]
+	if depth == 1:
+		ids = factory.ids_for_stage(1)
+	else:
+		ids = RunState.available_route_enemies(CHOICE_COUNT)
+	if slot >= ids.size():
+		node["name"] = "Path Closed"
+		node["tags"] = ["No foe remains"]
+		node["state"] = "bypassed"
+		return node
+	node = factory.build_spawn_data(ids[slot])
+	node.merge({
+		"type": "enemy", "stage": depth, "slot": slot,
+		"route_key": route_key,
+		"state": "available",
+	}, true)
+	if not RunState.route_key_available(route_key):
+		node["state"] = "locked"
+	return node
+
+
+func _combat_history_index(depth: int) -> int:
+	var index: int = 0
+	for previous_depth: int in range(1, depth):
+		if String(RunState.route_chosen_nodes.get(previous_depth, "")).begins_with("combat_"):
+			index += 1
+	return index
+
+
+func _boss_node(depth: int) -> Dictionary:
+	var data: Dictionary = factory.build_spawn_data(factory.boss_id())
+	var available: bool = depth == RunState.route_depth \
+			and RunState.route_key_available("boss")
+	data.merge({
+		"type": "boss", "stage": depth, "slot": 0,
+		"route_key": "boss", "state": "available" if available else "locked",
+	}, true)
+	return data
+
+
+func _activity_node(id: String, depth: int) -> Dictionary:
+	var data: Dictionary
+	var completed: bool = RunState.route_activity_completed(id)
+	if id == "ice_fishing":
+		data = {
+			"name": "Ice Fishing",
+			"subtitle": "Warm-word challenge",
+			"tooltip": "Catch a fish for a letter reward.",
+			"preview_texture": FISHING_ICON,
+			"accent": Color("78c9ec"),
+		}
+	else:
+		data = TundraEventScript.definition(id)
+		data["subtitle"] = String(data.get("mini_game", "Side Quest"))
+		data["tooltip"] = String(data.get("description", ""))
+		data["preview_texture"] = TundraEventScript.frame_texture(data, 0)
+		data["accent"] = Color("a98de0")
+	var state: String = "locked"
+	var route_key: String = "activity_" + id
+	var chosen: bool = String(RunState.route_chosen_nodes.get(depth, "")) == route_key
+	if completed and chosen:
+		state = "completed"
+	elif depth < RunState.route_depth:
+		state = "bypassed"
+	elif depth == RunState.route_depth:
+		var available: bool = RunState.fishing_route_available() \
+				if id == "ice_fishing" else RunState.optional_encounter_available(id)
+		if not RunState.route_key_available(route_key):
+			available = false
+		state = "available" if available else "locked"
+	data.merge({
+		"type": "activity", "activity_id": id, "stage": depth,
+		"slot": 0, "route_key": route_key, "state": state,
+	}, true)
+	return data
 
 
 func _on_choice_pressed(enemy_id: String) -> void:
@@ -59,10 +213,53 @@ func _on_choice_pressed(enemy_id: String) -> void:
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)
 
 
-func _on_treasure_selected() -> void:
-	get_tree().change_scene_to_file(ScenePaths.TREASURE_ROOM)
+func _on_route_node_selected(route_key: String) -> void:
+	RunState.record_route_choice(RunState.route_depth, route_key)
 
 
-func _on_optional_pressed(id: String) -> void:
-	if RunState.begin_optional_encounter(id):
+func _on_activity_pressed(id: String) -> void:
+	var route_key: String = "activity_" + id
+	if id == "ice_fishing":
+		if RunState.begin_fishing_route(route_key):
+			get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
+		return
+	if RunState.begin_optional_encounter(id, route_key):
 		get_tree().change_scene_to_file(ScenePaths.TUNDRA_EVENT)
+
+
+func _route_activity_choices(stage: int) -> Array[Dictionary]:
+	var choices: Array[Dictionary] = []
+	if RunState.selected_biome != "tundra" or stage <= 1 \
+			or RunState.is_boss_next():
+		return choices
+	# Rotate the four detours between stages and show at most two alongside
+	# combat. Completed activities disappear, revealing another branch.
+	var offset: int = ((stage - 2) * 2) % ROUTE_ACTIVITY_ORDER.size()
+	for step: int in ROUTE_ACTIVITY_ORDER.size():
+		var id: String = ROUTE_ACTIVITY_ORDER[
+			(offset + step) % ROUTE_ACTIVITY_ORDER.size()
+		]
+		if id == "ice_fishing":
+			if RunState.fishing_route_available():
+				choices.append({
+					"type": "activity",
+					"activity_id": id,
+					"name": "Ice Fishing",
+					"subtitle": "Warm-word challenge · letter reward",
+					"tooltip": "A safe detour. Catch a fish without skipping the next battle.",
+					"preview_texture": FISHING_ICON,
+					"accent": Color("78c9ec"),
+				})
+		elif RunState.optional_encounter_available(id):
+			var data: Dictionary = TundraEventScript.definition(id)
+			data["type"] = "activity"
+			data["activity_id"] = id
+			data["subtitle"] = String(data.get("mini_game", "Side Quest"))
+			data["tooltip"] = "%s This detour does not skip the next battle." % \
+					String(data.get("description", ""))
+			data["preview_texture"] = TundraEventScript.frame_texture(data, 0)
+			data["accent"] = Color("a98de0")
+			choices.append(data)
+		if choices.size() >= 2:
+			break
+	return choices

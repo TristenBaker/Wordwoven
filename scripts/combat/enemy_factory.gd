@@ -23,7 +23,7 @@ func ids_for_stage(stage: int) -> Array[String]:
 	if RunState.selected_biome == "tundra":
 		if stage == 1:
 			return [Balance.TUNDRA_STARTER_ENEMY]
-		if stage >= RunState.ENCOUNTERS_PER_RUN:
+		if RunState.is_boss_next():
 			return [Balance.TUNDRA_BOSS_ENEMY]
 		var remaining: Array[String] = []
 		for id: String in TUNDRA_REGULARS:

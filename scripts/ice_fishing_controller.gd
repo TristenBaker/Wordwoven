@@ -48,6 +48,8 @@ var _selected_hole: int = -1
 
 
 func _ready() -> void:
+	if RunState.pending_route_activity == "ice_fishing":
+		return_button.text = "Return to Route"
 	var hole_buttons: Array[Button] = [
 		hole_one_button, hole_two_button, hole_three_button,
 	]
@@ -58,7 +60,7 @@ func _ready() -> void:
 	submit_button.pressed.connect(_submit_word)
 	word_input.text_submitted.connect(_on_text_submitted)
 	retry_button.pressed.connect(_show_hole_selection)
-	return_button.pressed.connect(_return_to_tavern)
+	return_button.pressed.connect(_return_from_fishing)
 	word_timer.timeout.connect(_on_word_timer_timeout)
 	result_panel.hide()
 	_set_fishing_visible(false)
@@ -132,10 +134,11 @@ func _show_hole_selection() -> void:
 	]
 	var choice_made: bool = RunState.fishing_hole_chosen >= 0
 	for hole_index: int in range(hole_buttons.size()):
-		hole_buttons[hole_index].disabled = choice_made
-		hole_buttons[hole_index].text = "Hole %d\nChoose" % (
-			hole_index + 1
-		)
+		var button: Button = hole_buttons[hole_index]
+		button.disabled = choice_made
+		button.text = ""
+		button.tooltip_text = "Cast into fishing hole %d" % (hole_index + 1)
+		button.queue_redraw()
 
 	if choice_made:
 		hole_status_label.text = "You already chose a fishing hole this run."
@@ -297,5 +300,13 @@ func _set_fishing_visible(visible_state: bool) -> void:
 		control.visible = visible_state
 
 
-func _return_to_tavern() -> void:
+func _return_from_fishing() -> void:
+	if RunState.pending_route_activity == "ice_fishing":
+		if RunState.fishing_hole_chosen >= 0:
+			RunState.finish_route_activity()
+		else:
+			RunState.pending_route_activity = ""
+			RunState.pending_route_key = ""
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+		return
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)
