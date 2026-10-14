@@ -1,13 +1,15 @@
 extends Node
-const Balance = preload("res://data/balance/tuning.gd")
+signal run_started
+signal run_starting
+const Balance: GDScript = preload("res://data/balance/tuning.gd")
 ## Holds the state of the current roguelike run: player health,
 ## gold, the letter deck, relics, progress, and the word history
 ## that the tavern storyteller retells. Survives scene changes;
 ## contains no combat or UI logic.
 
-const STARTING_HEALTH: int = preload("res://data/balance/tuning.gd").RUN_STATE_STARTING_HEALTH
-const STARTING_GOLD: int = preload("res://data/balance/tuning.gd").RUN_STATE_STARTING_GOLD
-const ENCOUNTERS_PER_RUN: int = preload("res://data/balance/tuning.gd").RUN_STATE_ENCOUNTERS_PER_RUN
+const STARTING_HEALTH: int = Balance.RUN_STATE_STARTING_HEALTH
+const STARTING_GOLD: int = Balance.RUN_STATE_STARTING_GOLD
+const ENCOUNTERS_PER_RUN: int = Balance.RUN_STATE_ENCOUNTERS_PER_RUN
 
 # Set false to return to the original shared-deck and use-level system.
 var use_itemized_letters: bool = true
@@ -56,7 +58,8 @@ var next_enemy_id: String = ""
 # Cached preparation outcome, keyed to exactly one upcoming enemy/encounter.
 var pending_encounter_modifier: Dictionary = {}
 
-# Optional detours never consume a monster slot; skipped visits also count as used.
+# Optional detours never consume a monster slot.
+# Skipped visits also count as used.
 var optional_encounters: Dictionary = {}
 var optional_encounter_progress: Dictionary = {}
 var pending_optional_encounter: String = ""
@@ -73,6 +76,7 @@ var is_run_active: bool = false
 
 ## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
 func start_new_run() -> void:
+	run_starting.emit()
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
@@ -107,6 +111,7 @@ func start_new_run() -> void:
 		for letter: String in starters:
 			deck.append(LetterStats.create(letter))
 	is_run_active = true
+	run_started.emit()
 	EventBus.emit_deck_changed()
 	EventBus.emit_gold_changed(gold)
 
@@ -196,7 +201,9 @@ func unequip_letter(slot: String) -> bool:
 
 
 func rolled_letter_drop() -> LetterStats:
-	var maximum_level: int = mini(Balance.DROP_MAX_LEVEL, Balance.DROP_LEVEL_OFFSET + encounter_index)
+	var maximum_level: int = mini(
+		Balance.DROP_MAX_LEVEL, Balance.DROP_LEVEL_OFFSET + encounter_index
+	)
 	return rolled_letter_drop_at_level(randi_range(1, maximum_level))
 
 
@@ -293,7 +300,9 @@ func record_word(
 	})
 
 
-func cache_encounter_modifier(enemy_id: String, word: String, modifier_id: String) -> Dictionary:
+func cache_encounter_modifier(
+	enemy_id: String, word: String, modifier_id: String
+) -> Dictionary:
 	if not pending_encounter_modifier.is_empty():
 		return pending_encounter_modifier.duplicate(true)
 	pending_encounter_modifier = {
@@ -306,7 +315,10 @@ func cache_encounter_modifier(enemy_id: String, word: String, modifier_id: Strin
 func take_encounter_modifier(enemy_id: String) -> Dictionary:
 	var pending: Dictionary = pending_encounter_modifier.duplicate(true)
 	pending_encounter_modifier.clear()
-	if pending.get("encounter", -1) != encounter_index or pending.get("enemy_id", "") != enemy_id:
+	if (
+		pending.get("encounter", -1) != encounter_index
+		or pending.get("enemy_id", "") != enemy_id
+	):
 		return {}
 	return pending
 

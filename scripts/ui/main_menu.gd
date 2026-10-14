@@ -10,6 +10,7 @@ extends Control
 
 
 func _ready() -> void:
+	Telemetry.end_run("abandoned")
 	start_button.disabled = true
 	start_button.pressed.connect(_on_start_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)

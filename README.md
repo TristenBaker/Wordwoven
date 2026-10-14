@@ -98,3 +98,8 @@ F12 toggles the developer overlay in-game: full damage-math
 breakdown of the last word, a live counter tester, gold and
 healing cheats, skip-to-tavern, and forcing enemy tags or drawn
 letters.
+
+## Playtest data
+
+Offline gameplay telemetry identifies each build by Git branch and commit.
+See [playtest setup and reports](docs/telemetry.md) before exporting a test build.

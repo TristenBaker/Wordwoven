@@ -10,6 +10,7 @@ extends Control
 
 
 func _ready() -> void:
+	Telemetry.end_run("won" if victory else "lost")
 	RunState.is_run_active = false
 	menu_button.pressed.connect(_on_menu_pressed)
 	if victory:
