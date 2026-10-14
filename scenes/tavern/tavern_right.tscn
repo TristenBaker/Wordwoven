@@ -153,7 +153,7 @@ anchor_left = 0.6
 anchor_top = 0.74
 anchor_right = 0.92
 anchor_bottom = 0.84
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 22
 text = "Browse Letter Stock"
 
 [node name="GoLeftButton" type="Button" parent="."]
@@ -211,7 +211,7 @@ horizontal_alignment = 1
 [node name="Description" type="Label" parent="LetterShop/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.86, 0.7, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "Six new letters arrive after every victory. Price: 5 gold per level."
 horizontal_alignment = 1
 
@@ -224,7 +224,7 @@ theme_override_constants/v_separation = 8
 [node name="FeedbackLabel" type="Label" parent="LetterShop/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = ""
 autowrap_mode = 2
 

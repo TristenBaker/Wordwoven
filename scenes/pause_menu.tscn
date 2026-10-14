@@ -6,16 +6,16 @@
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause_panel"]
-bg_color = Color(0.105, 0.08, 0.065, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.72, 0.52, 0.26, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+bg_color = Color(0.045, 0.065, 0.09, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.40, 0.27, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 content_margin_left = 24.0
 content_margin_top = 24.0
 content_margin_right = 24.0
@@ -61,7 +61,7 @@ custom_minimum_size = Vector2(0, 46)
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 22
 text = "Resume"
 
 [node name="SettingsButton" type="Button" parent="Center/MenuPanel/Menu"]
@@ -69,7 +69,7 @@ custom_minimum_size = Vector2(0, 46)
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 22
 text = "Settings"
 
 [node name="MainMenuButton" type="Button" parent="Center/MenuPanel/Menu"]
@@ -77,7 +77,7 @@ custom_minimum_size = Vector2(0, 46)
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 22
 text = "Main Menu"
 
 [node name="QuitButton" type="Button" parent="Center/MenuPanel/Menu"]
@@ -85,7 +85,7 @@ custom_minimum_size = Vector2(0, 46)
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 22
 text = "Quit to Desktop"
 
 [node name="SettingsScreen" parent="." instance=ExtResource("2_settings")]

@@ -9,16 +9,16 @@
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.16, 0.07, 0.025, 0.95)
-border_width_left = 5
-border_width_top = 5
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.78, 0.48, 0.16, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+bg_color = Color(0.045, 0.065, 0.09, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.40, 0.27, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 content_margin_left = 42.0
 content_margin_top = 30.0
 content_margin_right = 42.0

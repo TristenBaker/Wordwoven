@@ -85,7 +85,7 @@ bg_color = Color(0, 0, 0, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
-border_color = Color(0.686275, 0.6, 0.478431, 1)
+border_color = Color(0.80, 0.76, 0.66, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 
@@ -94,12 +94,12 @@ content_margin_left = 8.0
 content_margin_top = 8.0
 content_margin_right = 8.0
 content_margin_bottom = 8.0
-bg_color = Color(0.075, 0.05, 0.04, 1)
+bg_color = Color(0.045, 0.065, 0.09, 0.97)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.36, 0.28, 0.18, 1)
+border_color = Color(0.48, 0.40, 0.27, 1)
 
 [node name="BiomeSelect" type="Control" unique_id=1380686789]
 layout_mode = 3
@@ -205,7 +205,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/DesertButton/Content" unique_id=1140653359]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "Sunscorched Wastes"
 horizontal_alignment = 1
@@ -239,12 +239,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/DesertButton/Content/ComingSoon" unique_id=286241726]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="ForestButton" type="Button" parent="Margin/Layout/Choices" unique_id=1105823669]
@@ -290,7 +290,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/ForestButton/Content" unique_id=1434366962]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "Whisperwood"
 horizontal_alignment = 1
@@ -324,12 +324,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/ForestButton/Content/ComingSoon" unique_id=796510166]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="RockyMountainsButton" type="Button" parent="Margin/Layout/Choices" unique_id=1055036403]
@@ -375,7 +375,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/RockyMountainsButton/Content" unique_id=1242460297]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "Stormspire Peaks"
 horizontal_alignment = 1
@@ -409,12 +409,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/RockyMountainsButton/Content/ComingSoon" unique_id=1428949883]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="SeaButton" type="Button" parent="Margin/Layout/Choices" unique_id=398846273]
@@ -460,7 +460,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/SeaButton/Content" unique_id=1021758282]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "The Drowned Realm"
 horizontal_alignment = 1
@@ -494,12 +494,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/SeaButton/Content/ComingSoon" unique_id=573003301]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="SkyButton" type="Button" parent="Margin/Layout/Choices" unique_id=388957389]
@@ -545,7 +545,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/SkyButton/Content" unique_id=1576057268]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "Aetherreach"
 horizontal_alignment = 1
@@ -579,12 +579,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/SkyButton/Content/ComingSoon" unique_id=1196359914]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="TundraButton" type="Button" parent="Margin/Layout/Choices" unique_id=1859259468]
@@ -678,7 +678,7 @@ stretch_mode = 6
 [node name="Name" type="Label" parent="Margin/Layout/Choices/VolcanoButton/Content" unique_id=60156166]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.52, 0.43, 1)
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
 theme_override_font_sizes/font_size = 18
 text = "Hellfire Gorge"
 horizontal_alignment = 1
@@ -712,12 +712,12 @@ offset_top = 9.0
 offset_right = 13.0
 offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.686275, 0.6, 0.478431, 1)
+color = Color(0.80, 0.76, 0.66, 1)
 
 [node name="Text" type="Label" parent="Margin/Layout/Choices/VolcanoButton/Content/ComingSoon" unique_id=1056493687]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
+theme_override_font_sizes/font_size = 18
 text = "COMING SOON"
 
 [node name="Details" type="HBoxContainer" parent="Margin/Layout" unique_id=3766079]
@@ -778,7 +778,7 @@ theme_override_constants/separation = 8
 [node name="Description" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent" unique_id=1896708119]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
 theme_override_font_sizes/font_size = 22
 text = "Beyond the icebound wastes, ancient whispers ride the bitter wind. Write your tale beneath the pale skies of Frostveil Expanse."
 autowrap_mode = 2
@@ -811,7 +811,7 @@ text = "FROZEN LETTERS"
 
 [node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/FrozenLetters"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
 theme_override_font_sizes/font_size = 18
 text = "Letters can become frozen and temporarily unavailable."
 autowrap_mode = 2
@@ -831,7 +831,7 @@ text = "HEAT"
 
 [node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/Heat"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
 theme_override_font_sizes/font_size = 18
 text = "Maintain heat to manage frozen letters throughout the Tundra."
 autowrap_mode = 2
@@ -851,7 +851,7 @@ text = "WORD TIP"
 
 [node name="Body" type="Label" parent="Margin/Layout/Details/InfoPanel/Padding/Info/DetailsScroll/TextContent/Mechanics/WordTip"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.686275, 0.6, 0.478431, 1)
+theme_override_colors/font_color = Color(0.80, 0.76, 0.66, 1)
 theme_override_font_sizes/font_size = 18
 text = "Warm words can be more effective against cold enemies."
 autowrap_mode = 2

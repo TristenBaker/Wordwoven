@@ -237,7 +237,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.9, 0.72, 0.75)
 theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "Press B to open the Tavern Page"
 horizontal_alignment = 1
 

@@ -19,16 +19,16 @@ fill_from = Vector2(0, 0)
 fill_to = Vector2(1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_map_panel"]
-bg_color = Color(0.055, 0.095, 0.095, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.54, 0.43, 0.24, 0.8)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
+bg_color = Color(0.045, 0.065, 0.09, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.40, 0.27, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 shadow_color = Color(0, 0, 0, 0.5)
 shadow_size = 12
 
@@ -186,28 +186,28 @@ theme_override_constants/separation = 24
 layout_mode = 2
 theme_override_colors/font_color = Color(0.79, 0.69, 0.45, 1)
 theme_override_fonts/font = ExtResource("5_body")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "●  Cleared"
 
 [node name="Available" type="Label" parent="Legend"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.93, 0.68, 1)
 theme_override_fonts/font = ExtResource("5_body")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "◆  Available route"
 
 [node name="Unknown" type="Label" parent="Legend"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.48, 0.48, 1)
+theme_override_colors/font_color = Color(0.68, 0.73, 0.73, 1)
 theme_override_fonts/font = ExtResource("5_body")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "○  Uncharted"
 
 [node name="Boss" type="Label" parent="Legend"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.36, 0.29, 1)
 theme_override_fonts/font = ExtResource("5_body")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "◆  Final boss"
 
 [node name="HintLabel" type="Label" parent="."]

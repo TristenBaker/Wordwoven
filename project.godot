@@ -41,6 +41,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 
 [gui]
 
+theme/custom="res://assets/Themes/Default_UI_Theme.tres"
 timers/tooltip_delay_sec=0.1
 
 [input]

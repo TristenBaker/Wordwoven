@@ -1,6 +1,160 @@
 [gd_resource type="Theme" format=3 uid="uid://cd024qap737m8"]
 
-[ext_resource type="FontFile" uid="uid://dppulj7gfoex6" path="res://assets/Fonts/Montserrat Fonts/Montserrat-Black.ttf" id="2_vx0wq"]
+[ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="body"]
+[ext_resource type="FontFile" uid="uid://rqd0nt2kx661" path="res://assets/Fonts/Junicode-Bold.ttf" id="bold"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.045, 0.065, 0.09, 0.97)
+border_color = Color(0.48, 0.40, 0.27, 1)
+border_width_left = 1
+content_margin_left = 12.0
+border_width_top = 1
+content_margin_top = 6.0
+border_width_right = 1
+content_margin_right = 12.0
+border_width_bottom = 1
+content_margin_bottom = 6.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="input"]
+bg_color = Color(0.025, 0.038, 0.055, 1)
+border_color = Color(0.48, 0.40, 0.27, 1)
+border_width_left = 1
+content_margin_left = 12.0
+border_width_top = 1
+content_margin_top = 6.0
+border_width_right = 1
+content_margin_right = 12.0
+border_width_bottom = 1
+content_margin_bottom = 6.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+bg_color = Color(0.10, 0.14, 0.18, 1)
+border_color = Color(0.78, 0.65, 0.40, 1)
+border_width_left = 1
+content_margin_left = 12.0
+border_width_top = 1
+content_margin_top = 6.0
+border_width_right = 1
+content_margin_right = 12.0
+border_width_bottom = 1
+content_margin_bottom = 6.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="disabled"]
+bg_color = Color(0.06, 0.07, 0.09, 1)
+border_color = Color(0.25, 0.28, 0.31, 1)
+border_width_left = 1
+content_margin_left = 12.0
+border_width_top = 1
+content_margin_top = 6.0
+border_width_right = 1
+content_margin_right = 12.0
+border_width_bottom = 1
+content_margin_bottom = 6.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="selection"]
+bg_color = Color(0.20, 0.27, 0.31, 1)
+border_color = Color(0.78, 0.65, 0.40, 1)
+border_width_left = 1
+content_margin_left = 12.0
+border_width_top = 1
+content_margin_top = 6.0
+border_width_right = 1
+content_margin_right = 12.0
+border_width_bottom = 1
+content_margin_bottom = 6.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+draw_center = false
+border_color = Color(0.94, 0.79, 0.49, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
 
 [resource]
-Label/fonts/font = ExtResource("2_vx0wq")
+default_font = ExtResource("body")
+default_font_size = 20
+Label/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+Button/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+CheckButton/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+CheckBox/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+OptionButton/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+LineEdit/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+TextEdit/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+PopupMenu/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+TooltipLabel/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+TabBar/colors/font_color = Color(0.94, 0.90, 0.80, 1)
+Label/constants/line_spacing = 3
+RichTextLabel/colors/default_color = Color(0.94, 0.90, 0.80, 1)
+RichTextLabel/fonts/normal_font = ExtResource("body")
+RichTextLabel/fonts/bold_font = ExtResource("bold")
+RichTextLabel/font_sizes/normal_font_size = 20
+RichTextLabel/font_sizes/bold_font_size = 20
+RichTextLabel/constants/line_separation = 4
+Button/styles/normal = SubResource("input")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("selection")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/read_only = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
+Button/colors/font_disabled_color = Color(0.62, 0.65, 0.66, 1)
+Button/colors/font_hover_color = Color(1, 0.95, 0.82, 1)
+Button/colors/caret_color = Color(0.94, 0.79, 0.49, 1)
+Button/colors/selection_color = Color(0.25, 0.37, 0.43, 1)
+OptionButton/styles/normal = SubResource("input")
+OptionButton/styles/hover = SubResource("hover")
+OptionButton/styles/pressed = SubResource("selection")
+OptionButton/styles/disabled = SubResource("disabled")
+OptionButton/styles/read_only = SubResource("disabled")
+OptionButton/styles/focus = SubResource("focus")
+OptionButton/colors/font_disabled_color = Color(0.62, 0.65, 0.66, 1)
+OptionButton/colors/font_hover_color = Color(1, 0.95, 0.82, 1)
+OptionButton/colors/caret_color = Color(0.94, 0.79, 0.49, 1)
+OptionButton/colors/selection_color = Color(0.25, 0.37, 0.43, 1)
+LineEdit/styles/normal = SubResource("input")
+LineEdit/styles/hover = SubResource("hover")
+LineEdit/styles/pressed = SubResource("selection")
+LineEdit/styles/disabled = SubResource("disabled")
+LineEdit/styles/read_only = SubResource("disabled")
+LineEdit/styles/focus = SubResource("focus")
+LineEdit/colors/font_disabled_color = Color(0.62, 0.65, 0.66, 1)
+LineEdit/colors/font_hover_color = Color(1, 0.95, 0.82, 1)
+LineEdit/colors/caret_color = Color(0.94, 0.79, 0.49, 1)
+LineEdit/colors/selection_color = Color(0.25, 0.37, 0.43, 1)
+TextEdit/styles/normal = SubResource("input")
+TextEdit/styles/hover = SubResource("hover")
+TextEdit/styles/pressed = SubResource("selection")
+TextEdit/styles/disabled = SubResource("disabled")
+TextEdit/styles/read_only = SubResource("disabled")
+TextEdit/styles/focus = SubResource("focus")
+TextEdit/colors/font_disabled_color = Color(0.62, 0.65, 0.66, 1)
+TextEdit/colors/font_hover_color = Color(1, 0.95, 0.82, 1)
+TextEdit/colors/caret_color = Color(0.94, 0.79, 0.49, 1)
+TextEdit/colors/selection_color = Color(0.25, 0.37, 0.43, 1)
+LineEdit/colors/font_placeholder_color = Color(0.68, 0.72, 0.72, 1)
+PanelContainer/styles/panel = SubResource("panel")
+PopupMenu/styles/panel = SubResource("panel")
+PopupMenu/styles/hover = SubResource("selection")
+PopupMenu/constants/v_separation = 10
+TooltipPanel/styles/panel = SubResource("panel")
+TooltipLabel/font_sizes/font_size = 18
