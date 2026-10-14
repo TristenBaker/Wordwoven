@@ -1,4 +1,5 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## Three one-use fishing holes. A chosen hole reveals a fish, then asks the
 ## player to rapidly copy a WordNet-derived sequence of warm-related words.
 
@@ -9,53 +10,10 @@ enum FishingState {
 	RESOLVED,
 }
 
-const HOLE_COUNT: int = 3
-const WORD_SECONDS: float = 8.0
-const WARM_SEEDS: Array[String] = [
-	"warm", "hot", "heated", "sunny", "summer", "fire",
-]
-const FISH_TABLE: Array[Dictionary] = [
-	{
-		"name": "Frost Minnow",
-		"rarity": "Common",
-		"weight": 50,
-		"words": 1,
-		"item_level": 1,
-		"color": Color("b7d8e8"),
-	},
-	{
-		"name": "Snowperch",
-		"rarity": "Uncommon",
-		"weight": 28,
-		"words": 2,
-		"item_level": 2,
-		"color": Color("79d291"),
-	},
-	{
-		"name": "Glacial Trout",
-		"rarity": "Rare",
-		"weight": 14,
-		"words": 3,
-		"item_level": 3,
-		"color": Color("67a9ff"),
-	},
-	{
-		"name": "Aurora Pike",
-		"rarity": "Epic",
-		"weight": 6,
-		"words": 4,
-		"item_level": 4,
-		"color": Color("c48cff"),
-	},
-	{
-		"name": "Icebound Leviathan",
-		"rarity": "Legendary",
-		"weight": 2,
-		"words": 5,
-		"item_level": 5,
-		"color": Color("ffca55"),
-	},
-]
+const HOLE_COUNT: int = preload("res://data/balance/tuning.gd").ICE_FISHING_CONTROLLER_HOLE_COUNT
+const WORD_SECONDS: float = preload("res://data/balance/tuning.gd").ICE_FISHING_CONTROLLER_WORD_SECONDS
+const WARM_SEEDS: Array[String] = preload("res://data/balance/tuning.gd").ICE_FISHING_CONTROLLER_WARM_SEEDS
+const FISH_TABLE: Array[Dictionary] = preload("res://data/balance/tuning.gd").ICE_FISHING_CONTROLLER_FISH_TABLE
 
 var _state: FishingState = FishingState.WAITING_FOR_WORDNET
 var _fish: Dictionary = {}
@@ -142,7 +100,7 @@ func _prepare_word_pool() -> void:
 
 	for seed: String in WARM_SEEDS:
 		var relation: Dictionary = WordNet.similarity_detailed(seed, "warm")
-		if seed != "warm" and float(relation.get("score", 0.0)) < 0.40:
+		if seed != "warm" and float(relation.get("score", 0.0)) < Balance.FISHING_SEMANTIC_THRESHOLD:
 			continue
 		_add_wordnet_word(seed)
 		for synonym: String in WordNet.synonyms_of(seed, 12):
@@ -151,7 +109,7 @@ func _prepare_word_pool() -> void:
 
 func _add_wordnet_word(candidate: String) -> void:
 	var word: String = candidate.strip_edges().to_lower()
-	if word.length() < 3 or word.length() > 14:
+	if word.length() < Balance.FISHING_MIN_LENGTH or word.length() > Balance.FISHING_MAX_LENGTH:
 		return
 	if not word.is_valid_identifier() or "_" in word:
 		return

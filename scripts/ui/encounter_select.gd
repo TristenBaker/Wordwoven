@@ -6,7 +6,7 @@ const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 ## choices, and every route converges on the final boss. Tundra runs
 ## expose every undefeated regular foe; other biomes offer two choices.
 
-const CHOICE_COUNT: int = 2
+const CHOICE_COUNT: int = preload("res://data/balance/tuning.gd").ENCOUNTER_SELECT_CHOICE_COUNT
 
 @onready var factory: EnemyFactory = $EnemyFactory
 @onready var title_label: Label = $Header/TitleLabel

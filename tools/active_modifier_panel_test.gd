@@ -1,7 +1,7 @@
 extends Node
 ## Presentation regression checks; never changes modifier definitions or selection.
 
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 const PANEL = preload("res://scenes/ui/active_modifier_panel.tscn")
 var failures: int = 0
 

@@ -4,7 +4,7 @@ extends Node
 ## deck into a draw pile, deals the hand, and recycles letters the
 ## player spends on words. The run's deck itself is never modified.
 
-const HAND_SIZE: int = 8
+const HAND_SIZE: int = preload("res://data/balance/tuning.gd").DECK_MANAGER_HAND_SIZE
 
 var _draw_pile: Array[LetterStats] = []
 var _discard_pile: Array[LetterStats] = []

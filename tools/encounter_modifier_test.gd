@@ -1,5 +1,5 @@
 extends Node
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var failures: int = 0
 func check(ok: bool, label: String) -> void:
 	if not ok:

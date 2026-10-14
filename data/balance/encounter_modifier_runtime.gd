@@ -1,6 +1,6 @@
 extends RefCounted
 ## Per-fight state for the additional fates. Preview methods never advance it.
-const TAG_PAIRS: String = "res://data/chameleon_tags.json"
+const TAG_PAIRS: String = "res://data/balance/chameleon_tags.json"
 var id: String = ""
 var base_attack: int = 0
 var casts: int = 0

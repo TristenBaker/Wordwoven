@@ -18,7 +18,7 @@ const CONCEPTS: Dictionary = {
 }
 const MIN_CONFIDENCE: float = 0.8
 const MIN_MARGIN: float = 0.1
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 static var _relations_cache: Dictionary = {}
 
 static func classify(adjective: String) -> Dictionary:

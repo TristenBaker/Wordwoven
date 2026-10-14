@@ -1,7 +1,7 @@
 extends Control
 ## Preparation is separate from combat: validation only, one cached fate, one exit.
-const FATE_CLASSIFIER = preload("res://scripts/modifiers/fate_classifier.gd")
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const FATE_CLASSIFIER = preload("res://data/balance/fate_classifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 const BODY = preload("res://assets/Fonts/Junicode.ttf")
 const BUTTON_THEME = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
 var _validator: WordValidator

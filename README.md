@@ -5,6 +5,9 @@ part of speech, counter the enemy's nature, and hear your exact
 words woven into the story of its defeat.
 Built with Godot 4.7 (standard build, pure GDScript).
 
+Game balancing lives in [`data/balance/`](data/balance/README.md): tuning,
+enemy and power catalogs, word scoring, encounter rules, and rewards.
+
 Full design document: [docs/GDD.md](docs/GDD.md).
 Code style: [docs/gdscript-style.md](docs/gdscript-style.md).
 

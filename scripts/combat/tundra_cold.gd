@@ -1,11 +1,11 @@
 class_name TundraCold
 extends RefCounted
-## Encounter-local rules. All balance values live here; no run/deck resources mutate.
-const FREEZE_EVERY: int = 3
-const HEAT_PER_WORD: int = 1
-const MAX_HEAT: int = 5
-const THAW_COST: int = 2
-const MIN_USABLE: int = 5
+## Encounter-local rules. Tuning lives in data/balance; no run/deck resources mutate.
+const FREEZE_EVERY: int = preload("res://data/balance/tuning.gd").TUNDRA_COLD_FREEZE_EVERY
+const HEAT_PER_WORD: int = preload("res://data/balance/tuning.gd").TUNDRA_COLD_HEAT_PER_WORD
+const MAX_HEAT: int = preload("res://data/balance/tuning.gd").TUNDRA_COLD_MAX_HEAT
+const THAW_COST: int = preload("res://data/balance/tuning.gd").TUNDRA_COLD_THAW_COST
+const MIN_USABLE: int = preload("res://data/balance/tuning.gd").TUNDRA_COLD_MIN_USABLE
 
 var freeze_every: int = FREEZE_EVERY
 var heat_per_word: int = HEAT_PER_WORD

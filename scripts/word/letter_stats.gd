@@ -1,5 +1,6 @@
 class_name LetterStats
 extends Resource
+const Balance = preload("res://data/balance/tuning.gd")
 ## A letter in the party. Its element determines the damage it contributes,
 ## and each accepted use from the hand raises its level.
 
@@ -24,20 +25,15 @@ enum Modifier {
 	HEAVY,
 }
 
-const VOWELS: String = "aeiou"
-const COMMON_CONSONANTS: String = "bcdfghlmnprst"
-const UNCOMMON_CONSONANTS: String = "jkqvwxyz"
+const VOWELS: String = preload("res://data/balance/tuning.gd").LETTER_STATS_VOWELS
+const COMMON_CONSONANTS: String = preload("res://data/balance/tuning.gd").LETTER_STATS_COMMON_CONSONANTS
+const UNCOMMON_CONSONANTS: String = preload("res://data/balance/tuning.gd").LETTER_STATS_UNCOMMON_CONSONANTS
 
 # Scrabble-style base power for each letter.
-const BASE_POWER: Dictionary[String, int] = {
-	"a": 1, "b": 3, "c": 3, "d": 2, "e": 1, "f": 4, "g": 2,
-	"h": 4, "i": 1, "j": 8, "k": 5, "l": 1, "m": 3, "n": 1,
-	"o": 1, "p": 3, "q": 10, "r": 1, "s": 1, "t": 1, "u": 1,
-	"v": 4, "w": 4, "x": 8, "y": 4, "z": 10,
-}
+const BASE_POWER: Dictionary[String, int] = preload("res://data/balance/tuning.gd").LETTER_STATS_BASE_POWER
 
 # Additional power multiplier gained per level past 1.
-const LEVEL_POWER_STEP: float = 0.25
+const LEVEL_POWER_STEP: float = preload("res://data/balance/tuning.gd").LETTER_STATS_LEVEL_POWER_STEP
 
 @export var letter: String = "a"
 @export var level: int = 1
@@ -71,7 +67,7 @@ static func create_item(
 
 ## Called once after this letter resolves an accepted use.
 func gain_use_level() -> void:
-	level += 1
+	level += Balance.LETTER_LEVELS_PER_USE
 
 
 ## Power this letter contributes when used in a word.
@@ -80,9 +76,9 @@ func power() -> float:
 	var level_bonus: float = 1.0 + LEVEL_POWER_STEP * float(level - 1)
 	var amount: float = float(base) * level_bonus
 	if modifier == Modifier.HEAVY:
-		amount += 4.0
+		amount += Balance.HEAVY_POWER
 	if modifier == Modifier.KEEN:
-		amount *= 2.0
+		amount *= Balance.KEEN_MULTIPLIER
 	return amount
 
 

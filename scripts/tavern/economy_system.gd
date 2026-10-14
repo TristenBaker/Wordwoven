@@ -1,16 +1,17 @@
 class_name EconomySystem
 extends Node
+const Balance = preload("res://data/balance/tuning.gd")
 ## Tavern transactions for recruiting letters, paid dismissals, and meals.
 ## Offers belong to the run so revisiting the tavern cannot reroll stock.
 
-const RECRUIT_COUNT: int = 6
-const LETTER_DEALER_OFFER_COUNT: int = 6
-const RECRUIT_PRICE: int = 10
-const RARE_RECRUIT_PRICE: int = 20
-const DROP_PRICE: int = 10
-const MIN_DECK_SIZE: int = 10
-const MEAL_PRICE: int = 15
-const MEAL_HEAL: int = 10
+const RECRUIT_COUNT: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_RECRUIT_COUNT
+const LETTER_DEALER_OFFER_COUNT: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_LETTER_DEALER_OFFER_COUNT
+const RECRUIT_PRICE: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_RECRUIT_PRICE
+const RARE_RECRUIT_PRICE: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_RARE_RECRUIT_PRICE
+const DROP_PRICE: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_DROP_PRICE
+const MIN_DECK_SIZE: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_MIN_DECK_SIZE
+const MEAL_PRICE: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_MEAL_PRICE
+const MEAL_HEAL: int = preload("res://data/balance/tuning.gd").ECONOMY_SYSTEM_MEAL_HEAL
 
 
 func _ready() -> void:
@@ -90,7 +91,7 @@ func letter_dealer_offers() -> Array[Dictionary]:
 func letter_dealer_price(item: LetterStats) -> int:
 	if item == null:
 		return -1
-	return item.level * 5
+	return item.level * Balance.DEALER_PRICE_PER_LEVEL
 
 
 func buy_letter_dealer_item(offer_index: int) -> bool:

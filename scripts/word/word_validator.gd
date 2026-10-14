@@ -4,7 +4,7 @@ extends Node
 ## word, letters only, long enough, and not already played this
 ## encounter. Reports a human-readable reason when it is not.
 
-const MINIMUM_LENGTH: int = 2
+const MINIMUM_LENGTH: int = preload("res://data/balance/tuning.gd").WORD_VALIDATOR_MINIMUM_LENGTH
 
 # Words already accepted this encounter; repeats are rejected to
 # push the player toward linguistic variety.

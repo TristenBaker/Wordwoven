@@ -1,12 +1,13 @@
 extends Node
+const Balance = preload("res://data/balance/tuning.gd")
 ## Holds the state of the current roguelike run: player health,
 ## gold, the letter deck, relics, progress, and the word history
 ## that the tavern storyteller retells. Survives scene changes;
 ## contains no combat or UI logic.
 
-const STARTING_HEALTH: int = 50
-const STARTING_GOLD: int = 0
-const ENCOUNTERS_PER_RUN: int = 6
+const STARTING_HEALTH: int = preload("res://data/balance/tuning.gd").RUN_STATE_STARTING_HEALTH
+const STARTING_GOLD: int = preload("res://data/balance/tuning.gd").RUN_STATE_STARTING_GOLD
+const ENCOUNTERS_PER_RUN: int = preload("res://data/balance/tuning.gd").RUN_STATE_ENCOUNTERS_PER_RUN
 
 # Set false to return to the original shared-deck and use-level system.
 var use_itemized_letters: bool = true
@@ -195,7 +196,7 @@ func unequip_letter(slot: String) -> bool:
 
 
 func rolled_letter_drop() -> LetterStats:
-	var maximum_level: int = mini(5, 1 + encounter_index)
+	var maximum_level: int = mini(Balance.DROP_MAX_LEVEL, Balance.DROP_LEVEL_OFFSET + encounter_index)
 	return rolled_letter_drop_at_level(randi_range(1, maximum_level))
 
 
@@ -214,7 +215,7 @@ func rolled_letter_drop_at_level(item_level: int) -> LetterStats:
 	]
 	var item_element: int = elements.pick_random()
 	return LetterStats.create_item(
-		letter, item_element, clampi(item_level, 1, 5)
+		letter, item_element, clampi(item_level, 1, Balance.DROP_MAX_LEVEL)
 	)
 
 
@@ -223,7 +224,7 @@ func _setup_itemized_starters() -> void:
 	for letter: String in LetterStats.BASE_POWER:
 		letters.append(letter)
 	letters.shuffle()
-	for index: int in range(10):
+	for index: int in range(Balance.STARTER_COUNT):
 		var letter: String = letters[index]
 		var elements: Array[int] = [
 			LetterStats.Element.FIRE,

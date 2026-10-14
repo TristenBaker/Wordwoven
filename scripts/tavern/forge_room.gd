@@ -1,11 +1,12 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## First playable forge: choose three loose tiles, satisfy a conversion rule,
 ## then supply a word to influence the upgrade roll.
 
 const TILE_THEME: LetterTileTheme = preload(
 	"res://assets/Themes/letter_tiles/default_letter_tile_theme.tres"
 )
-const BASE_SUCCESS_CHANCE: float = 0.70
+const BASE_SUCCESS_CHANCE: float = preload("res://data/balance/tuning.gd").FORGE_ROOM_BASE_SUCCESS_CHANCE
 
 var forge_system := ForgeSystem.new()
 var selected_items: Array[LetterStats] = []
@@ -311,7 +312,7 @@ func add_item_to_board(item: LetterStats) -> void:
 	if is_forging or item == null or selected_items.has(item) \
 		or not RunState.letter_inventory.has(item):
 		return
-	if selected_items.size() >= 3:
+	if selected_items.size() >= Balance.FORGE_INGREDIENT_COUNT:
 		feedback_label.text = "A first-version recipe uses exactly three tiles."
 		return
 	selected_items.append(item)
@@ -339,9 +340,9 @@ func _refresh_forge_state() -> void:
 	if rule.is_empty():
 		rule_result.text = "Place three tiles that satisfy a conversion rule."
 	else:
-		rule_result.text = "Rule applied: %s\nFailure: same-level result · Success: +1 level" % rule["name"]
+		rule_result.text = "Rule applied: %s\nFailure: same-level result · Success: +%d level" % [rule["name"], Balance.FORGE_LEVEL_GAIN]
 	var word_data: Dictionary = _word_data()
-	if selected_items.size() != 3:
+	if selected_items.size() != Balance.FORGE_INGREDIENT_COUNT:
 		chance_label.text = "Forge cost: none in this prototype"
 		forge_button.disabled = true
 		return
@@ -358,7 +359,7 @@ func _refresh_forge_state() -> void:
 
 func _word_data() -> Dictionary:
 	var word: String = word_input.text.strip_edges().to_lower()
-	if word.length() < 2:
+	if word.length() < WordValidator.MINIMUM_LENGTH:
 		return {"valid": false, "reason": "Enter a real word to temper the forge."}
 	if not WordNet.is_ready:
 		return {"valid": false, "reason": "The lexicon is still loading."}
@@ -367,11 +368,11 @@ func _word_data() -> Dictionary:
 	var score: int = 0
 	for character: String in word:
 		score += int(LetterStats.BASE_POWER.get(character, 1))
-	var quality: float = clampf(float(score) / 16.0, 0.0, 1.0)
+	var quality: float = clampf(float(score) / Balance.FORGE_MAX_QUALITY_SCORE, 0.0, 1.0)
 	return {
 		"valid": true,
 		"score": score,
-		"multiplier": lerpf(0.80, 1.30, quality),
+		"multiplier": lerpf(Balance.FORGE_MULTIPLIER_MIN, Balance.FORGE_MULTIPLIER_MAX, quality),
 	}
 
 

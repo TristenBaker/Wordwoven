@@ -1,13 +1,14 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## Runs one combat encounter as a turn state machine: the player
 ## drafts a word, the enemy takes the damage, then retaliates.
 ## Delegates the rules to DeckManager, WordValidator,
 ## DamageCalculator, and EnemyFactory child nodes and keeps only
 ## the flow and the screen updates here.
 
-const ENCOUNTER_MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const ENCOUNTER_MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var _encounter_modifier: Dictionary = {}
-var _modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+var _modifier_runtime = preload("res://data/balance/encounter_modifier_runtime.gd").new()
 
 enum State {
 	PLAYER_INPUT,
@@ -27,7 +28,7 @@ const PARTY_SETTLE_DELAY: float = 0.25
 # Fade to black between the enemy's death and the victory tale.
 const VICTORY_FADE_TIME: float = 0.35
 
-const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
+const PROMPT_ORDER: Array[String] = preload("res://data/balance/tuning.gd").COMBAT_CONTROLLER_PROMPT_ORDER
 
 # Adding background array
 var backgrounds: Array[Texture2D] = [
@@ -174,11 +175,11 @@ func _start_encounter() -> void:
 	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
 	if not ENCOUNTER_MODIFIERS.eligible(_encounter_modifier, RunState.selected_biome):
 		_encounter_modifier = {}
-	_modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+	_modifier_runtime = preload("res://data/balance/encounter_modifier_runtime.gd").new()
 	_modifier_runtime.configure(_encounter_modifier, int(spawn_data.attack), String(spawn_data.id))
 	if _modifier_runtime.id == "frostbite_tax" and cold.enabled:
-		cold.freeze_every = 2
-		cold.heat_per_word = 2
+		cold.freeze_every = Balance.FROSTBITE_FREEZE_EVERY
+		cold.heat_per_word = Balance.FROSTBITE_HEAT_PER_WORD
 		_refresh_cold()
 	var base_spawn: Dictionary = spawn_data
 	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)

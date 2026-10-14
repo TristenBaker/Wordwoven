@@ -1,5 +1,6 @@
 class_name EncounterRouteMap
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 const TREASURE_CHEST: Texture2D = preload(
@@ -14,7 +15,7 @@ signal enemy_selected(enemy_id: String)
 signal treasure_selected()
 signal optional_selected(encounter_id: String)
 
-const STAGE_COUNT: int = 6
+const STAGE_COUNT: int = Balance.RUN_STATE_ENCOUNTERS_PER_RUN
 const MAP_PADDING_X: float = 72.0
 const CHOICE_OFFSET_Y: float = 92.0
 
