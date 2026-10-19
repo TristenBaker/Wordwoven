@@ -42,7 +42,7 @@ func _build_tally() -> String:
 		]
 	tally += "\nGold earned: %d" % RunState.gold_earned_this_run
 	tally += "\n\n" + RunScoring.breakdown_text(run)
-	tally += "\n\nLOCAL LEADERBOARD"
+	tally += "\n\nLOCAL %s LEADERBOARD" % String(run.get("mode", "Story")).to_upper()
 	for index: int in mini(5, entries.size()):
 		var entry: Dictionary = entries[index]
 		tally += "\n#%d  %d  · %s · %s" % [

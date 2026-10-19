@@ -8,6 +8,8 @@ const STARTING_HEALTH: int = 50
 const STARTING_GOLD: int = 0
 const ENCOUNTERS_PER_RUN: int = 6
 
+enum RunMode { STORY, ENDLESS }
+
 # Set false to return to the original shared-deck and use-level system.
 var use_itemized_letters: bool = true
 
@@ -16,6 +18,7 @@ var player_health: int = STARTING_HEALTH
 var gold: int = STARTING_GOLD
 var gold_earned_this_run: int = 0
 var run_score_recorded: bool = false
+var run_mode: RunMode = RunMode.STORY
 
 # The letter characters the player owns.
 var deck: Array[LetterStats] = []
@@ -73,7 +76,8 @@ var is_run_active: bool = false
 
 
 ## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
-func start_new_run() -> void:
+func start_new_run(mode: RunMode = RunMode.STORY) -> void:
+	run_mode = mode
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
@@ -116,7 +120,15 @@ func start_new_run() -> void:
 
 ## True when the next encounter is the final boss.
 func is_boss_next() -> bool:
-	return encounter_index >= ENCOUNTERS_PER_RUN
+	return run_mode == RunMode.STORY and encounter_index >= ENCOUNTERS_PER_RUN
+
+
+func is_endless() -> bool:
+	return run_mode == RunMode.ENDLESS
+
+
+func endless_shop_due() -> bool:
+	return is_endless() and encounter_index > 0 and encounter_index % 5 == 0
 
 
 func advance_encounter() -> void:

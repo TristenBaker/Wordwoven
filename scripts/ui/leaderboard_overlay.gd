@@ -4,6 +4,12 @@ extends Control
 
 const BUTTON_THEME := preload("res://assets/Themes/WordWoven_Button_Theme.tres")
 
+var _leaderboard: RunLeaderboard
+var _mode_key: String = "story"
+var _list: RichTextLabel
+var _story_button: Button
+var _endless_button: Button
+
 
 static func open_in(parent: Node) -> void:
 	if parent.get_node_or_null("LeaderboardOverlay") != null:
@@ -14,6 +20,9 @@ static func open_in(parent: Node) -> void:
 
 
 func _ready() -> void:
+	_leaderboard = RunLeaderboard.new()
+	if RunState.is_run_active and RunState.is_endless():
+		_mode_key = "endless"
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	z_index = 200
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -65,23 +74,56 @@ func _build() -> void:
 	subtitle.add_theme_font_size_override("font_size", 17)
 	content.add_child(subtitle)
 
-	var leaderboard := RunLeaderboard.new()
-	var entries: Array[Dictionary] = leaderboard.entries()
-	var list := RichTextLabel.new()
-	list.bbcode_enabled = true
-	list.fit_content = false
-	list.scroll_active = true
-	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	list.custom_minimum_size = Vector2(560, 340)
-	list.add_theme_font_size_override("normal_font_size", 19)
-	list.add_theme_color_override("default_color", Color("f4e9d0"))
-	list.text = _entry_text(entries)
-	content.add_child(list)
+	var tabs := HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 12)
+	content.add_child(tabs)
+	var tab_group := ButtonGroup.new()
+	_story_button = _mode_button("Story", "story", tab_group)
+	_endless_button = _mode_button("Endless", "endless", tab_group)
+	tabs.add_child(_story_button)
+	tabs.add_child(_endless_button)
+	_story_button.button_pressed = _mode_key == "story"
+	_endless_button.button_pressed = _mode_key == "endless"
+	_story_button.pressed.connect(_select_mode.bind("story"))
+	_endless_button.pressed.connect(_select_mode.bind("endless"))
+
+	_list = RichTextLabel.new()
+	_list.bbcode_enabled = true
+	_list.fit_content = false
+	_list.scroll_active = true
+	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_list.custom_minimum_size = Vector2(560, 290)
+	_list.add_theme_font_size_override("normal_font_size", 19)
+	_list.add_theme_color_override("default_color", Color("f4e9d0"))
+	content.add_child(_list)
+	_refresh_list()
 
 
-func _entry_text(entries: Array[Dictionary]) -> String:
+func _mode_button(label: String, key: String, group: ButtonGroup) -> Button:
+	var button := Button.new()
+	button.theme = BUTTON_THEME
+	button.theme_type_variation = &"WordWovenActionButton"
+	button.text = label
+	button.toggle_mode = true
+	button.button_group = group
+	button.custom_minimum_size = Vector2(145, 40)
+	button.set_meta("mode_key", key)
+	return button
+
+
+func _select_mode(key: String) -> void:
+	_mode_key = key
+	_refresh_list()
+
+
+func _refresh_list() -> void:
+	_list.text = _entry_text(_leaderboard.entries(_mode_key), _mode_key)
+
+
+func _entry_text(entries: Array[Dictionary], mode_key: String) -> String:
 	if entries.is_empty():
-		return "[center]No completed runs yet.\n\nFinish a tale to add its score here.[/center]"
+		return "[center]No completed %s runs yet.\n\nFinish a run to add its score here.[/center]" % mode_key.capitalize()
 	var lines: Array[String] = []
 	for index: int in entries.size():
 		var entry: Dictionary = entries[index]

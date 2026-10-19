@@ -30,7 +30,10 @@ static func snapshot(victory: bool) -> Dictionary:
 	return {
 		"score": score,
 		"victory": victory,
-		"biome": RunState.selected_biome.capitalize() if not RunState.selected_biome.is_empty() else "Unknown",
+		"mode": "Endless" if RunState.is_endless() else "Story",
+		"biome": "Endless Wilds" if RunState.is_endless() else (
+			RunState.selected_biome.capitalize() if not RunState.selected_biome.is_empty() else "Unknown"
+		),
 		"enemies": defeated,
 		"gold_earned": gold_earned,
 		"tile_levels": total_levels,

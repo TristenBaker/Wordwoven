@@ -49,9 +49,14 @@ func roll_choices(count: int) -> Array[String]:
 	var choices: Array[String] = []
 	if count <= 0:
 		return choices
-	var guaranteed_index: int = randi_range(0, count - 1)
+	var premium_indices: Array[int] = []
+	var premium_count: int = mini(2 if RunState.is_endless() else 1, count)
+	while premium_indices.size() < premium_count:
+		var index: int = randi_range(0, count - 1)
+		if not premium_indices.has(index):
+			premium_indices.append(index)
 	while choices.size() < count and not available.is_empty():
-		var allows_common: bool = choices.size() != guaranteed_index
+		var allows_common: bool = not premium_indices.has(choices.size())
 		var quality: String = _roll_quality(allows_common)
 		var candidates: Array[String] = []
 		for power_id: String in available:

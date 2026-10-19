@@ -19,16 +19,24 @@ func _ready() -> void:
 			RunState.pending_victory_letter.describe()
 	else:
 		letter_label.text = "No letter item dropped this time."
-	continue_button.text = "Complete the Tale" if RunState.is_boss_next() else "Return to Tavern"
+	if RunState.is_endless():
+		continue_button.text = "Visit Tavern" if RunState.endless_shop_due() else "Next Wave"
+	else:
+		continue_button.text = "Complete the Tale" if RunState.is_boss_next() else "Return to Tavern"
 	continue_button.pressed.connect(_finish_rewards)
 	continue_button.grab_focus()
 
 
 func _finish_rewards() -> void:
 	var defeated_boss := RunState.is_boss_next()
+	var visit_endless_shop := RunState.endless_shop_due()
 	RunState.advance_encounter()
 	RunState.clear_pending_victory()
 	if defeated_boss:
 		get_tree().change_scene_to_file(ScenePaths.RUN_WON)
+	elif RunState.is_endless():
+		get_tree().change_scene_to_file(
+			ScenePaths.TAVERN if visit_endless_shop else ScenePaths.COMBAT
+		)
 	else:
 		get_tree().change_scene_to_file(ScenePaths.TAVERN)

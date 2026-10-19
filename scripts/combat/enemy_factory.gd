@@ -21,6 +21,15 @@ func _ready() -> void:
 
 ## Enemy ids whose tier suits the given encounter stage (1-based).
 func ids_for_stage(stage: int) -> Array[String]:
+	if RunState.is_endless():
+		var endless_ids: Array[String] = []
+		for id: String in _definitions:
+			var definition: Dictionary = _definitions[id]
+			# Endless mixes the original creatures with the newer Tundra set;
+			# tier-four bosses stay reserved for authored story finales.
+			if int(definition.get("tier", BOSS_TIER)) < BOSS_TIER:
+				endless_ids.append(id)
+		return endless_ids
 	if RunState.selected_biome == "tundra":
 		if stage == 1:
 			return ["frostfang_wolf"]
@@ -71,12 +80,20 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 	var growth: int = 0
 	if definition.get("biome", "") == "tundra" and enemy_id in TUNDRA_REGULARS:
 		growth = clampi(RunState.encounter_index - 2, 0, 3)
+	var health: int = int(definition["health"]) + growth * 6
+	var attack: int = int(definition["attack"]) + growth
+	var gold: int = int(definition["gold"]) + growth * 6
+	if RunState.is_endless():
+		var wave: int = maxi(RunState.encounter_index - 1, 0)
+		health += wave * 9
+		attack += floori(float(wave) / 2.0)
+		gold += 3 + wave * 2
 	return {
 		"id": enemy_id,
 		"name": definition["name"],
-		"health": int(definition["health"]) + growth * 6,
-		"attack": int(definition["attack"]) + growth,
-		"gold": int(definition["gold"]) + growth * 6,
+		"health": health,
+		"attack": attack,
+		"gold": gold,
 		"texture": definition["texture"],
 		"frame_width": int(definition["frame_width"]),
 		"tags": tags,

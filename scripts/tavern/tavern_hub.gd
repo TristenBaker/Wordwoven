@@ -46,7 +46,9 @@ func _open_tavern_page() -> void:
 
 
 func _leave_tavern() -> void:
-	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+	get_tree().change_scene_to_file(
+		ScenePaths.COMBAT if RunState.is_endless() else ScenePaths.ENCOUNTER_SELECT
+	)
 
 
 func _open_left_room() -> void:

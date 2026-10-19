@@ -39,6 +39,14 @@ var backgrounds: Array[Texture2D] = [
 	preload("res://art/backgrounds/tundra.png"),
 	preload("res://art/backgrounds/volcano.png")
 ]
+var endless_biome_backgrounds: Array[Texture2D] = [
+	preload("res://art/backgrounds/Tundra Biome/T1.png"),
+	preload("res://art/backgrounds/Tundra Biome/T2.png"),
+	preload("res://art/backgrounds/Tundra Biome/T3.png"),
+	preload("res://art/backgrounds/Tundra Biome/T4.png"),
+	preload("res://art/backgrounds/Tundra Biome/T5.png"),
+	preload("res://art/backgrounds/Tundra Biome/T6.png"),
+]
 var required_pos: String = "n"
 var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
@@ -100,6 +108,7 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 @onready var timer_label: Label = $Layout/StatusArea/TimerLabel
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
+@onready var endless_route: HBoxContainer = $Layout/EndlessRoute
 
 
 func _ready() -> void:
@@ -116,6 +125,7 @@ func _ready() -> void:
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
+	_move_enemy_info_beneath_endless_route()
 	heat_meter = PanelContainer.new()
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
 	$Layout/InputArea.add_child(heat_meter)
@@ -130,6 +140,19 @@ func _ready() -> void:
 	effectiveness_indicator.minimum_size_changed.connect(_queue_feedback_layout)
 	_start_encounter()
 	_queue_feedback_layout()
+
+
+func _move_enemy_info_beneath_endless_route() -> void:
+	if not RunState.is_endless():
+		return
+	var info: VBoxContainer = enemy.info_box
+	info.reparent($Layout)
+	info.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	info.offset_left = -170.0
+	info.offset_top = 72.0
+	info.offset_right = 170.0
+	info.offset_bottom = 200.0
+	info.z_index = 2
 
 
 func _exit_tree() -> void:
@@ -201,7 +224,13 @@ func _start_encounter() -> void:
 # Adding function for randomizing backgrounds
 func _randomize_background() -> void:
 	# Keep the existing random draw so other randomized systems are unaffected.
-	background.texture = backgrounds.pick_random()
+	if RunState.is_endless():
+		var endless_pool: Array[Texture2D] = []
+		endless_pool.append_array(backgrounds)
+		endless_pool.append_array(endless_biome_backgrounds)
+		background.texture = endless_pool.pick_random()
+	else:
+		background.texture = backgrounds.pick_random()
 	if RunState.selected_biome == "tundra":
 		background.texture = load(
 			"res://art/backgrounds/Tundra Biome/T%d.png"
@@ -441,7 +470,9 @@ func _on_enemy_died() -> void:
 	word_input.editable = false
 	submit_button.disabled = true
 	await _play_victory_transition()
-	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
+	get_tree().change_scene_to_file(
+		ScenePaths.POWER_SELECT if RunState.is_endless() else ScenePaths.FIGHT_COMPLETION
+	)
 
 
 # Every party action finishes before the enemy dissolves, then the
@@ -697,12 +728,64 @@ func _refresh_status() -> void:
 		RunState.player_health, RunState.player_max_health
 	]
 	gold_label.text = "Gold: %d" % RunState.gold
+	if RunState.is_endless():
+		stage_label.text = "ENDLESS · WAVE %d" % RunState.encounter_index
+		_refresh_endless_route()
+		return
+	endless_route.visible = false
 	var stage_text: String = "Encounter %d of %d" % [
 		RunState.encounter_index, RunState.ENCOUNTERS_PER_RUN
 	]
 	if RunState.is_boss_next():
 		stage_text = "Final Encounter"
 	stage_label.text = stage_text
+
+
+func _refresh_endless_route() -> void:
+	endless_route.visible = true
+	for child: Node in endless_route.get_children():
+		endless_route.remove_child(child)
+		child.queue_free()
+	for offset: int in range(5):
+		var wave: int = RunState.encounter_index + offset
+		var shop_after_wave: bool = wave % 5 == 0
+		var node := PanelContainer.new()
+		node.custom_minimum_size = Vector2(105, 48)
+		node.add_theme_stylebox_override(
+			"panel", _endless_route_style(offset == 0, shop_after_wave)
+		)
+		var label := Label.new()
+		label.text = "NOW\nWAVE %d" % wave if offset == 0 else (
+			"SHOP\nWAVE %d" % wave if shop_after_wave else "WAVE %d" % wave
+		)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color("fff4d6"))
+		node.add_child(label)
+		endless_route.add_child(node)
+		if offset < 4:
+			var arrow := Label.new()
+			arrow.text = "›"
+			arrow.add_theme_font_size_override("font_size", 25)
+			arrow.add_theme_color_override("font_color", Color("ccb37d"))
+			arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			endless_route.add_child(arrow)
+
+
+func _endless_route_style(is_current: bool, is_shop: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("285138") if is_current else (
+		Color("72551e") if is_shop else Color("20384f")
+	)
+	style.border_color = Color("a9ff9a") if is_current else (
+		Color("ffd15d") if is_shop else Color("78b9ed")
+	)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(9)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	return style
 
 
 func _describe_result(result: Dictionary) -> String:

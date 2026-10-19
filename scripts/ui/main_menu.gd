@@ -33,7 +33,7 @@ func _on_loading_finished(success: bool) -> void:
 
 
 func _on_start_pressed() -> void:
-	get_tree().change_scene_to_file(ScenePaths.BIOME_SELECT)
+	get_tree().change_scene_to_file(ScenePaths.MODE_SELECT)
 
 
 func _on_settings_pressed() -> void:
