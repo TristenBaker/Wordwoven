@@ -14,6 +14,8 @@ var use_itemized_letters: bool = true
 var player_max_health: int = STARTING_HEALTH
 var player_health: int = STARTING_HEALTH
 var gold: int = STARTING_GOLD
+var gold_earned_this_run: int = 0
+var run_score_recorded: bool = false
 
 # The letter characters the player owns.
 var deck: Array[LetterStats] = []
@@ -75,6 +77,8 @@ func start_new_run() -> void:
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
+	gold_earned_this_run = 0
+	run_score_recorded = false
 	relics = []
 	fishing_hole_chosen = -1
 	completed_encounters = []
@@ -248,6 +252,8 @@ func choose_fishing_hole(hole_index: int) -> bool:
 
 func add_gold(amount: int) -> void:
 	gold += amount
+	if amount > 0:
+		gold_earned_this_run += amount
 	EventBus.emit_gold_changed(gold)
 
 

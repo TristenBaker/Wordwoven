@@ -61,6 +61,32 @@ func matching_rule(items: Array[LetterStats]) -> Dictionary:
 	return {}
 
 
+func can_extend_rule(selected: Array[LetterStats], candidate: LetterStats) -> bool:
+	if candidate == null or selected.has(candidate) or selected.size() >= 3:
+		return false
+	if selected.is_empty():
+		return true
+	for item: LetterStats in selected:
+		if item.level != candidate.level:
+			return false
+	if selected.size() == 1:
+		return true
+	var completed: Array[LetterStats] = selected.duplicate()
+	completed.append(candidate)
+	return not matching_rule(completed).is_empty()
+
+
+func next_step_text(selected: Array[LetterStats]) -> String:
+	if selected.is_empty():
+		return "Choose a tile. Matching-level tiles will light up."
+	if selected.size() == 1:
+		return "Choose a second tile at Level %d. Highlighted tiles are eligible." % selected[0].level
+	if selected.size() == 2:
+		return "Choose one highlighted Level %d tile to complete a recipe." % selected[0].level
+	var rule: Dictionary = matching_rule(selected)
+	return "Recipe ready: %s." % rule.get("name", "Unknown")
+
+
 func forge(items: Array[LetterStats], succeeded: bool) -> LetterStats:
 	var rule: Dictionary = matching_rule(items)
 	if rule.is_empty():

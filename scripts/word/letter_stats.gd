@@ -105,25 +105,51 @@ func effect_text() -> String:
 
 
 func throughput_text() -> String:
-	return "Base contribution: %.1f %s damage per use." % [
-		power(), element_name_text()
+	var base: int = BASE_POWER.get(letter, 1)
+	var level_multiplier: float = 1.0 + LEVEL_POWER_STEP * float(level - 1)
+	var text := "Damage: %d base × %.2f level = %.1f %s per use." % [
+		base, level_multiplier, power(), element_name_text(),
 	]
+	if modifier == Modifier.HEAVY:
+		text += " Heavy adds +4 before elemental effects."
+	elif modifier == Modifier.KEEN:
+		text += " Keen doubles the final tile contribution."
+	return text
 
 
 func element_detail_text() -> String:
+	var powers := RelicSystem.new()
 	match element:
 		Element.FIRE:
-			return "Fire damage can ignite enemies through Burn powers."
+			var burn := powers.total_effect("fire_burn_ratio")
+			return "Fire hits deal direct damage%s." % (
+				" and Burn for %.0f%% of that hit" % (burn * 100.0) if burn > 0.0 else ""
+			)
 		Element.LIGHTNING:
-			return "Lightning damage can chain into recursive echoes."
+			var echo := powers.total_effect("lightning_echo_chance")
+			return "Lightning hits deal direct damage%s." % (
+				" with %.0f%% echo chance; echoes can echo again" % (echo * 100.0) if echo > 0.0 else ""
+			)
 		Element.WATER:
-			return "Water damage can restore health through Water powers."
+			var heal := powers.total_effect("water_heal_ratio")
+			return "Water hits deal direct damage%s." % (
+				" and heal %.0f%% of damage" % (heal * 100.0) if heal > 0.0 else ""
+			)
 		Element.ICE:
-			return "Ice damage can weaken the next enemy retaliation."
+			var reduction := powers.total_effect("ice_retaliation_reduction")
+			return "Ice hits deal direct damage%s." % (
+				" and reduce next retaliation by %d" % int(reduction) if reduction > 0.0 else ""
+			)
 		Element.NATURE:
-			return "Nature damage can poison enemies through Nature powers."
+			var poison := powers.total_effect("nature_poison_ratio")
+			return "Nature hits deal direct damage%s." % (
+				" and Poison for %.0f%% of that hit" % (poison * 100.0) if poison > 0.0 else ""
+			)
 		Element.EARTH:
-			return "Earth damage can grant Guard against retaliation."
+			var guard := powers.total_effect("earth_guard")
+			return "Earth hits deal direct damage%s." % (
+				" and grant %d Guard" % int(guard) if guard > 0.0 else ""
+			)
 	return "Elemental damage shaped by your selected powers."
 
 

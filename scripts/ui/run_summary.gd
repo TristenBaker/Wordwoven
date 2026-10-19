@@ -20,6 +20,14 @@ func _ready() -> void:
 
 
 func _build_tally() -> String:
+	var run: Dictionary = RunScoring.snapshot(victory)
+	var leaderboard := RunLeaderboard.new()
+	var entries: Array[Dictionary]
+	if not RunState.run_score_recorded:
+		entries = leaderboard.record(run)
+		RunState.run_score_recorded = true
+	else:
+		entries = leaderboard.entries()
 	var words_played: int = RunState.word_history.size()
 	var best_word: String = ""
 	var best_damage: float = 0.0
@@ -32,7 +40,16 @@ func _build_tally() -> String:
 		tally += "\nMightiest word: %s (%.0f damage)" % [
 			best_word.to_upper(), best_damage
 		]
-	tally += "\nGold amassed: %d" % RunState.gold
+	tally += "\nGold earned: %d" % RunState.gold_earned_this_run
+	tally += "\n\n" + RunScoring.breakdown_text(run)
+	tally += "\n\nLOCAL LEADERBOARD"
+	for index: int in mini(5, entries.size()):
+		var entry: Dictionary = entries[index]
+		tally += "\n#%d  %d  · %s · %s" % [
+			index + 1, int(entry.get("score", 0)),
+			"Victory" if bool(entry.get("victory", false)) else "Defeat",
+			entry.get("biome", "Unknown"),
+		]
 	return tally
 
 

@@ -4,6 +4,7 @@ extends Control
 
 @onready var start_button: Button = $CenterBox/Menu/StartButton
 @onready var settings_button: Button = $CenterBox/Menu/SettingsButton
+@onready var leaderboard_button: Button = $CenterBox/Menu/LeaderboardButton
 @onready var quit_button: Button = $CenterBox/Menu/QuitButton
 @onready var status_label: Label = $CenterBox/Menu/StatusLabel
 @onready var settings_screen: SettingsScreen = $SettingsScreen
@@ -13,6 +14,7 @@ func _ready() -> void:
 	start_button.disabled = true
 	start_button.pressed.connect(_on_start_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
+	leaderboard_button.pressed.connect(_on_leaderboard_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
 	settings_screen.closed.connect(_on_settings_closed)
 	if WordNet.is_ready:
@@ -41,6 +43,10 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	$CenterBox.show()
+
+
+func _on_leaderboard_pressed() -> void:
+	LeaderboardOverlay.open_in(self)
 
 
 func _on_quit_pressed() -> void:

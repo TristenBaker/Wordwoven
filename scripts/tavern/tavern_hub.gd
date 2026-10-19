@@ -9,6 +9,7 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var left_arrow: Button = $GoLeftButton
 @onready var right_arrow: Button = $RightArrow
 @onready var forge_button: Button = $ForgeButton
+@onready var leaderboard_button: Button = $LeaderboardButton
 @onready var word_game_button: Button = $WordGameButton
 @onready var ice_fishing_button: Button = $DebugIceFishingButton
 @onready var health_label: Label = $StatusPanel/HealthLabel
@@ -21,6 +22,7 @@ func _ready() -> void:
 	left_arrow.pressed.connect(_open_left_room)
 	right_arrow.pressed.connect(_open_right_room)
 	forge_button.pressed.connect(_open_forge)
+	leaderboard_button.pressed.connect(_open_leaderboard)
 	word_game_button.pressed.connect(_open_word_game)
 	ice_fishing_button.visible = OS.is_debug_build()
 	ice_fishing_button.pressed.connect(_open_ice_fishing)
@@ -57,6 +59,10 @@ func _open_right_room() -> void:
 
 func _open_forge() -> void:
 	get_tree().change_scene_to_file(ScenePaths.FORGE)
+
+
+func _open_leaderboard() -> void:
+	LeaderboardOverlay.open_in(self)
 
 
 func _open_word_game() -> void:

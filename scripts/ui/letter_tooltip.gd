@@ -40,7 +40,9 @@ func _content_for(stats: LetterStats) -> String:
 		"[center][color=#%s][b]%s[/b][/color][/center]" % [
 			color_code, stats.element_name_text().to_upper(),
 		],
-		"Level: %d" % stats.level,
+		"[center][color=#%s][b]LEVEL %d[/b][/color][/center]" % [
+			color_code, stats.level,
+		],
 		"",
 		stats.element_detail_text(),
 		"[b]Base contribution:[/b] [color=#%s][b]%.1f %s damage[/b][/color] per use." % [
@@ -56,8 +58,9 @@ func _content_for(stats: LetterStats) -> String:
 	else:
 		for power_id: String in power_ids:
 			var info: Dictionary = power_system.relic_info(power_id)
-			lines.append("• %s ×%d" % [
+			lines.append("• %s ×%d — %s" % [
 				info.get("name", power_id), RunState.relics.count(power_id),
+				power_system.calculated_effect_text(power_id),
 			])
 	return "\n".join(lines)
 
