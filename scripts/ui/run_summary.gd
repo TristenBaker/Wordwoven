@@ -34,6 +34,8 @@ func _build_tally() -> String:
 			best_word.to_upper(), best_damage
 		]
 	tally += "\nGold amassed: %d" % RunState.gold
+	if RunState.has_key_item("ember_word"):
+		tally += "\nKey item recovered: THE EMBER WORD"
 	return tally
 
 

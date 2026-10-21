@@ -50,6 +50,22 @@ func _ready() -> void:
 		validator.queue_free()
 		for letter: String in answer:
 			check(puzzle.hand.count(letter) >= answer.count(letter), "Word puzzle hand contains every required letter")
+	for enemy_id: String in RunState.route_enemy_order:
+		RunState.defeated_enemy_ids.append(enemy_id)
+	check(
+		RunState.available_route_enemies(2).size() == 2,
+		"The final regular room offers repeat fights after the unique roster is exhausted"
+	)
+	RunState.defeated_enemy_ids.clear()
+	RunState.route_depth = 7
+	RunState.route_chosen_nodes[6] = "activity_lore_room"
+	check(
+		RunState.route_key_available("combat_7_0")
+		and RunState.route_key_available("combat_7_1"),
+		"Both fights after the lore room remain selectable"
+	)
+	RunState.route_depth = 1
+	RunState.route_chosen_nodes.clear()
 
 	var forced_combat_depths: Array[int] = []
 	for column_index: int in RunState.route_graph_columns.size() - 1:
@@ -118,14 +134,71 @@ func _ready() -> void:
 	check(RunState.is_boss_next() and RunState.encounter_index == RunState.ENCOUNTERS_PER_RUN, "Boss jump sets combat stage")
 	DebugTools.free_map_select = false
 
+	# A new expedition begins on the map, where the opening fight is visible
+	# and selectable before entering its modifier screen.
+	RunState.start_new_run()
+	RunState.selected_biome = "tundra"
+	RunState.ensure_tundra_route_plan()
+	var encounter_select: Control = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
+	add_child(encounter_select)
+	await get_tree().process_frame
+	var opening_visible: bool = false
+	for node: Dictionary in encounter_select._build_tundra_route():
+		if node.get("route_key", "") == "combat_1_0":
+			opening_visible = node.get("state", "") == "available"
+	check(opening_visible, "The first fight appears as an available map node")
+	encounter_select.queue_free()
+
+	RunState.route_depth = 2
+	RunState.pending_route_activity = "ice_fishing"
+	RunState.pending_route_key = "activity_ice_fishing"
 	var fishing: Control = load(ScenePaths.ICE_FISHING).instantiate()
 	add_child(fishing)
 	await get_tree().process_frame
+	if not WordNet.is_ready:
+		await WordNet.loading_finished
+		await get_tree().process_frame
 	var holes: int = 0
 	for button: Button in [fishing.hole_one_button, fishing.hole_two_button, fishing.hole_three_button]:
 		if button is IceHoleButton and button.text.is_empty():
 			holes += 1
 	check(holes == 3, "Fishing presents three illustrated ice holes")
+	check(
+		fishing.tutorial_panel.visible and not fishing.hole_selection_panel.visible,
+		"Fishing opens with its first-time tutorial"
+	)
+	fishing._dismiss_tutorial()
+	check(
+		not fishing.tutorial_panel.visible and fishing.hole_selection_panel.visible
+		and RunState.fishing_tutorial_seen,
+		"Dismissing the tutorial reveals the holes and records it as seen"
+	)
+	fishing._warm_word_pool.clear()
+	for warm_word: String in ["warm", "hot", "heated", "sunny", "summer"]:
+		fishing._warm_word_pool.append(warm_word)
+	fishing._select_hole(0)
+	await get_tree().process_frame
+	check(
+		fishing.target_panel.visible and fishing.progress_label.visible
+		and fishing.timer_bar.visible and fishing.input_row.visible
+		and not fishing.fish_panel.visible and not fishing.instruction_label.visible
+		and not fishing.timer_label.visible and not fishing.feedback_label.visible,
+		"The live challenge keeps only the word, counter, timer, and input"
+	)
+	check(
+		fishing.word_input.has_focus() and fishing.word_input.keep_editing_on_text_submit,
+		"Fishing captures typing immediately and retains focus after Enter"
+	)
+	if fishing._challenge_words.size() == 1:
+		fishing._challenge_words.append("hot")
+	var time_before_word: float = fishing.word_timer.time_left
+	fishing.word_input.text = fishing._challenge_words[0]
+	fishing._submit_word()
+	var time_after_word: float = fishing.word_timer.time_left
+	check(
+		time_after_word <= time_before_word,
+		"Correct fishing words do not reset the eight-second total timer"
+	)
 	fishing.queue_free()
 
 	print("Route progression and fishing UI: %d failures" % failures)
@@ -138,6 +211,8 @@ func _resolve_activity(route_key: String) -> void:
 	RunState.pending_route_key = route_key
 	if activity_id == "ice_fishing":
 		RunState.fishing_hole_chosen = 0
+	elif activity_id == "lore_room":
+		RunState.lore_room_completed = true
 	else:
 		RunState.optional_encounters[activity_id] = {"skipped": true}
 	RunState.finish_route_activity()

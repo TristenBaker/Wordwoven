@@ -29,6 +29,8 @@ func ids_for_stage(stage: int) -> Array[String]:
 		for id: String in TUNDRA_REGULARS:
 			if not RunState.defeated_enemy_ids.has(id):
 				remaining.append(id)
+		if remaining.is_empty():
+			remaining = TUNDRA_REGULARS.duplicate()
 		return remaining
 	var tier: int = _tier_for_stage(stage)
 	var ids: Array[String] = []

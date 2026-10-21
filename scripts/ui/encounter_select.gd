@@ -4,6 +4,7 @@ const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 const Balance = preload("res://data/balance/tuning.gd")
 const FISHING_ICON: Texture2D = preload("res://assets/Art/Items/dead fish.png")
 const HANGMAN_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
+const LORE_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
 const ROUTE_ACTIVITY_ORDER: Array[String] = [
 	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
 ]
@@ -130,8 +131,8 @@ func _combat_node(route_key: String, depth: int) -> Dictionary:
 				depth, ""
 		))
 		var history_index: int = _combat_history_index(depth)
-		if route_key == chosen_key and history_index < RunState.defeated_enemy_ids.size():
-			var enemy_id: String = RunState.defeated_enemy_ids[history_index]
+		if route_key == chosen_key and history_index < RunState.defeated_enemy_history.size():
+			var enemy_id: String = RunState.defeated_enemy_history[history_index]
 			node = factory.build_spawn_data(enemy_id)
 			node.merge({
 				"type": "enemy", "stage": depth, "slot": slot,
@@ -196,6 +197,14 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 			"preview_texture": FISHING_ICON,
 			"accent": Color("78c9ec"),
 		}
+	elif id == "lore_room":
+		data = {
+			"name": "Voice in the Ice",
+			"subtitle": "A frozen memory",
+			"tooltip": "Listen to a memory left inside the glacier.",
+			"preview_texture": LORE_ICON,
+			"accent": Color("9edcf2"),
+		}
 	else:
 		data = TundraEventScript.definition(id)
 		data["subtitle"] = String(data.get("mini_game", "Side Quest"))
@@ -210,8 +219,13 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 	elif depth < RunState.route_depth:
 		state = "bypassed"
 	elif depth == RunState.route_depth:
-		var available: bool = RunState.fishing_route_available() \
-				if id == "ice_fishing" else RunState.optional_encounter_available(id)
+		var available: bool
+		if id == "ice_fishing":
+			available = RunState.fishing_route_available()
+		elif id == "lore_room":
+			available = RunState.lore_room_available()
+		else:
+			available = RunState.optional_encounter_available(id)
 		if not RunState.route_key_available(route_key):
 			available = false
 		state = "available" if available else "locked"
@@ -246,6 +260,10 @@ func _on_activity_pressed(id: String) -> void:
 	if id == "ice_fishing":
 		if RunState.begin_fishing_route(route_key):
 			get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
+		return
+	if id == "lore_room":
+		if RunState.begin_lore_room(route_key):
+			get_tree().change_scene_to_file(ScenePaths.LORE_ROOM)
 		return
 	if RunState.begin_optional_encounter(id, route_key):
 		get_tree().change_scene_to_file(ScenePaths.HANGMAN if id == "hangman" else ScenePaths.TUNDRA_EVENT)
