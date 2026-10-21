@@ -26,11 +26,15 @@ func _ready() -> void:
 	for column_index: int in RunState.route_graph_columns.size():
 		if RunState.route_graph_columns[column_index].has("activity_hangman"):
 			hangman_depth = column_index + 1
-	check(hangman_depth in [2, 4, 6], "The word puzzle can appear at different run depths")
+	check(hangman_depth in [2, 4], "The word puzzle can appear at different split depths")
+	check(
+		RunState.route_graph_columns[5] == ["activity_lore_room"],
+		"The required lore room remains the only node at its depth"
+	)
 	if not WordNet.is_ready:
 		var lexicon_loaded: bool = await WordNet.loading_finished
 		check(lexicon_loaded, "Combat word bank loads")
-	for depth: int in [2, 4, 6]:
+	for depth: int in [2, 4]:
 		var puzzle: Dictionary = HANGMAN_RULES.new_puzzle(depth)
 		check(not puzzle.is_empty(), "Word puzzle draws from combat lexicon")
 		if puzzle.is_empty():

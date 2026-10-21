@@ -365,7 +365,10 @@ func ensure_tundra_route_plan() -> void:
 		["combat_7_0", "combat_7_1"],
 		["boss"],
 	]
-	var hangman_column: int = [1, 3, 5].pick_random()
+	# Keep the lore room as the sole required node at depth six. Optional
+	# activities may vary at the earlier split columns without creating a route
+	# that bypasses or dead-ends after the story beat.
+	var hangman_column: int = [1, 3].pick_random()
 	route_graph_columns[hangman_column].append("activity_hangman")
 	for column_index: int in route_graph_columns.size():
 		for key: String in route_graph_columns[column_index]:
