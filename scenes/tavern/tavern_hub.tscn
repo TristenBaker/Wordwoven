@@ -222,7 +222,7 @@ grow_horizontal = 2
 theme_override_font_sizes/font_size = 22
 text = "Leaderboard"
 
-[node name="WordGameButton" type="Button" parent="."]
+[node name="MinigamesButton" type="Button" parent="."]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 1
@@ -235,7 +235,77 @@ offset_right = 130.0
 offset_bottom = 512.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 22
-text = "The Inkwell Word"
+text = "Minigames"
+
+[node name="MinigamesPopup" type="Control" parent="."]
+visible = false
+z_index = 20
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Shade" type="ColorRect" parent="MinigamesPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.012, 0.008, 0.78)
+
+[node name="Center" type="CenterContainer" parent="MinigamesPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="MinigamesPopup/Center"]
+custom_minimum_size = Vector2(510, 380)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_interaction")
+
+[node name="Menu" type="VBoxContainer" parent="MinigamesPopup/Center/Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="MinigamesPopup/Center/Panel/Menu"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.5, 1)
+theme_override_fonts/font = ExtResource("3_title")
+theme_override_font_sizes/font_size = 34
+text = "Minigames"
+horizontal_alignment = 1
+
+[node name="WordGameButton" type="Button" parent="MinigamesPopup/Center/Panel/Menu"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+custom_minimum_size = Vector2(420, 68)
+theme_override_font_sizes/font_size = 21
+text = "The Inkwell Word\nFind the five-letter word"
+
+[node name="HandwritingButton" type="Button" parent="MinigamesPopup/Center/Panel/Menu"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+custom_minimum_size = Vector2(420, 68)
+theme_override_font_sizes/font_size = 21
+text = "Letter Tracing\nTrace each character before time runs out"
+
+[node name="CloseButton" type="Button" parent="MinigamesPopup/Center/Panel/Menu"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+custom_minimum_size = Vector2(180, 42)
+theme_override_font_sizes/font_size = 18
+text = "Close"
 
 [node name="Hint" type="Label" parent="." unique_id=1802721590]
 visible = false

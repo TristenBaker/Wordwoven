@@ -19,6 +19,9 @@ var gold: int = STARTING_GOLD
 var gold_earned_this_run: int = 0
 var run_score_recorded: bool = false
 var run_mode: RunMode = RunMode.STORY
+var has_unseen_inventory_items: bool = false
+var auto_equip_enabled: bool = false
+var auto_equip_same_element_only: bool = false
 
 # The letter characters the player owns.
 var deck: Array[LetterStats] = []
@@ -75,6 +78,13 @@ var word_history: Array[Dictionary] = []
 var is_run_active: bool = false
 
 
+func _ready() -> void:
+	auto_equip_enabled = bool(AppSettings.preferences.get("auto_equip_enabled", false))
+	auto_equip_same_element_only = bool(
+		AppSettings.preferences.get("auto_equip_same_element_only", false)
+	)
+
+
 ## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
 func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	run_mode = mode
@@ -83,6 +93,7 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	gold = STARTING_GOLD
 	gold_earned_this_run = 0
 	run_score_recorded = false
+	has_unseen_inventory_items = false
 	relics = []
 	fishing_hole_chosen = -1
 	completed_encounters = []
@@ -183,7 +194,43 @@ func add_letter_item(item: LetterStats) -> void:
 	if item == null:
 		return
 	letter_inventory.append(item)
+	has_unseen_inventory_items = true
+	if auto_equip_enabled:
+		_try_auto_equip_item(item)
 	EventBus.emit_deck_changed()
+
+
+func set_auto_equip(enabled: bool, same_element_only: bool) -> void:
+	auto_equip_enabled = enabled
+	auto_equip_same_element_only = same_element_only
+	AppSettings.set_auto_equip_preferences(enabled, same_element_only)
+
+
+func _try_auto_equip_item(item: LetterStats) -> bool:
+	if not use_itemized_letters or not letter_inventory.has(item):
+		return false
+	var slot: String = item.letter.to_lower()
+	var current: LetterStats = equipped_letters.get(slot, null)
+	if current == null:
+		if auto_equip_same_element_only:
+			return false
+	elif item.level <= current.level or (
+		auto_equip_same_element_only and item.element != current.element
+	):
+		return false
+	letter_inventory.erase(item)
+	if current != null:
+		letter_inventory.append(current)
+	equipped_letters[slot] = item
+	return true
+
+
+func mark_inventory_items_unseen() -> void:
+	has_unseen_inventory_items = true
+
+
+func mark_inventory_seen() -> void:
+	has_unseen_inventory_items = false
 
 
 func equip_letter_item(item: LetterStats) -> bool:
@@ -208,6 +255,39 @@ func unequip_letter(slot: String) -> bool:
 	letter_inventory.append(item)
 	EventBus.emit_deck_changed()
 	return true
+
+
+## Equips only genuine upgrades. With an element lock, an occupied slot can
+## only be replaced by a higher-level item of its current element.
+func auto_equip_higher_levels(same_element_only: bool = false) -> int:
+	if not use_itemized_letters:
+		return 0
+	var changed := 0
+	for letter: String in "abcdefghijklmnopqrstuvwxyz":
+		var current: LetterStats = equipped_letters.get(letter, null)
+		var best: LetterStats = null
+		for item: LetterStats in letter_inventory:
+			if item.letter != letter:
+				continue
+			if current == null:
+				if same_element_only:
+					continue
+			elif item.level <= current.level or (
+				same_element_only and item.element != current.element
+			):
+				continue
+			if best == null or item.level > best.level:
+				best = item
+		if best == null:
+			continue
+		letter_inventory.erase(best)
+		if current != null:
+			letter_inventory.append(current)
+		equipped_letters[letter] = best
+		changed += 1
+	if changed > 0:
+		EventBus.emit_deck_changed()
+	return changed
 
 
 func rolled_letter_drop() -> LetterStats:

@@ -10,7 +10,11 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var right_arrow: Button = $RightArrow
 @onready var forge_button: Button = $ForgeButton
 @onready var leaderboard_button: Button = $LeaderboardButton
-@onready var word_game_button: Button = $WordGameButton
+@onready var minigames_button: Button = $MinigamesButton
+@onready var minigames_popup: Control = $MinigamesPopup
+@onready var word_game_button: Button = $MinigamesPopup/Center/Panel/Menu/WordGameButton
+@onready var handwriting_button: Button = $MinigamesPopup/Center/Panel/Menu/HandwritingButton
+@onready var minigames_close_button: Button = $MinigamesPopup/Center/Panel/Menu/CloseButton
 @onready var ice_fishing_button: Button = $DebugIceFishingButton
 @onready var health_label: Label = $StatusPanel/HealthLabel
 @onready var gold_label: Label = $StatusPanel/GoldLabel
@@ -23,7 +27,11 @@ func _ready() -> void:
 	right_arrow.pressed.connect(_open_right_room)
 	forge_button.pressed.connect(_open_forge)
 	leaderboard_button.pressed.connect(_open_leaderboard)
+	minigames_button.pressed.connect(_open_minigames)
 	word_game_button.pressed.connect(_open_word_game)
+	handwriting_button.pressed.connect(_open_handwriting_game)
+	minigames_close_button.pressed.connect(minigames_popup.hide)
+	minigames_popup.hide()
 	ice_fishing_button.visible = OS.is_debug_build()
 	ice_fishing_button.pressed.connect(_open_ice_fishing)
 	EventBus.gold_changed.connect(_on_gold_changed)
@@ -69,6 +77,14 @@ func _open_leaderboard() -> void:
 
 func _open_word_game() -> void:
 	get_tree().change_scene_to_file(ScenePaths.WORD_GAME)
+
+
+func _open_minigames() -> void:
+	minigames_popup.show()
+
+
+func _open_handwriting_game() -> void:
+	get_tree().change_scene_to_file(ScenePaths.HANDWRITING_GAME)
 
 
 func _open_ice_fishing() -> void:

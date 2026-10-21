@@ -150,6 +150,32 @@ theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
 text = "AUDIO"
 modulate = Color(0.88, 0.77, 0.53, 1)
 
+[node name="GameplayHeading" type="Label" parent="Center/Panel/Settings"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("body")
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
+text = "GAMEPLAY"
+modulate = Color(0.88, 0.77, 0.53, 1)
+
+[node name="AutoEquipToggle" type="CheckButton" parent="Center/Panel/Settings"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("body")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
+text = "Auto-equip higher-level letter rewards"
+tooltip_text = "Automatically equips a new letter tile when it is a higher-level upgrade."
+
+[node name="SameElementToggle" type="CheckButton" parent="Center/Panel/Settings"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = ExtResource("body")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.92, 0.87, 0.75, 1)
+text = "Only replace with the same element"
+tooltip_text = "Keeps an equipped letter's element; only a higher-level tile of that element can replace it."
+
 [node name="AudioGrid" type="GridContainer" parent="Center/Panel/Settings"]
 layout_mode = 2
 columns = 3

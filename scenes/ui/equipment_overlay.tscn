@@ -113,6 +113,35 @@ theme_override_colors/font_color = Color(0.93, 0.83, 0.66, 1)
 theme_override_fonts/font = ExtResource("2_body")
 theme_override_font_sizes/font_size = 18
 
+[node name="AutoEquipRow" type="HBoxContainer" parent="EquipmentPanel/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AutoEquipButton" type="Button" parent="EquipmentPanel/Content/AutoEquipRow"]
+custom_minimum_size = Vector2(250, 38)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 18
+text = "Auto-equip upgrades"
+
+[node name="SameElementToggle" type="Button" parent="EquipmentPanel/Content/AutoEquipRow"]
+custom_minimum_size = Vector2(230, 38)
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 16
+text = "Same element only"
+tooltip_text = "Only replace an equipped tile with a higher-level tile of the same element."
+
+[node name="AutoEquipNote" type="Label" parent="EquipmentPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.67, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+
 [node name="EquippedLabel" type="Label" parent="EquipmentPanel/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.75, 0.35, 1)

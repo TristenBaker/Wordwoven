@@ -4,6 +4,7 @@ const CONFIG_PATH: String = "user://settings.cfg"
 const DEFAULTS: Dictionary = {
 	"display_mode": 2, "resolution": Vector2i(1280, 720),
 	"master_volume": 50.0, "music_volume": 50.0, "sfx_volume": 50.0,
+	"auto_equip_enabled": false, "auto_equip_same_element_only": false,
 }
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 var preferences: Dictionary = DEFAULTS.duplicate(true)
@@ -66,7 +67,18 @@ func _sanitize(values: Dictionary) -> Dictionary:
 		var volume = values.get(key, DEFAULTS[key])
 		if (volume is float or volume is int) and is_finite(float(volume)):
 			clean[key] = clampf(float(volume), 0.0, 100.0)
+	for key: String in ["auto_equip_enabled", "auto_equip_same_element_only"]:
+		var enabled = values.get(key, DEFAULTS[key])
+		if enabled is bool:
+			clean[key] = enabled
 	return clean
+
+
+func set_auto_equip_preferences(enabled: bool, same_element_only: bool) -> void:
+	var updated: Dictionary = preferences.duplicate(true)
+	updated.auto_equip_enabled = enabled
+	updated.auto_equip_same_element_only = same_element_only
+	save_and_apply(updated)
 
 func load_preferences(path: String = CONFIG_PATH) -> void:
 	var config := ConfigFile.new()

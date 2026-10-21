@@ -14,6 +14,10 @@ const TILE_THEME: LetterTileTheme = preload(
 @onready var letters_tab: Button = $EquipmentPanel/Content/TitleRow/LettersTab
 @onready var powers_tab: Button = $EquipmentPanel/Content/TitleRow/PowersTab
 @onready var mode_label: Label = $EquipmentPanel/Content/ModeLabel
+@onready var auto_equip_row: HBoxContainer = $EquipmentPanel/Content/AutoEquipRow
+@onready var auto_equip_button: Button = $EquipmentPanel/Content/AutoEquipRow/AutoEquipButton
+@onready var same_element_toggle: Button = $EquipmentPanel/Content/AutoEquipRow/SameElementToggle
+@onready var auto_equip_note: Label = $EquipmentPanel/Content/AutoEquipNote
 @onready var equipped_label: Label = $EquipmentPanel/Content/EquippedLabel
 @onready var slots_grid: GridContainer = $EquipmentPanel/Content/SlotsScroll/SlotsGrid
 @onready var slots_scroll: ScrollContainer = $EquipmentPanel/Content/SlotsScroll
@@ -31,6 +35,7 @@ const TILE_THEME: LetterTileTheme = preload(
 @onready var close_button: Button = $EquipmentPanel/Content/TitleRow/CloseButton
 
 var _showing_powers: bool = false
+var _notification_dot: Panel
 
 
 func _ready() -> void:
@@ -38,8 +43,14 @@ func _ready() -> void:
 	close_button.pressed.connect(panel.hide)
 	letters_tab.pressed.connect(_show_letters)
 	powers_tab.pressed.connect(_show_powers)
+	auto_equip_button.toggled.connect(_set_auto_equip_enabled)
+	same_element_toggle.toggled.connect(_set_auto_equip_element_lock)
+	auto_equip_button.button_pressed = RunState.auto_equip_enabled
+	same_element_toggle.button_pressed = RunState.auto_equip_same_element_only
 	EventBus.deck_changed.connect(_refresh)
 	EventBus.relic_gained.connect(_on_relic_gained)
+	_notification_dot = _build_notification_dot()
+	toggle_button.add_child(_notification_dot)
 	$EquipmentPanel/Content/TitleRow.move_child(letters_tab, 1)
 	$EquipmentPanel/Content/TitleRow.move_child(powers_tab, 2)
 	$EquipmentPanel/Content/TitleRow.move_child(close_button, 3)
@@ -54,17 +65,48 @@ func _on_relic_gained(_power_id: String) -> void:
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
 	if panel.visible:
+		RunState.mark_inventory_seen()
 		_show_letters()
 		_refresh()
 
 
 func _refresh() -> void:
+	if _notification_dot != null:
+		_notification_dot.visible = RunState.has_unseen_inventory_items
 	mode_label.text = "Itemized letters mode" if RunState.use_itemized_letters \
 		else "Legacy deck mode — item equipment is inactive"
 	_rebuild_slots()
 	_rebuild_inventory()
 	_rebuild_powers()
 	_refresh_tab()
+
+
+func _set_auto_equip_enabled(enabled: bool) -> void:
+	RunState.set_auto_equip(enabled, RunState.auto_equip_same_element_only)
+	auto_equip_note.text = "New letter rewards will equip upgrades automatically." \
+		if enabled else "Auto-equip is off."
+	_refresh_tab()
+
+
+func _set_auto_equip_element_lock(enabled: bool) -> void:
+	RunState.set_auto_equip(RunState.auto_equip_enabled, enabled)
+	_refresh_tab()
+
+
+func _build_notification_dot() -> Panel:
+	var dot := Panel.new()
+	dot.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	dot.position = Vector2(2, 2)
+	dot.size = Vector2(18, 18)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dot.tooltip_text = "New letter item"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("e54646")
+	style.border_color = Color("fff3df")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	dot.add_theme_stylebox_override("panel", style)
+	return dot
 
 
 func _show_letters() -> void:
@@ -82,6 +124,15 @@ func _refresh_tab() -> void:
 	letters_tab.button_pressed = not _showing_powers
 	powers_tab.button_pressed = _showing_powers
 	mode_label.visible = not _showing_powers
+	auto_equip_row.visible = not _showing_powers and RunState.use_itemized_letters
+	auto_equip_button.button_pressed = RunState.auto_equip_enabled
+	auto_equip_button.text = "✓ Auto-equip upgrades" if RunState.auto_equip_enabled \
+		else "Auto-equip upgrades"
+	same_element_toggle.button_pressed = RunState.auto_equip_same_element_only
+	same_element_toggle.text = "✓ Same element only" if RunState.auto_equip_same_element_only \
+		else "Same element only"
+	auto_equip_note.visible = not _showing_powers and RunState.use_itemized_letters \
+		and not auto_equip_note.text.is_empty()
 	equipped_label.visible = not _showing_powers
 	slots_scroll.visible = not _showing_powers
 	inventory_label.visible = not _showing_powers
