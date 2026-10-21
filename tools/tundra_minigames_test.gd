@@ -14,6 +14,7 @@ func setup(id: String) -> void:
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
 	RunState.encounter_index = 2
+	RunState.route_depth = 2
 	RunState.completed_encounters.append(1)
 	RunState.player_health = 23
 	check(RunState.begin_optional_encounter(id), "Encounter available: " + id)

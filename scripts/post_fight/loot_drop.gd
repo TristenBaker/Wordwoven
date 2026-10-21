@@ -2,8 +2,12 @@ extends Control
 ## Final step after a fight: a deliberately small loot summary, ready for
 ## dropped letters and other items to be added later.
 
+const EMBER_WORD: Resource = preload("res://data/items/ember_word.tres")
+
+@onready var title_label: Label = $CenterBox/LootPanel/Content/Title
 @onready var enemy_label: Label = $CenterBox/LootPanel/Content/Enemy
 @onready var gold_label: Label = $CenterBox/LootPanel/Content/GoldCard/Gold
+@onready var future_hint: Label = $CenterBox/LootPanel/Content/FutureHint
 @onready var letter_label: Label = $CenterBox/LootPanel/Content/LetterDrop
 @onready var continue_button: Button = $CenterBox/LootPanel/Content/ContinueButton
 
@@ -19,6 +23,14 @@ func _ready() -> void:
 			RunState.pending_victory_letter.describe()
 	else:
 		letter_label.text = "No letter item dropped this time."
+	if RunState.is_boss_next():
+		var newly_recovered: bool = RunState.grant_key_item(EMBER_WORD)
+		title_label.text = EMBER_WORD.display_name
+		future_hint.text = EMBER_WORD.description
+		if newly_recovered:
+			letter_label.text = "KEY ITEM RECOVERED: THE EMBER WORD"
+		else:
+			letter_label.text = "The Ember Word is already safe."
 	continue_button.text = "Complete the Tale" if RunState.is_boss_next() else "Return to Tavern"
 	continue_button.pressed.connect(_finish_rewards)
 	continue_button.grab_focus()

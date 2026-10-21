@@ -241,25 +241,4 @@ theme_override_font_sizes/font_size = 17
 text = "Press B to open the Tavern Page"
 horizontal_alignment = 1
 
-[node name="DebugIceFishingButton" type="Button" parent="."]
-visible = false
-z_index = 100
-theme = ExtResource("ww_buttons")
-theme_type_variation = &"WordWovenActionButton"
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -244.0
-offset_top = -130.0
-offset_right = -24.0
-offset_bottom = -82.0
-grow_horizontal = 0
-grow_vertical = 0
-tooltip_text = "Debug shortcut to the ice-fishing minigame"
-theme_override_font_sizes/font_size = 18
-text = "Debug: Ice Fishing  [I]"
-
 [node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]

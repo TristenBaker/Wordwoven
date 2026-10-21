@@ -28,6 +28,10 @@ var equipped_letters: Dictionary[String, LetterStats] = {}
 
 # Relic identifiers, resolved by the relic system.
 var relics: Array[String] = []
+var key_items: Array[Resource] = []
+var tundra_intro_seen: bool = false
+var lore_room_completed: bool = false
+var fishing_tutorial_seen: bool = false
 
 # The ice-fishing choice can be made only once during a run.
 var fishing_hole_chosen: int = -1
@@ -50,6 +54,7 @@ var _last_route_signature: String = ""
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
 var defeated_enemy_ids: Array[String] = []
+var defeated_enemy_history: Array[String] = []
 var relic_rewards: Dictionary[int, String] = {}
 
 # Transient post-fight presentation data. These values carry a completed
@@ -96,6 +101,10 @@ func start_new_run() -> void:
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
 	relics = []
+	key_items = []
+	tundra_intro_seen = false
+	lore_room_completed = false
+	fishing_tutorial_seen = false
 	fishing_hole_chosen = -1
 	pending_route_activity = ""
 	pending_route_key = ""
@@ -111,6 +120,7 @@ func start_new_run() -> void:
 	route_chosen_nodes.clear()
 	completed_encounters = []
 	defeated_enemy_ids = []
+	defeated_enemy_history = []
 	relic_rewards = {}
 	pending_victory_enemy = ""
 	pending_victory_gold = 0
@@ -158,6 +168,8 @@ func advance_encounter() -> void:
 
 ## Records a victory once before its relic can be claimed.
 func complete_encounter(enemy_id: String = "") -> void:
+	if not enemy_id.is_empty():
+		defeated_enemy_history.append(enemy_id)
 	if not enemy_id.is_empty() and not defeated_enemy_ids.has(enemy_id):
 		defeated_enemy_ids.append(enemy_id)
 	if not completed_encounters.has(encounter_index):
@@ -205,6 +217,21 @@ func add_letter_item(item: LetterStats) -> void:
 		return
 	letter_inventory.append(item)
 	EventBus.emit_deck_changed()
+
+
+## Adds a unique story item. Re-entering a reward screen cannot duplicate it.
+func grant_key_item(item: Resource) -> bool:
+	if item == null or has_key_item(item.id):
+		return false
+	key_items.append(item)
+	return true
+
+
+func has_key_item(id: String) -> bool:
+	for item: Resource in key_items:
+		if item.id == id:
+			return true
+	return false
 
 
 func equip_letter_item(item: LetterStats) -> bool:
@@ -334,11 +361,14 @@ func ensure_tundra_route_plan() -> void:
 		["combat_3_0", "combat_3_1"],
 		["combat_4_0", "activity_" + activity_ids[2]],
 		["combat_5_0", "combat_5_1"],
-		["activity_" + activity_ids[3]],
+		["activity_lore_room"],
 		["combat_7_0", "combat_7_1"],
 		["boss"],
 	]
-	var hangman_column: int = [1, 3, 5].pick_random()
+	# Keep the lore room as the sole required node at depth six. Optional
+	# activities may vary at the earlier split columns without creating a route
+	# that bypasses or dead-ends after the story beat.
+	var hangman_column: int = [1, 3].pick_random()
 	route_graph_columns[hangman_column].append("activity_hangman")
 	for column_index: int in route_graph_columns.size():
 		for key: String in route_graph_columns[column_index]:
@@ -394,7 +424,33 @@ func required_route_activity_at(stage: int) -> String:
 func route_activity_completed(id: String) -> bool:
 	if id == "ice_fishing":
 		return fishing_hole_chosen >= 0
+	if id == "lore_room":
+		return lore_room_completed
 	return optional_encounters.has(id)
+
+
+func lore_room_available() -> bool:
+	return (
+		is_run_active and selected_biome == "tundra"
+		and not lore_room_completed and not is_boss_next()
+		and pending_route_activity.is_empty()
+	)
+
+
+func begin_lore_room(route_key: String) -> bool:
+	if not lore_room_available() or not route_key_available(route_key):
+		return false
+	pending_route_activity = "lore_room"
+	pending_route_key = route_key
+	return true
+
+
+func finish_lore_room() -> bool:
+	if pending_route_activity != "lore_room" or lore_room_completed:
+		return false
+	lore_room_completed = true
+	finish_route_activity()
+	return true
 
 
 func route_activity_resolved(id: String) -> bool:
@@ -471,6 +527,16 @@ func available_route_enemies(limit: int = 2) -> Array[String]:
 		available.append(enemy_id)
 		if available.size() >= limit:
 			break
+	# The generated route can contain five regular fights, while the biome
+	# currently has four regular enemy types. Once every type has appeared,
+	# offer repeats so the expedition can never dead-end before the boss.
+	if available.size() < limit:
+		for enemy_id: String in route_enemy_order:
+			if available.has(enemy_id):
+				continue
+			available.append(enemy_id)
+			if available.size() >= limit:
+				break
 	return available
 
 

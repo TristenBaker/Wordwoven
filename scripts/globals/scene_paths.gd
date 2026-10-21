@@ -16,6 +16,8 @@ const FORGE: String = "res://scenes/tavern/forge.tscn"
 const TREASURE_ROOM: String = "res://scenes/events/treasure_room.tscn"
 const WORD_GAME: String = "res://scenes/tavern/word_game.tscn"
 const ICE_FISHING: String = "res://scenes/ice_fishing.tscn"
+const TUNDRA_INTRO: String = "res://scenes/story/tundra_intro.tscn"
+const LORE_ROOM: String = "res://scenes/story/lore_room.tscn"
 const ENCOUNTER_SELECT: String = \
 		"res://scenes/encounter_select.tscn"
 const RUN_WON: String = "res://scenes/run_won.tscn"
