@@ -39,7 +39,15 @@ func _ready() -> void:
 	add_child(lore)
 	await get_tree().process_frame
 	check(lore.story_text.text.contains("glacier"), "The lore room reveals a frozen memory")
-	check(lore.continue_button.text == "Skip Cutscene", "The lore cutscene is skippable")
+	check(
+		lore.get_node("BlackBackground").color == Color.BLACK,
+		"The lore cutscene uses a completely black background"
+	)
+	check(
+		lore.get_node_or_null("Center/LorePanel") == null
+		and lore.get_node_or_null("Center/StoryText") != null,
+		"The lore cutscene displays only its white poem text"
+	)
 	lore.queue_free()
 
 	RunState.pending_route_activity = ""

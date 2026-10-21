@@ -2,20 +2,16 @@ extends Control
 ## A route room that reveals why the Frost Wyrm imposed the White Silence.
 
 const LINES: Array[String] = [
-	"A voice is trapped inside the glacier.",
-	"It is old, immense—and afraid.",
-	"[i]I watched promises become threats, and names become weapons.[/i]",
+	"A voice is trapped inside the glacier. \nIt is old, and full of fear. \n[i]promises become threats, and names become weapons.[/i]",
 	"[i]A frozen word cannot lie.[/i]",
-	"[i]When every voice is still, meaning will remain pure.[/i]",
-	"The memory belongs to the Frost Wyrm.",
-	"It means to preserve language by silencing everyone who could change it.",
+	"[i]When every voice is still, meaning will remain pure.[/i]\n\nTo preserve language by silencing everyone who could change it.",
+	"The Frost Wyrm has the Ember Word..."
 ]
 
 const FADE_SECONDS: float = 0.65
-const HOLD_SECONDS: float = 2.35
+const HOLD_SECONDS: float = 4.35
 
-@onready var story_text: RichTextLabel = $Center/LorePanel/Content/StoryText
-@onready var continue_button: Button = $Center/LorePanel/Content/ContinueButton
+@onready var story_text: RichTextLabel = $Center/StoryText
 
 var line_index: int = 0
 var _ending: bool = false
@@ -26,15 +22,15 @@ func _ready() -> void:
 	if RunState.pending_route_activity != "lore_room":
 		get_tree().change_scene_to_file.call_deferred(ScenePaths.ENCOUNTER_SELECT)
 		return
-	continue_button.pressed.connect(_finish_cutscene)
-	continue_button.text = "Skip Cutscene"
-	continue_button.grab_focus()
 	story_text.modulate.a = 0.0
 	_play_sequence()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
+	var mouse_skip: bool = event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	if event.is_action_pressed("ui_accept") \
+			or event.is_action_pressed("ui_cancel") or mouse_skip:
 		get_viewport().set_input_as_handled()
 		_finish_cutscene()
 
