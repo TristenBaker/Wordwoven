@@ -27,7 +27,7 @@ anchor_right = 1.0
 offset_left = -420.0
 offset_top = 8.0
 offset_right = -8.0
-offset_bottom = 560.0
+offset_bottom = 680.0
 theme_override_styles/panel = SubResource("1_panel_style")
 
 [node name="Box" type="VBoxContainer" parent="Panel"]
@@ -95,6 +95,54 @@ theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 text = "To Tavern"
+
+[node name="EncounterRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AutoKillButton" type="Button" parent="Panel/Box/EncounterRow"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Immediately defeat the current enemy."
+text = "DEV: Auto Kill"
+
+[node name="FreeMapButton" type="Button" parent="Panel/Box/EncounterRow"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Open the Tundra map and pick any encounter, regardless of route progress."
+text = "Pick Any Encounter"
+
+[node name="HangmanRow" type="HBoxContainer" parent="Panel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TierSelect" type="OptionButton" parent="Panel/Box/HangmanRow"]
+theme = ExtResource("ww_buttons")
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Choose a Hangman difficulty for the next debug reset."
+item_count = 4
+selected = 0
+popup/item_0/text = "Route tier"
+popup/item_0/id = 0
+popup/item_1/text = "Tier 1 · 2–6 letters"
+popup/item_1/id = 1
+popup/item_2/text = "Tier 2 · 7–9 letters"
+popup/item_2/id = 2
+popup/item_3/text = "Tier 3 · 10+ letters"
+popup/item_3/id = 3
+
+[node name="ResetButton" type="Button" parent="Panel/Box/HangmanRow"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Restart Hangman with a new word and full timer. Testing resets award nothing."
+text = "Reset Hangman"
 
 [node name="ForceRow" type="HBoxContainer" parent="Panel/Box"]
 layout_mode = 2

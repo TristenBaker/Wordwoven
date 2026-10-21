@@ -20,6 +20,11 @@
 	"description": "Three magical locks await. Read each riddle and answer with an ADJECTIVE. Two valid guesses per lock; synonyms welcome. Earn 4 gold per opened lock.",
 	"mini_game": "Crack the Locks"
   },
+  "hangman": {
+	"name": "The Missing Word",
+	"description": "Fill the missing letters in order before time runs out. Your hand has every letter you need, along with decoys. Wrong guesses clear the slots, but the clock keeps running. Win several letter items.",
+	"mini_game": "Timed Word Puzzle"
+  },
   "icy_portal": {
 	"name": "Mysterious Portal",
 	"pos": "r",

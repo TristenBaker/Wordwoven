@@ -338,6 +338,8 @@ func ensure_tundra_route_plan() -> void:
 		["combat_7_0", "combat_7_1"],
 		["boss"],
 	]
+	var hangman_column: int = [1, 3, 5].pick_random()
+	route_graph_columns[hangman_column].append("activity_hangman")
 	for column_index: int in route_graph_columns.size():
 		for key: String in route_graph_columns[column_index]:
 			if key.begins_with("activity_"):
@@ -363,6 +365,8 @@ func _build_route_graph() -> void:
 				route_edges[source] = [String(
 					destinations[source_index % destinations.size()]
 				)]
+				if destinations.size() > sources.size():
+					route_edges[source].append(String(destinations[-1]))
 	# The opening room always visibly fans into the complete first decision.
 	route_edges["combat_1_0"] = route_graph_columns[1].duplicate()
 
@@ -421,6 +425,41 @@ func route_key_available(route_key: String) -> bool:
 		return route_key == "combat_1_0"
 	var predecessor: String = route_predecessor_for_stage(route_depth)
 	return route_edges.get(predecessor, []).has(route_key)
+
+
+## Developer-only map jump. Preserve the run's inventory while making the
+## selected room current and replayable, even after a previous completion.
+func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
+	ensure_tundra_route_plan()
+	if depth < 1 or depth > route_graph_columns.size() \
+			or not route_graph_columns[depth - 1].has(route_key):
+		return false
+	route_depth = depth
+	encounter_index = ENCOUNTERS_PER_RUN if route_key == "boss" else \
+		mini(1 + int(floor(float(depth) / 2.0)), ENCOUNTERS_PER_RUN - 1)
+	is_run_active = true
+	completed_encounters.erase(ENCOUNTERS_PER_RUN)
+	pending_route_activity = ""
+	pending_route_key = ""
+	pending_optional_encounter = ""
+	next_enemy_id = ""
+	pending_encounter_modifier.clear()
+	clear_pending_victory()
+	for previous_depth: int in route_chosen_nodes.keys():
+		if previous_depth >= depth:
+			route_chosen_nodes.erase(previous_depth)
+	if depth > 1:
+		for predecessor: String in route_graph_columns[depth - 2]:
+			if route_edges.get(predecessor, []).has(route_key):
+				route_chosen_nodes[depth - 1] = predecessor
+				break
+	if route_key.begins_with("activity_"):
+		var activity_id: String = route_key.trim_prefix("activity_")
+		optional_encounters.erase(activity_id)
+		optional_encounter_progress.erase(activity_id)
+		if activity_id == "ice_fishing":
+			fishing_hole_chosen = -1
+	return true
 
 
 func available_route_enemies(limit: int = 2) -> Array[String]:
@@ -511,7 +550,8 @@ func optional_encounter_available(id: String) -> bool:
 		is_run_active and selected_biome == "tundra"
 		and route_depth > 1 and not is_boss_next()
 		and not completed_encounters.has(ENCOUNTERS_PER_RUN)
-		and event_script.IDS.has(id) and not optional_encounters.has(id)
+		and (event_script.IDS.has(id) or id == "hangman")
+		and not optional_encounters.has(id)
 		and (pending_route_activity.is_empty() or pending_route_activity == id)
 	)
 

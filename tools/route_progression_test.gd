@@ -1,5 +1,7 @@
 extends Node
 
+const HANGMAN_RULES = preload("res://scripts/encounters/hangman_rules.gd")
+
 var failures: int = 0
 
 
@@ -11,11 +13,43 @@ func check(condition: bool, message: String) -> void:
 
 
 func _ready() -> void:
+	check(DebugTools.has_node("Panel/Box/EncounterRow/AutoKillButton"), "F12 owns Dev Auto Kill")
+	check(DebugTools.has_node("Panel/Box/EncounterRow/FreeMapButton"), "F12 exposes free map selection")
+	check(DebugTools.has_node("Panel/Box/HangmanRow/TierSelect"), "F12 exposes Hangman tier selection")
+	check(DebugTools.has_node("Panel/Box/HangmanRow/ResetButton"), "F12 exposes Hangman reset")
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
 	RunState.ensure_tundra_route_plan()
 	check(RunState.route_graph_columns.size() == 8, "Route has seven rooms and a boss")
-	check(RunState.route_graph_columns[1].size() == 2, "Opening fight immediately splits")
+	check(RunState.route_graph_columns[1].size() >= 2, "Opening fight immediately splits")
+	var hangman_depth: int = -1
+	for column_index: int in RunState.route_graph_columns.size():
+		if RunState.route_graph_columns[column_index].has("activity_hangman"):
+			hangman_depth = column_index + 1
+	check(hangman_depth in [2, 4, 6], "The word puzzle can appear at different run depths")
+	if not WordNet.is_ready:
+		var lexicon_loaded: bool = await WordNet.loading_finished
+		check(lexicon_loaded, "Combat word bank loads")
+	for depth: int in [2, 4, 6]:
+		var puzzle: Dictionary = HANGMAN_RULES.new_puzzle(depth)
+		check(not puzzle.is_empty(), "Word puzzle draws from combat lexicon")
+		if puzzle.is_empty():
+			continue
+		var sorted_hand: Array = puzzle.hand.duplicate()
+		sorted_hand.sort()
+		check(puzzle.hand == sorted_hand, "Word puzzle letters are alphabetical")
+		var answer: String = HANGMAN_RULES.expected_letters(puzzle)
+		var validator := WordValidator.new()
+		add_child(validator)
+		var playable: bool = false
+		for pos: String in WordNet.parts_of_speech(String(puzzle.word)):
+			if validator.validate(String(puzzle.word), pos).valid:
+				playable = true
+				break
+		check(playable, "Spelling target is playable in combat")
+		validator.queue_free()
+		for letter: String in answer:
+			check(puzzle.hand.count(letter) >= answer.count(letter), "Word puzzle hand contains every required letter")
 
 	var forced_combat_depths: Array[int] = []
 	for column_index: int in RunState.route_graph_columns.size() - 1:
@@ -57,6 +91,32 @@ func _ready() -> void:
 
 	check(RunState.is_boss_next(), "Route reaches the boss node")
 	check(RunState.encounter_index - 1 >= 4, "At least four combats precede the boss")
+	DebugTools.free_map_select = true
+	var map: Control = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
+	add_child(map)
+	await get_tree().process_frame
+	for button: Button in map.route_map._buttons:
+		check(not button.disabled, "Free map selection exposes every route node")
+	map.queue_free()
+	var puzzle_depth: int = int(RunState.route_activity_stages.hangman)
+	check(RunState.debug_jump_to_route_node("activity_hangman", puzzle_depth), "Debug jump accepts the word puzzle")
+	check(RunState.route_depth == puzzle_depth and RunState.optional_encounter_available("hangman"), "Debug jump makes the selected room playable")
+	check(RunState.begin_optional_encounter("hangman", "activity_hangman"), "Debug puzzle can start")
+	var hangman: Variant = load(ScenePaths.HANGMAN).instantiate()
+	add_child(hangman)
+	var deck_before_reset: int = RunState.deck.size()
+	hangman._finish(true)
+	check(not RunState.optional_encounters.has("hangman") and RunState.deck.size() == deck_before_reset, "Previewed win has no committed rewards")
+	DebugTools.hangman_reset_requested.emit(2)
+	check(not hangman.finished and int(hangman.puzzle.tier) == 2, "F12 reset starts selected Hangman tier")
+	check(hangman.pending_rewards.is_empty() and RunState.deck.size() == deck_before_reset, "Reset discards unclaimed rewards")
+	check(hangman.deadline_ms > Time.get_ticks_msec(), "Hangman reset restarts the timer")
+	DebugTools.hangman_reset_requested.emit(-1)
+	check(int(hangman.puzzle.tier) == HANGMAN_RULES.tier_for_depth(puzzle_depth), "Route tier option restores automatic difficulty")
+	hangman.queue_free()
+	check(RunState.debug_jump_to_route_node("boss", RunState.route_graph_columns.size()), "Debug jump accepts the boss")
+	check(RunState.is_boss_next() and RunState.encounter_index == RunState.ENCOUNTERS_PER_RUN, "Boss jump sets combat stage")
+	DebugTools.free_map_select = false
 
 	var fishing: Control = load(ScenePaths.ICE_FISHING).instantiate()
 	add_child(fishing)

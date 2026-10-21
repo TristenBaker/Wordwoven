@@ -1,7 +1,9 @@
 extends Control
 
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
+const Balance = preload("res://data/balance/tuning.gd")
 const FISHING_ICON: Texture2D = preload("res://assets/Art/Items/dead fish.png")
+const HANGMAN_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
 const ROUTE_ACTIVITY_ORDER: Array[String] = [
 	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
 ]
@@ -46,6 +48,9 @@ func _ready() -> void:
 			title_label.text = "Chart Your Course"
 			subtitle_label.text = \
 					"Each room advances the journey. Your route closes paths behind you."
+		if DebugTools.free_map_select:
+			title_label.text = "Free Encounter Select"
+			subtitle_label.text = "Debug mode: choose any room on the map."
 		route_map.setup_full(RunState.route_depth, _build_tundra_route())
 		return
 	if RunState.is_boss_next():
@@ -105,6 +110,15 @@ func _append_column(
 
 func _combat_node(route_key: String, depth: int) -> Dictionary:
 	var slot: int = int(route_key.get_slice("_", 2))
+	if DebugTools.free_map_select:
+		var enemy_id: String = Balance.TUNDRA_STARTER_ENEMY if depth == 1 else \
+			RunState.route_enemy_order[(depth + slot) % RunState.route_enemy_order.size()]
+		var debug_node: Dictionary = factory.build_spawn_data(enemy_id)
+		debug_node.merge({
+			"type": "enemy", "stage": depth, "slot": slot,
+			"route_key": route_key, "state": "available",
+		}, true)
+		return debug_node
 	var node: Dictionary = {
 		"type": "enemy", "stage": depth, "slot": slot,
 		"route_key": route_key,
@@ -162,8 +176,8 @@ func _combat_history_index(depth: int) -> int:
 
 func _boss_node(depth: int) -> Dictionary:
 	var data: Dictionary = factory.build_spawn_data(factory.boss_id())
-	var available: bool = depth == RunState.route_depth \
-			and RunState.route_key_available("boss")
+	var available: bool = DebugTools.free_map_select or (depth == RunState.route_depth \
+			and RunState.route_key_available("boss"))
 	data.merge({
 		"type": "boss", "stage": depth, "slot": 0,
 		"route_key": "boss", "state": "available" if available else "locked",
@@ -186,7 +200,7 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 		data = TundraEventScript.definition(id)
 		data["subtitle"] = String(data.get("mini_game", "Side Quest"))
 		data["tooltip"] = String(data.get("description", ""))
-		data["preview_texture"] = TundraEventScript.frame_texture(data, 0)
+		data["preview_texture"] = HANGMAN_ICON if id == "hangman" else TundraEventScript.frame_texture(data, 0)
 		data["accent"] = Color("a98de0")
 	var state: String = "locked"
 	var route_key: String = "activity_" + id
@@ -203,7 +217,8 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 		state = "available" if available else "locked"
 	data.merge({
 		"type": "activity", "activity_id": id, "stage": depth,
-		"slot": 0, "route_key": route_key, "state": state,
+		"slot": 0, "route_key": route_key,
+		"state": "available" if DebugTools.free_map_select else state,
 	}, true)
 	return data
 
@@ -214,17 +229,26 @@ func _on_choice_pressed(enemy_id: String) -> void:
 
 
 func _on_route_node_selected(route_key: String) -> void:
+	if DebugTools.free_map_select:
+		var depth: int = RunState.route_graph_columns.size() if route_key == "boss" else \
+			int(route_key.get_slice("_", 1))
+		if not RunState.debug_jump_to_route_node(route_key, depth):
+			return
 	RunState.record_route_choice(RunState.route_depth, route_key)
 
 
 func _on_activity_pressed(id: String) -> void:
 	var route_key: String = "activity_" + id
+	if DebugTools.free_map_select:
+		var depth: int = int(RunState.route_activity_stages.get(id, -1))
+		if not RunState.debug_jump_to_route_node(route_key, depth):
+			return
 	if id == "ice_fishing":
 		if RunState.begin_fishing_route(route_key):
 			get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
 		return
 	if RunState.begin_optional_encounter(id, route_key):
-		get_tree().change_scene_to_file(ScenePaths.TUNDRA_EVENT)
+		get_tree().change_scene_to_file(ScenePaths.HANGMAN if id == "hangman" else ScenePaths.TUNDRA_EVENT)
 
 
 func _route_activity_choices(stage: int) -> Array[Dictionary]:

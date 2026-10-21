@@ -4,11 +4,15 @@ extends CanvasLayer
 ## tester, and carries cheats: gold, healing, skipping to the
 ## tavern, and forcing enemy tags or drawn letters.
 
+signal auto_kill_requested
+signal hangman_reset_requested(tier_override: int)
+
 # Set from the overlay; EnemyFactory applies them at the next spawn.
 var forced_tags: Array[String] = []
 
 # Set from the overlay; DeckManager deals these at the next refill.
 var forced_letters: String = ""
+var free_map_select: bool = false
 
 @onready var panel: PanelContainer = $Panel
 @onready var breakdown_label: RichTextLabel = \
@@ -24,6 +28,10 @@ var forced_letters: String = ""
 @onready var heal_button: Button = $Panel/Box/CheatRow/HealButton
 @onready var tavern_button: Button = \
 		$Panel/Box/CheatRow/TavernButton
+@onready var auto_kill_button: Button = $Panel/Box/EncounterRow/AutoKillButton
+@onready var free_map_button: Button = $Panel/Box/EncounterRow/FreeMapButton
+@onready var hangman_tier_select: OptionButton = $Panel/Box/HangmanRow/TierSelect
+@onready var hangman_reset_button: Button = $Panel/Box/HangmanRow/ResetButton
 @onready var tags_input: LineEdit = $Panel/Box/ForceRow/TagsInput
 @onready var letters_input: LineEdit = \
 		$Panel/Box/ForceRow/LettersInput
@@ -35,6 +43,10 @@ func _ready() -> void:
 	gold_button.pressed.connect(_on_gold_pressed)
 	heal_button.pressed.connect(_on_heal_pressed)
 	tavern_button.pressed.connect(_on_tavern_pressed)
+	auto_kill_button.pressed.connect(_on_auto_kill_pressed)
+	free_map_button.pressed.connect(_on_free_map_pressed)
+	hangman_reset_button.pressed.connect(_on_hangman_reset_pressed)
+	RunState.run_started.connect(func(): free_map_select = false)
 	tags_input.text_changed.connect(_on_tags_changed)
 	letters_input.text_changed.connect(_on_letters_changed)
 	EventBus.word_resolved.connect(_on_word_resolved)
@@ -43,6 +55,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_overlay_toggle"):
 		panel.visible = not panel.visible
+		if panel.visible:
+			_refresh_encounter_buttons()
 		EventBus.emit_debug_toggled(panel.visible)
 
 
@@ -120,6 +134,39 @@ func _on_tavern_pressed() -> void:
 	if not RunState.is_run_active:
 		RunState.start_new_run()
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)
+
+
+func _refresh_encounter_buttons() -> void:
+	auto_kill_button.disabled = get_tree().current_scene == null or \
+		get_tree().current_scene.scene_file_path != ScenePaths.COMBAT
+	var in_hangman: bool = get_tree().current_scene != null and \
+		get_tree().current_scene.scene_file_path == ScenePaths.HANGMAN
+	hangman_tier_select.disabled = not in_hangman or not WordNet.is_ready
+	hangman_reset_button.disabled = not in_hangman or not WordNet.is_ready
+
+
+func _on_auto_kill_pressed() -> void:
+	auto_kill_requested.emit()
+	panel.hide()
+	EventBus.emit_debug_toggled(false)
+
+
+func _on_free_map_pressed() -> void:
+	if not RunState.is_run_active:
+		RunState.start_new_run()
+	free_map_select = true
+	RunState.selected_biome = "tundra"
+	RunState.ensure_tundra_route_plan()
+	panel.hide()
+	EventBus.emit_debug_toggled(false)
+	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+
+
+func _on_hangman_reset_pressed() -> void:
+	var tier_override: int = hangman_tier_select.selected - 1
+	hangman_reset_requested.emit(tier_override)
+	panel.hide()
+	EventBus.emit_debug_toggled(false)
 
 
 func _on_tags_changed(new_text: String) -> void:

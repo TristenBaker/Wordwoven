@@ -80,7 +80,6 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 		$Layout/InputArea/WordComposerRow/OutputCounters/Gold/Value
 @onready var damage_popup: Label = $Layout/DamagePopup
 @onready var pause_menu: PauseMenu = $PauseMenu
-@onready var dev_kill_button: Button = $Layout/DevKillButton
 @onready var feedback_label: Label = \
 		$Layout/FeedbackBanner/Content/FeedbackLabel
 @onready var prompt_label: Label = $Layout/FeedbackBanner/Content/PromptLabel
@@ -113,7 +112,7 @@ func _ready() -> void:
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
-	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
+	DebugTools.auto_kill_requested.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
@@ -214,7 +213,11 @@ func _pick_spawn_data() -> Dictionary:
 	RunState.next_enemy_id = ""
 	if RunState.selected_biome == "tundra":
 		var allowed: Array[String] = factory.ids_for_stage(RunState.encounter_index)
-		if not allowed.has(enemy_id):
+		var debug_pick: bool = DebugTools.free_map_select and (
+			enemy_id == factory.boss_id() or enemy_id == Balance.TUNDRA_STARTER_ENEMY
+			or Balance.ENEMY_FACTORY_TUNDRA_REGULARS.has(enemy_id)
+		)
+		if not allowed.has(enemy_id) and not debug_pick:
 			enemy_id = allowed.pick_random()
 	if enemy_id.is_empty():
 		if RunState.is_boss_next():

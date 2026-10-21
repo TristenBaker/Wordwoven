@@ -62,6 +62,7 @@ var _data_files: Dictionary = {}
 # A checkout whose line endings differ from the source shifts those positions,
 # so this lazily maps logical WordNet offsets to the local file positions.
 var _data_positions: Dictionary = {}
+var _combat_words_by_length: Dictionary = {}
 
 
 ## Loads the database from the given dict folder, preferring the
@@ -76,8 +77,87 @@ func load_from_dict(dict_path: String) -> bool:
 	# endings from WordNet's original byte offsets. Prepare them while the
 	# autoload is still on its background thread, never on a player's keypress.
 	_prepare_data_offsets()
+	_build_combat_word_bank()
 	is_loaded = true
 	return true
+
+
+## A random single-word spelling prompt from the same lexical forms that
+## WordValidator accepts in at least one combat part-of-speech round.
+## max_length <= 0 means there is no upper length limit.
+func random_combat_word(min_length: int, max_length: int = 0) -> String:
+	var total: int = 0
+	for length: int in _combat_words_by_length:
+		if length >= min_length and (max_length <= 0 or length <= max_length):
+			var bucket: Array = _combat_words_by_length[length]
+			total += bucket.size()
+	if total == 0:
+		return ""
+	var choice: int = randi_range(0, total - 1)
+	for length: int in _combat_words_by_length:
+		if length < min_length or (max_length > 0 and length > max_length):
+			continue
+		var words: Array = _combat_words_by_length[length]
+		if choice < words.size():
+			return String(words[choice])
+		choice -= words.size()
+	return ""
+
+
+func combat_word_count() -> int:
+	var total: int = 0
+	for words: Array in _combat_words_by_length.values():
+		total += words.size()
+	return total
+
+
+func combat_bank_has(word: String) -> bool:
+	var bucket: Array = _combat_words_by_length.get(word.length(), [])
+	return bucket.has(word.to_lower())
+
+
+func _build_combat_word_bank() -> void:
+	_combat_words_by_length.clear()
+	var seen: Dictionary = {}
+	for pos: String in POS_LIST:
+		var index: Dictionary = _indexes[pos]
+		for lemma: String in index:
+			_add_combat_word(lemma, seen)
+			if pos == "n":
+				_add_combat_word(lemma + "s", seen)
+				_add_combat_word(lemma + "es", seen)
+				if lemma.ends_with("y"):
+					_add_combat_word(lemma.left(lemma.length() - 1) + "ies", seen)
+			elif pos == "a":
+				_add_combat_word(lemma + "er", seen)
+				_add_combat_word(lemma + "est", seen)
+				if lemma.ends_with("e"):
+					_add_combat_word(lemma + "r", seen)
+					_add_combat_word(lemma + "st", seen)
+	for pos: String in ["n", "a"]:
+		var exceptions: Dictionary = _exceptions[pos]
+		for irregular: String in exceptions:
+			_add_combat_word(irregular, seen)
+
+
+func _add_combat_word(word: String, seen: Dictionary) -> void:
+	if word.length() < 2 or seen.has(word):
+		return
+	for character: String in word:
+		if character < "a" or character > "z":
+			return
+	var playable: bool = false
+	for pos: String in parts_of_speech(word):
+		if pos != "v" or is_base_form(word, "v"):
+			playable = true
+			break
+	if not playable:
+		return
+	seen[word] = true
+	if not _combat_words_by_length.has(word.length()):
+		_combat_words_by_length[word.length()] = []
+	var bucket: Array = _combat_words_by_length[word.length()]
+	bucket.append(word)
 
 
 ## True when the word (or one of its lemmas) appears in any index.

@@ -87,7 +87,7 @@ func _run() -> void:
 			await get_tree().process_frame
 			await get_tree().process_frame
 			check(panel.size.x == 264 and panel.size.y >= panel.get_combined_minimum_size().y, id + " status fits at " + str(resolution))
-			check(is_equal_approx(panel.get_global_rect().end.y + 8, combat.dev_kill_button.get_global_rect().position.y), id + " existing panel placement")
+			check(not combat.has_node("Layout/DevKillButton"), id + " debug kill control moved to F12")
 			check(not panel.get_global_rect().intersects(combat.get_node("Layout/StatusArea").get_global_rect()), id + " status does not overlap existing UI")
 		get_tree().root.size = original_size
 		combat.set_process(false) # Freeze quick-cast time while asserting exact preview equality.

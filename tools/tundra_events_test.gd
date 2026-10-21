@@ -202,7 +202,7 @@ func _run_legacy() -> void:
 		check(combat._encounter_modifier.size() > 0 and combat.timer_label.text.contains("Quick-cast"), "Modifier and quick-cast preserved")
 		check(combat.cold.enabled and combat.cold.frozen.is_empty(), "Existing cold reset preserved")
 		check(id == "frostfang_wolf" if stage == 1 else (id == "frost_wyrm" if stage == 6 else id in EnemyFactory.TUNDRA_REGULARS), "Required Tundra monster: %d" % stage)
-		combat.dev_kill_button.pressed.emit()
+		DebugTools.auto_kill_button.pressed.emit()
 		var completion = await _wait(ScenePaths.FIGHT_COMPLETION)
 		completion.continue_button.pressed.emit()
 		var powers = await _wait(ScenePaths.POWER_SELECT)
@@ -281,7 +281,10 @@ func _check_layouts() -> void:
 		map = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 		viewport.add_child(map)
 		await _frames()
-		check(map.route_map._buttons.size() == 11, "The entire route remains visible at the boss")
+		var planned_nodes: int = 0
+		for column: Array in RunState.route_graph_columns:
+			planned_nodes += column.size()
+		check(map.route_map._buttons.size() == planned_nodes, "The entire route remains visible at the boss")
 		for card: Button in map.route_map._buttons:
 			check(bounds.encloses(card.get_global_rect()), "Boss map fits " + str(dimensions))
 		map.queue_free()

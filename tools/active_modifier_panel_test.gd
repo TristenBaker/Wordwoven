@@ -32,7 +32,7 @@ func _run() -> void:
 		_check(panel.size.x >= panel.get_combined_minimum_size().x and panel.size.y >= panel.get_combined_minimum_size().y, "Compact text fits: " + modifier.id)
 	panel.show_modifier("", {}, {}, {}, 1.0)
 	await get_tree().process_frame
-	_check(panel.size == panel.get_combined_minimum_size(), "Panel automatically shrinks to content")
+	_check(panel.size.x == 264.0 and panel.size.y == panel.get_combined_minimum_size().y, "Panel keeps its status column width and shrinks to content height")
 	_check(panel.name_label.text == "No Active Modifier" and not panel.effect_label.visible, "Empty encounter clears stale modifier")
 	panel.queue_free()
 	print("Active modifier panel: %d failures" % failures)
