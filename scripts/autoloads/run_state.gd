@@ -451,27 +451,27 @@ func ensure_tundra_route_plan() -> void:
 	]
 	activity_ids.shuffle()
 	# Route depth is separate from fight count. Combat-only layers 1, 3, 5,
-	# and 7 guarantee four fights, while an activity consumes its own room and
-	# advances the expedition instead of returning to a battle at the same depth.
+	# and 7 guarantee four fights. Each depth-three branch leads to its own copy
+	# of the early lore room, so the story beat does not collapse the route.
 	route_graph_columns = [
 		["combat_1_0"],
 		["activity_" + activity_ids[0], "activity_" + activity_ids[1]],
 		["combat_3_0", "combat_3_1"],
-		["combat_4_0", "activity_" + activity_ids[2]],
+		["activity_lore_room_0", "activity_lore_room_1"],
 		["combat_5_0", "combat_5_1"],
-		["activity_lore_room"],
+		["activity_" + activity_ids[2]],
 		["combat_7_0", "combat_7_1"],
 		["boss"],
 	]
-	# Keep the lore room as the sole required node at depth six. Optional
-	# activities may vary at the earlier split columns without creating a route
-	# that bypasses or dead-ends after the story beat.
-	var hangman_column: int = [1, 3].pick_random()
+	# Hangman can join either the opening split or the later activity split,
+	# keeping repeat runs varied without crowding the two lore branches.
+	var hangman_column: int = [1, 5].pick_random()
 	route_graph_columns[hangman_column].append("activity_hangman")
 	for column_index: int in route_graph_columns.size():
 		for key: String in route_graph_columns[column_index]:
 			if key.begins_with("activity_"):
-				route_activity_stages[key.trim_prefix("activity_")] = column_index + 1
+				var route_id: String = key.trim_prefix("activity_")
+				route_activity_stages[route_id] = column_index + 1
 	_build_route_graph()
 	var signature: String = "%s|%s" % [str(route_graph_columns), str(route_enemy_order)]
 	if signature == _last_route_signature:
@@ -515,8 +515,15 @@ func required_route_activity_at(stage: int) -> String:
 	var column: Array = route_graph_columns[stage - 1] if stage > 0 \
 			and stage <= route_graph_columns.size() else []
 	if column.size() == 1 and String(column[0]).begins_with("activity_"):
-		return String(column[0]).trim_prefix("activity_")
+		return route_activity_id(String(column[0]))
 	return ""
+
+
+func route_activity_id(route_key_or_id: String) -> String:
+	var id: String = route_key_or_id.trim_prefix("activity_")
+	if id.begins_with("lore_room_"):
+		return "lore_room"
+	return id
 
 
 func route_activity_completed(id: String) -> bool:
@@ -609,7 +616,7 @@ func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
 				route_chosen_nodes[depth - 1] = predecessor
 				break
 	if route_key.begins_with("activity_"):
-		var activity_id: String = route_key.trim_prefix("activity_")
+		var activity_id: String = route_activity_id(route_key)
 		optional_encounters.erase(activity_id)
 		optional_encounter_progress.erase(activity_id)
 		if activity_id == "ice_fishing":

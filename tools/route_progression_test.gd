@@ -26,15 +26,22 @@ func _ready() -> void:
 	for column_index: int in RunState.route_graph_columns.size():
 		if RunState.route_graph_columns[column_index].has("activity_hangman"):
 			hangman_depth = column_index + 1
-	check(hangman_depth in [2, 4], "The word puzzle can appear at different split depths")
+	check(hangman_depth in [2, 6], "The word puzzle can appear at different split depths")
 	check(
-		RunState.route_graph_columns[5] == ["activity_lore_room"],
-		"The required lore room remains the only node at its depth"
+		RunState.route_graph_columns[3] == [
+			"activity_lore_room_0", "activity_lore_room_1",
+		],
+		"Each early branch gets its own copy of the lore room"
+	)
+	check(
+		RunState.route_edges["combat_3_0"] == ["activity_lore_room_0"]
+		and RunState.route_edges["combat_3_1"] == ["activity_lore_room_1"],
+		"The two lore copies preserve the player's chosen path"
 	)
 	if not WordNet.is_ready:
 		var lexicon_loaded: bool = await WordNet.loading_finished
 		check(lexicon_loaded, "Combat word bank loads")
-	for depth: int in [2, 4]:
+	for depth: int in [2, 6]:
 		var puzzle: Dictionary = HANGMAN_RULES.new_puzzle(depth)
 		check(not puzzle.is_empty(), "Word puzzle draws from combat lexicon")
 		if puzzle.is_empty():
@@ -61,12 +68,12 @@ func _ready() -> void:
 		"The final regular room offers repeat fights after the unique roster is exhausted"
 	)
 	RunState.defeated_enemy_ids.clear()
-	RunState.route_depth = 7
-	RunState.route_chosen_nodes[6] = "activity_lore_room"
+	RunState.route_depth = 5
+	RunState.route_chosen_nodes[4] = "activity_lore_room_0"
 	check(
-		RunState.route_key_available("combat_7_0")
-		and RunState.route_key_available("combat_7_1"),
-		"Both fights after the lore room remain selectable"
+		RunState.route_key_available("combat_5_0")
+		and not RunState.route_key_available("combat_5_1"),
+		"A lore room continues along its branch instead of merging every path"
 	)
 	RunState.route_depth = 1
 	RunState.route_chosen_nodes.clear()
@@ -210,7 +217,7 @@ func _ready() -> void:
 
 
 func _resolve_activity(route_key: String) -> void:
-	var activity_id: String = route_key.trim_prefix("activity_")
+	var activity_id: String = RunState.route_activity_id(route_key)
 	RunState.pending_route_activity = activity_id
 	RunState.pending_route_key = route_key
 	if activity_id == "ice_fishing":

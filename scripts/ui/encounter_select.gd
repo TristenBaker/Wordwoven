@@ -84,9 +84,7 @@ func _build_tundra_route() -> Array[Dictionary]:
 			if route_key == "boss":
 				column_nodes.append(_boss_node(depth))
 			elif route_key.begins_with("activity_"):
-				column_nodes.append(_activity_node(
-					route_key.trim_prefix("activity_"), depth
-				))
+				column_nodes.append(_activity_node(route_key, depth))
 			else:
 				column_nodes.append(_combat_node(route_key, depth))
 		_append_column(nodes, column_nodes, depth, "")
@@ -187,7 +185,9 @@ func _boss_node(depth: int) -> Dictionary:
 	return data
 
 
-func _activity_node(id: String, depth: int) -> Dictionary:
+func _activity_node(route_key: String, depth: int) -> Dictionary:
+	var route_id: String = route_key.trim_prefix("activity_")
+	var id: String = RunState.route_activity_id(route_id)
 	var data: Dictionary
 	var completed: bool = RunState.route_activity_completed(id)
 	if id == "ice_fishing":
@@ -213,7 +213,6 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 		data["preview_texture"] = HANGMAN_ICON if id == "hangman" else TundraEventScript.frame_texture(data, 0)
 		data["accent"] = Color("a98de0")
 	var state: String = "locked"
-	var route_key: String = "activity_" + id
 	var chosen: bool = String(RunState.route_chosen_nodes.get(depth, "")) == route_key
 	if completed and chosen:
 		state = "completed"
@@ -231,7 +230,7 @@ func _activity_node(id: String, depth: int) -> Dictionary:
 			available = false
 		state = "available" if available else "locked"
 	data.merge({
-		"type": "activity", "activity_id": id, "stage": depth,
+		"type": "activity", "activity_id": route_id, "stage": depth,
 		"slot": 0, "route_key": route_key,
 		"state": "available" if DebugTools.free_map_select else state,
 	}, true)
@@ -252,10 +251,11 @@ func _on_route_node_selected(route_key: String) -> void:
 	RunState.record_route_choice(RunState.route_depth, route_key)
 
 
-func _on_activity_pressed(id: String) -> void:
-	var route_key: String = "activity_" + id
+func _on_activity_pressed(route_id: String) -> void:
+	var route_key: String = "activity_" + route_id
+	var id: String = RunState.route_activity_id(route_id)
 	if DebugTools.free_map_select:
-		var depth: int = int(RunState.route_activity_stages.get(id, -1))
+		var depth: int = int(RunState.route_activity_stages.get(route_id, -1))
 		if not RunState.debug_jump_to_route_node(route_key, depth):
 			return
 	if id == "ice_fishing":

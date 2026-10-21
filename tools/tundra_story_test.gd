@@ -18,8 +18,10 @@ func _ready() -> void:
 	RunState.ensure_tundra_route_plan()
 
 	check(
-		RunState.route_graph_columns[5] == ["activity_lore_room"],
-		"The lore room is a required route room, not a same-tier detour"
+		RunState.route_graph_columns[3] == [
+			"activity_lore_room_0", "activity_lore_room_1",
+		],
+		"The lore room appears early on both established branches"
 	)
 
 	var intro: Control = load(ScenePaths.TUNDRA_INTRO).instantiate()
@@ -34,7 +36,7 @@ func _ready() -> void:
 	intro.queue_free()
 
 	RunState.pending_route_activity = "lore_room"
-	RunState.pending_route_key = "activity_lore_room"
+	RunState.pending_route_key = "activity_lore_room_0"
 	var lore: Control = load(ScenePaths.LORE_ROOM).instantiate()
 	add_child(lore)
 	await get_tree().process_frame
