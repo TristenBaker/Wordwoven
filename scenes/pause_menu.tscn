@@ -1,4 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/progress_menu.tscn" id="sprint4_menu"]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
 [ext_resource type="PackedScene" path="res://scenes/settings_screen.tscn" id="2_settings"]
@@ -64,6 +66,15 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 21
 text = "Resume"
 
+[node name="AchievementsButton" type="Button" parent="Center/MenuPanel/Menu"]
+custom_minimum_size = Vector2(320, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 22
+text = "Achievements"
+
 [node name="SettingsButton" type="Button" parent="Center/MenuPanel/Menu"]
 custom_minimum_size = Vector2(0, 46)
 theme = ExtResource("ww_buttons")
@@ -89,3 +100,8 @@ theme_override_font_sizes/font_size = 21
 text = "Quit to Desktop"
 
 [node name="SettingsScreen" parent="." instance=ExtResource("2_settings")]
+
+[node name="WordHistory" parent="." instance=ExtResource("sprint4_menu")]
+content = 1
+
+[node name="AchievementsMenu" parent="." instance=ExtResource("sprint4_menu")]

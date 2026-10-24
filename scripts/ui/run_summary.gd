@@ -10,6 +10,8 @@ extends Control
 
 
 func _ready() -> void:
+	PlayerStats.finalize_run(victory)
+	$CenterBox/Menu/PlayerStatistics/Scroll/Statistics.refresh()
 	Telemetry.end_run("won" if victory else "lost")
 	RunState.is_run_active = false
 	menu_button.pressed.connect(_on_menu_pressed)
@@ -21,19 +23,7 @@ func _ready() -> void:
 
 
 func _build_tally() -> String:
-	var words_played: int = RunState.word_history.size()
-	var best_word: String = ""
-	var best_damage: float = 0.0
-	for entry: Dictionary in RunState.word_history:
-		if entry["damage"] > best_damage:
-			best_damage = entry["damage"]
-			best_word = entry["word"]
-	var tally: String = "Words spoken: %d" % words_played
-	if not best_word.is_empty():
-		tally += "\nMightiest word: %s (%.0f damage)" % [
-			best_word.to_upper(), best_damage
-		]
-	tally += "\nGold amassed: %d" % RunState.gold
+	var tally: String = "Gold amassed: %d" % RunState.gold
 	if RunState.has_key_item("ember_word"):
 		tally += "\nKey item recovered: THE EMBER WORD"
 	return tally

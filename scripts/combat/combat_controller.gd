@@ -114,6 +114,7 @@ func _ready() -> void:
 	pause_menu.resumed.connect(_restore_composer_after_pause)
 	DebugTools.auto_kill_requested.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
+	$Layout/WordHistoryButton.pressed.connect(_open_word_history)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
 	heat_meter = PanelContainer.new()
@@ -258,7 +259,7 @@ func _on_text_submitted(_text: String) -> void:
 
 
 func _on_submit() -> void:
-	if _state != State.PLAYER_INPUT:
+	if _state != State.PLAYER_INPUT or get_tree().paused:
 		return
 	effectiveness_indicator.clear()
 	var word: String = word_input.text.strip_edges().to_lower()
@@ -286,6 +287,7 @@ func _on_submit() -> void:
 
 
 func _on_dev_kill_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	if _state in [State.WON, State.LOST] or enemy == null \
 			or not enemy.is_alive():
 		return
@@ -313,7 +315,13 @@ func _resolve_word(word: String) -> void:
 	validator.mark_played(word)
 	RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
-		required_pos
+		required_pos, {
+			"effectiveness_label": (
+				WordEffectivenessFormat.classification(result)
+			),
+			"effectiveness": result.get("effectiveness", 0.0),
+			"semantic_multiplier": result.get("semantic_multiplier", 0.0),
+		}
 	)
 	_apply_elemental_effects(result)
 	EventBus.emit_word_resolved(result)
@@ -771,3 +779,8 @@ func _log(message: String) -> void:
 
 func _update_modifier_status(word: String = "") -> void:
 	$Layout/ActiveModifierPanel.show_status(_encounter_modifier, _modifier_runtime.status(word))
+
+
+func _open_word_history() -> void:
+	if _state == State.PLAYER_INPUT:
+		pause_menu.open_history($PauseMenu/WordHistory)

@@ -410,3 +410,18 @@ color = Color(0, 0, 0, 0)
 
 [node name="EquipmentOverlay" parent="." unique_id=3890068 instance=ExtResource("12_equipment")]
 layout_mode = 1
+
+[node name="WordHistoryButton" type="Button" parent="Layout"]
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -286.0
+offset_top = 14.0
+offset_right = -142.0
+offset_bottom = 50.0
+grow_horizontal = 0
+focus_mode = 0
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 16
+text = "Word History"

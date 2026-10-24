@@ -486,6 +486,7 @@ func route_key_available(route_key: String) -> bool:
 ## Developer-only map jump. Preserve the run's inventory while making the
 ## selected room current and replayable, even after a previous completion.
 func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
+	PlayerStats.mark_debug_assisted()
 	ensure_tundra_route_plan()
 	if depth < 1 or depth > route_graph_columns.size() \
 			or not route_graph_columns[depth - 1].has(route_key):
@@ -574,15 +575,23 @@ func record_word(
 	enemy_name: String,
 	tags: Array[String],
 	damage: float,
-	pos: String = ""
+	pos: String = "",
+	metadata: Dictionary = {}
 ) -> void:
 	word_history.append({
 		"word": word,
 		"enemy": enemy_name,
-		"tags": tags,
+		"tags": tags.duplicate(),
 		"damage": damage,
 		"pos": pos,
 		"encounter": encounter_index,
+		"effectiveness_label": String(
+			metadata.get("effectiveness_label", "Unavailable")
+		),
+		"effectiveness": float(metadata.get("effectiveness", 0.0)),
+		"semantic_multiplier": float(
+			metadata.get("semantic_multiplier", 0.0)
+		),
 	})
 
 

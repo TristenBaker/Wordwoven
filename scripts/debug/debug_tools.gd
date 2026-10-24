@@ -123,16 +123,19 @@ func _on_score_pressed() -> void:
 # --- Cheats --------------------------------------------------------
 
 func _on_gold_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	RunState.add_gold(100)
 
 
 func _on_heal_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	RunState.heal_player(RunState.player_max_health)
 
 
 func _on_tavern_pressed() -> void:
 	if not RunState.is_run_active:
 		RunState.start_new_run()
+	PlayerStats.mark_debug_assisted()
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)
 
 
@@ -146,6 +149,7 @@ func _refresh_encounter_buttons() -> void:
 
 
 func _on_auto_kill_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	auto_kill_requested.emit()
 	panel.hide()
 	EventBus.emit_debug_toggled(false)
@@ -154,6 +158,7 @@ func _on_auto_kill_pressed() -> void:
 func _on_free_map_pressed() -> void:
 	if not RunState.is_run_active:
 		RunState.start_new_run()
+	PlayerStats.mark_debug_assisted()
 	free_map_select = true
 	RunState.selected_biome = "tundra"
 	RunState.ensure_tundra_route_plan()
@@ -163,6 +168,7 @@ func _on_free_map_pressed() -> void:
 
 
 func _on_hangman_reset_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	var tier_override: int = hangman_tier_select.selected - 1
 	hangman_reset_requested.emit(tier_override)
 	panel.hide()
@@ -170,6 +176,7 @@ func _on_hangman_reset_pressed() -> void:
 
 
 func _on_tags_changed(new_text: String) -> void:
+	PlayerStats.mark_debug_assisted()
 	forced_tags = []
 	for tag: String in new_text.split(",", false):
 		var cleaned: String = tag.strip_edges().to_lower()
@@ -178,4 +185,5 @@ func _on_tags_changed(new_text: String) -> void:
 
 
 func _on_letters_changed(new_text: String) -> void:
+	PlayerStats.mark_debug_assisted()
 	forced_letters = new_text.strip_edges().to_lower()
