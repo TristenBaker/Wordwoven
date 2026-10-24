@@ -11,6 +11,9 @@ extends Control
 
 func _ready() -> void:
 	Telemetry.end_run("abandoned")
+	PlayerStats.finalize_run()
+	$CenterBox/Menu/AchievementsButton.pressed.connect(_show_achievements)
+	$AchievementsMenu.closed.connect(_on_settings_closed)
 	start_button.disabled = true
 	start_button.pressed.connect(_on_start_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
@@ -42,7 +45,20 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	$CenterBox.show()
+	start_button.call_deferred("grab_focus")
 
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+
+func _show_achievements() -> void:
+	$CenterBox.hide()
+	$AchievementsMenu.open()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo \
+			and event.keycode == KEY_ESCAPE and $AchievementsMenu.visible:
+		$AchievementsMenu.close()
+		get_viewport().set_input_as_handled()

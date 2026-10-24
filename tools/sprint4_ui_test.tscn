@@ -1,0 +1,4 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://tools/sprint4_ui_test.gd" id="1"]
+[node name="Sprint4UITest" type="Node"]
+script = ExtResource("1")

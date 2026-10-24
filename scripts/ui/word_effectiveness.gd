@@ -1,8 +1,8 @@
 extends PanelContainer
 ## Displays the calculator's existing counter result; never calculates damage.
 
-const GOLD := Color("ffe2a0")
-const MUTED := Color("aaa995")
+const GOLD: Color = Color("ffe2a0")
+const MUTED: Color = Color("aaa995")
 var _fade: Tween
 var _showing_result: bool = false
 @onready var label: Label = $Label
@@ -48,15 +48,13 @@ func _clear_result() -> void:
 
 
 func _display(result: Dictionary) -> void:
-	var counter: Dictionary = result.get("counter", {})
 	var multiplier: float = float(result.get("semantic_multiplier", 0.0))
-	# Preserve the original combat feedback qualification and thresholds.
-	var effective: bool = counter.get("strategy", "none") in [
-		"wordnet antonym", "thematic counter", "counter synonym",
-	] and float(counter.get("score", 0.0)) > 0.0 and not String(counter.get("tag", "")).is_empty() and multiplier > 1.0
-	label.text = ("SUPER EFFECTIVE!" if multiplier >= 2.0 else "EFFECTIVE!") if effective else "THE WORD FINDS NO WEAKNESS"
+	label.text = WordEffectivenessFormat.classification(result)
+	var effective: bool = label.text != "THE WORD FINDS NO WEAKNESS"
 	label.add_theme_color_override("font_color", GOLD if effective else MUTED)
-	tooltip_text = "Effectiveness %.2f • Semantic multiplier ×%.2f" % [float(result.get("effectiveness", 0.0)), multiplier]
+	tooltip_text = "Effectiveness %.2f • Semantic multiplier ×%.2f" % [
+		float(result.get("effectiveness", 0.0)), multiplier,
+	]
 	modulate.a = 1.0
 
 
