@@ -20,6 +20,8 @@ enum State {
 
 const LETTER_TILE_SCENE: PackedScene = \
 		preload("res://scenes/combat/letter_tile.tscn")
+const STAR_COIN: Texture2D = preload("res://assets/Art/Items/starcoin.png")
+const STAR_COIN_DING: AudioStream = preload("res://assets/Audio/party/coin.wav")
 
 # Pause before and after the enemy's retaliation, in seconds.
 const ENEMY_TURN_DELAY: float = 0.7
@@ -39,6 +41,14 @@ var backgrounds: Array[Texture2D] = [
 	preload("res://art/backgrounds/sky.png"),
 	preload("res://art/backgrounds/tundra.png"),
 	preload("res://art/backgrounds/volcano.png")
+]
+var endless_biome_backgrounds: Array[Texture2D] = [
+	preload("res://art/backgrounds/Tundra Biome/T1.png"),
+	preload("res://art/backgrounds/Tundra Biome/T2.png"),
+	preload("res://art/backgrounds/Tundra Biome/T3.png"),
+	preload("res://art/backgrounds/Tundra Biome/T4.png"),
+	preload("res://art/backgrounds/Tundra Biome/T5.png"),
+	preload("res://art/backgrounds/Tundra Biome/T6.png"),
 ]
 var required_pos: String = "n"
 var _state: State = State.PLAYER_INPUT
@@ -100,6 +110,7 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 @onready var timer_label: Label = $Layout/StatusArea/TimerLabel
 @onready var gold_label: Label = $Layout/StatusArea/GoldLabel
 @onready var stage_label: Label = $Layout/StatusArea/StageLabel
+@onready var endless_route: HBoxContainer = $Layout/EndlessRoute
 
 
 func _ready() -> void:
@@ -117,6 +128,7 @@ func _ready() -> void:
 	$Layout/WordHistoryButton.pressed.connect(_open_word_history)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
+	_move_enemy_info_beneath_endless_route()
 	heat_meter = PanelContainer.new()
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
 	$Layout/InputArea.add_child(heat_meter)
@@ -131,6 +143,19 @@ func _ready() -> void:
 	effectiveness_indicator.minimum_size_changed.connect(_queue_feedback_layout)
 	_start_encounter()
 	_queue_feedback_layout()
+
+
+func _move_enemy_info_beneath_endless_route() -> void:
+	if not RunState.is_endless():
+		return
+	var info: VBoxContainer = enemy.info_box
+	info.reparent($Layout)
+	info.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	info.offset_left = -170.0
+	info.offset_top = 72.0
+	info.offset_right = 170.0
+	info.offset_bottom = 200.0
+	info.z_index = 2
 
 
 func _exit_tree() -> void:
@@ -202,7 +227,13 @@ func _start_encounter() -> void:
 # Adding function for randomizing backgrounds
 func _randomize_background() -> void:
 	# Keep the existing random draw so other randomized systems are unaffected.
-	background.texture = backgrounds.pick_random()
+	if RunState.is_endless():
+		var endless_pool: Array[Texture2D] = []
+		endless_pool.append_array(backgrounds)
+		endless_pool.append_array(endless_biome_backgrounds)
+		background.texture = endless_pool.pick_random()
+	else:
+		background.texture = backgrounds.pick_random()
 	if RunState.selected_biome == "tundra":
 		background.texture = load(
 			"res://art/backgrounds/Tundra Biome/T%d.png"
@@ -313,7 +344,7 @@ func _resolve_word(word: String) -> void:
 		_log("GREEDY: +1 cast gold (%d/5). The monster charges a consultation fee." % _modifier_runtime.gold_gained)
 	_update_modifier_status()
 	validator.mark_played(word)
-	RunState.record_word(
+	var earned_star_coin := RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
 		required_pos, {
 			"effectiveness_label": (
@@ -345,6 +376,8 @@ func _resolve_word(word: String) -> void:
 	if _state != State.RESOLVING:
 		return
 	_show_damage_popup(result["damage"])
+	if earned_star_coin:
+		_show_star_coin_reward(word)
 	enemy.take_damage(result["damage"])
 	if enemy.is_alive():
 		_enemy_turn()
@@ -453,7 +486,9 @@ func _on_enemy_died() -> void:
 	word_input.editable = false
 	submit_button.disabled = true
 	await _play_victory_transition()
-	get_tree().change_scene_to_file(ScenePaths.FIGHT_COMPLETION)
+	get_tree().change_scene_to_file(
+		ScenePaths.POWER_SELECT if RunState.is_endless() else ScenePaths.FIGHT_COMPLETION
+	)
 
 
 # Every party action finishes before the enemy dissolves, then the
@@ -664,6 +699,53 @@ func _show_damage_popup(amount: float) -> void:
 	_damage_popup_tween.chain().tween_callback(damage_popup.hide)
 
 
+func _show_star_coin_reward(word: String) -> void:
+	var effect := Control.new()
+	effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	effect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	effect.z_index = 120
+	add_child(effect)
+	var start := get_viewport_rect().size * Vector2(0.5, 0.38)
+	var coin := TextureRect.new()
+	coin.texture = STAR_COIN
+	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	coin.size = Vector2(76, 76)
+	coin.global_position = start - coin.size * 0.5
+	coin.pivot_offset = coin.size * 0.5
+	coin.scale = Vector2(0.35, 0.35)
+	coin.modulate = Color(1, 1, 1, 0)
+	effect.add_child(coin)
+	var notice := Label.new()
+	notice.text = "NEW WORD!  +1 STARCOIN\n%s" % word.to_upper()
+	notice.position = start + Vector2(-180, 46)
+	notice.size = Vector2(360, 62)
+	notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	notice.add_theme_font_override("font", preload("res://assets/Fonts/Junicode.ttf"))
+	notice.add_theme_font_size_override("font_size", 21)
+	notice.add_theme_color_override("font_color", Color("d5f8ff"))
+	notice.add_theme_color_override("font_outline_color", Color("251144"))
+	notice.add_theme_constant_override("outline_size", 5)
+	notice.modulate.a = 0.0
+	effect.add_child(notice)
+	var ding := AudioStreamPlayer.new()
+	ding.stream = STAR_COIN_DING
+	ding.bus = &"SFX"
+	effect.add_child(ding)
+	ding.play()
+	var target: Vector2 = $EquipmentOverlay/EquipButton.get_global_rect().get_center() \
+		- coin.size * 0.5
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(coin, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(coin, "modulate:a", 1.0, 0.14)
+	tween.tween_property(notice, "modulate:a", 1.0, 0.14)
+	tween.chain().tween_property(coin, "global_position", target, 0.58).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(coin, "scale", Vector2(0.28, 0.28), 0.58)
+	tween.parallel().tween_property(coin, "modulate:a", 0.0, 0.58)
+	tween.parallel().tween_property(notice, "modulate:a", 0.0, 0.34)
+	tween.chain().tween_callback(effect.queue_free)
+
+
 func _rebuild_hand_tiles() -> void:
 	for child: Node in hand_box.get_children():
 		hand_box.remove_child(child)
@@ -709,12 +791,64 @@ func _refresh_status() -> void:
 		RunState.player_health, RunState.player_max_health
 	]
 	gold_label.text = "Gold: %d" % RunState.gold
+	if RunState.is_endless():
+		stage_label.text = "ENDLESS · WAVE %d" % RunState.encounter_index
+		_refresh_endless_route()
+		return
+	endless_route.visible = false
 	var stage_text: String = "Encounter %d of %d" % [
 		RunState.encounter_index, RunState.ENCOUNTERS_PER_RUN
 	]
 	if RunState.is_boss_next():
 		stage_text = "Final Encounter"
 	stage_label.text = stage_text
+
+
+func _refresh_endless_route() -> void:
+	endless_route.visible = true
+	for child: Node in endless_route.get_children():
+		endless_route.remove_child(child)
+		child.queue_free()
+	for offset: int in range(5):
+		var wave: int = RunState.encounter_index + offset
+		var shop_after_wave: bool = wave % 5 == 0
+		var node := PanelContainer.new()
+		node.custom_minimum_size = Vector2(105, 48)
+		node.add_theme_stylebox_override(
+			"panel", _endless_route_style(offset == 0, shop_after_wave)
+		)
+		var label := Label.new()
+		label.text = "NOW\nWAVE %d" % wave if offset == 0 else (
+			"SHOP\nWAVE %d" % wave if shop_after_wave else "WAVE %d" % wave
+		)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color("fff4d6"))
+		node.add_child(label)
+		endless_route.add_child(node)
+		if offset < 4:
+			var arrow := Label.new()
+			arrow.text = "›"
+			arrow.add_theme_font_size_override("font_size", 25)
+			arrow.add_theme_color_override("font_color", Color("ccb37d"))
+			arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			endless_route.add_child(arrow)
+
+
+func _endless_route_style(is_current: bool, is_shop: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("285138") if is_current else (
+		Color("72551e") if is_shop else Color("20384f")
+	)
+	style.border_color = Color("a9ff9a") if is_current else (
+		Color("ffd15d") if is_shop else Color("78b9ed")
+	)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(9)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	return style
 
 
 func _describe_result(result: Dictionary) -> String:

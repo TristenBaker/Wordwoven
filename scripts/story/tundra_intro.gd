@@ -71,6 +71,6 @@ func _finish_cutscene() -> void:
 	_ending = true
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
-	# The opening combat is a real map node. Let the player select it so the
-	# route records and displays that first fight like every later encounter.
-	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+	# The prologue hands straight into the opening bag draw. That screen then
+	# introduces the equipped letters before beginning the first encounter.
+	get_tree().change_scene_to_file(ScenePaths.STARTER_DRAW)

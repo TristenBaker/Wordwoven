@@ -9,7 +9,13 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var left_arrow: Button = $GoLeftButton
 @onready var right_arrow: Button = $RightArrow
 @onready var forge_button: Button = $ForgeButton
-@onready var word_game_button: Button = $WordGameButton
+@onready var leaderboard_button: Button = $LeaderboardButton
+@onready var minigames_button: Button = $MinigamesButton
+@onready var minigames_popup: Control = $MinigamesPopup
+@onready var word_game_button: Button = $MinigamesPopup/Center/Panel/Menu/WordGameButton
+@onready var handwriting_button: Button = $MinigamesPopup/Center/Panel/Menu/HandwritingButton
+@onready var minigames_close_button: Button = $MinigamesPopup/Center/Panel/Menu/CloseButton
+@onready var ice_fishing_button := get_node_or_null("DebugIceFishingButton") as Button
 @onready var health_label: Label = $StatusPanel/HealthLabel
 @onready var gold_label: Label = $StatusPanel/GoldLabel
 
@@ -20,7 +26,15 @@ func _ready() -> void:
 	left_arrow.pressed.connect(_open_left_room)
 	right_arrow.pressed.connect(_open_right_room)
 	forge_button.pressed.connect(_open_forge)
+	leaderboard_button.pressed.connect(_open_leaderboard)
+	minigames_button.pressed.connect(_open_minigames)
 	word_game_button.pressed.connect(_open_word_game)
+	handwriting_button.pressed.connect(_open_handwriting_game)
+	minigames_close_button.pressed.connect(minigames_popup.hide)
+	minigames_popup.hide()
+	if ice_fishing_button != null:
+		ice_fishing_button.visible = OS.is_debug_build()
+		ice_fishing_button.pressed.connect(_open_ice_fishing)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	_refresh_status()
 
@@ -38,7 +52,9 @@ func _open_tavern_page() -> void:
 
 
 func _leave_tavern() -> void:
-	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+	get_tree().change_scene_to_file(
+		ScenePaths.COMBAT if RunState.is_endless() else ScenePaths.ENCOUNTER_SELECT
+	)
 
 
 func _open_left_room() -> void:
@@ -53,10 +69,24 @@ func _open_forge() -> void:
 	get_tree().change_scene_to_file(ScenePaths.FORGE)
 
 
+func _open_leaderboard() -> void:
+	LeaderboardOverlay.open_in(self)
+
+
 func _open_word_game() -> void:
 	get_tree().change_scene_to_file(ScenePaths.WORD_GAME)
 
 
+func _open_minigames() -> void:
+	minigames_popup.show()
+
+
+func _open_handwriting_game() -> void:
+	get_tree().change_scene_to_file(ScenePaths.HANDWRITING_GAME)
+
+
+func _open_ice_fishing() -> void:
+	get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
 func _on_gold_changed(_new_total: int) -> void:
 	_refresh_status()
 

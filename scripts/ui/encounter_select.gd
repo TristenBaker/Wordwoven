@@ -32,9 +32,10 @@ func _ready() -> void:
 	route_map.enemy_selected.connect(_on_choice_pressed)
 	route_map.activity_selected.connect(_on_activity_pressed)
 	route_map.route_node_selected.connect(_on_route_node_selected)
-	var detours: VBoxContainer = $MapPanel/Margin/Content/OptionalChoices
+	var detours := get_node_or_null("MapPanel/Margin/Content/OptionalChoices") as Control
 	# Activities now live on the route itself instead of in a separate sidebar.
-	detours.visible = false
+	if detours != null:
+		detours.visible = false
 	if RunState.selected_biome == "tundra":
 		RunState.ensure_tundra_route_plan()
 		progress_label.text = "ROOM %d / %d   •   %d FIGHTS WON" % [

@@ -1,6 +1,6 @@
 extends Control
 const Balance = preload("res://data/balance/tuning.gd")
-## A word opens the chest, then each visible reward must be claimed.
+## A word opens the chest, then its rewards burst out and fly to the backpack.
 
 const BODY := preload("res://assets/Fonts/Junicode.ttf")
 const CHEST_CLOSED: Texture2D = preload("res://assets/Art/Events/WW_chestclosed.png")
@@ -222,15 +222,26 @@ func _show_loot() -> void:
 	gold_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	gold_label.add_theme_constant_override("outline_size", 5)
 	gold_reward.add_child(gold_label)
-	await _animate_reward_in(gold_reward)
+	if pending_item != null:
+		tile_reward = LETTER_TILE_SCENE.instantiate() as LetterTile
+		tile_reward.custom_minimum_size = Vector2(120, 132)
+		tile_reward.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		loot_row.add_child(tile_reward)
+		tile_reward.setup(pending_item)
+	await _animate_rewards_in()
 
-func _animate_reward_in(reward: Control) -> void:
-	reward.pivot_offset = reward.custom_minimum_size * 0.5
-	reward.scale = Vector2(0.55, 0.55)
-	reward.modulate = Color(1.0, 1.0, 1.0, 0.0)
+func _animate_rewards_in() -> void:
+	var rewards: Array[Control] = [gold_reward]
+	if tile_reward != null:
+		rewards.append(tile_reward)
+	for reward: Control in rewards:
+		reward.pivot_offset = reward.size * 0.5
+		reward.scale = Vector2(0.55, 0.55)
+		reward.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var tween := create_tween().set_parallel(true)
-	tween.tween_property(reward, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(reward, "modulate:a", 1.0, 0.18)
+	for reward: Control in rewards:
+		tween.tween_property(reward, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(reward, "modulate:a", 1.0, 0.18)
 	await tween.finished
 
 func _on_reward_stage_gui_input(event: InputEvent) -> void:
@@ -242,55 +253,28 @@ func _on_reward_stage_gui_input(event: InputEvent) -> void:
 	if reward_phase >= 2:
 		_finish()
 		return
-	_claim_current_reward()
+	_claim_rewards()
 
-func _claim_current_reward() -> void:
+func _claim_rewards() -> void:
 	if reward_busy:
 		return
 	reward_busy = true
 	reward_prompt.hide()
-	if reward_phase == 0:
-		_scatter_coins_to_backpack(gold_reward)
-		RunState.add_gold(pending_gold)
-		pending_gold = 0
-		claimed_rewards += 1
-		await get_tree().create_timer(0.62).timeout
-		if pending_item != null:
-			reward_phase = 1
-			await _show_tile_reward()
-			reward_busy = false
-			reward_prompt.text = "CLICK ANYWHERE TO CLAIM"
-			reward_prompt.show()
-			return
-		_finish_reward_claims()
-		return
-	if reward_phase == 1 and pending_item != null:
-		var item: LetterStats = pending_item
+	_scatter_coins_to_backpack(gold_reward)
+	RunState.add_gold(pending_gold)
+	pending_gold = 0
+	claimed_rewards += 1
+	if pending_item != null:
+		await get_tree().create_timer(0.18).timeout
 		_fly_tile_to_items(tile_reward)
-		RunState.add_letter_item(item)
+		RunState.add_letter_item(pending_item)
 		pending_item = null
 		claimed_rewards += 1
-		_finish_reward_claims()
-
-func _show_tile_reward() -> void:
-	tile_reward = LETTER_TILE_SCENE.instantiate() as LetterTile
-	tile_reward.custom_minimum_size = Vector2(120, 132)
-	tile_reward.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	loot_row.add_child(tile_reward)
-	tile_reward.setup(pending_item)
-	await get_tree().process_frame
-	var target_position := tile_reward.position
-	tile_reward.position += Vector2(130, 0)
-	tile_reward.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(tile_reward, "position", target_position, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(tile_reward, "modulate:a", 1.0, 0.2)
-	await tween.finished
-
-func _finish_reward_claims() -> void:
+	await get_tree().create_timer(0.65).timeout
 	reward_phase = 2
 	reward_busy = false
-	_check_claims()
+	reward_prompt.text = "CLICK ANYWHERE TO RETURN TO TAVERN"
+	reward_prompt.show()
 
 func _fly_tile_to_items(tile: LetterTile) -> void:
 	var source_rect := tile.get_global_rect()
@@ -336,11 +320,6 @@ func _cropped_texture(source: Texture2D, crop: Rect2) -> AtlasTexture:
 	cropped.atlas = source
 	cropped.region = crop
 	return cropped
-
-func _check_claims() -> void:
-	if pending_gold <= 0 and pending_item == null:
-		reward_prompt.text = "CLICK ANYWHERE TO RETURN TO TAVERN"
-		reward_prompt.show()
 
 func _effects_local(global_position: Vector2) -> Vector2:
 	return global_position - effects.get_global_rect().position

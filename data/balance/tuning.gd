@@ -41,6 +41,10 @@ const ENEMY_FACTORY_BOSS_TIER: int = 4
 const ENEMY_FACTORY_TUNDRA_REGULARS: Array[String] = [
 	"glacier_bear", "frozen_revenant", "winter_wraith", "tundra_behemoth",
 ]
+const ENEMY_FACTORY_ENDLESS_HEALTH_PER_WAVE: int = 9
+const ENEMY_FACTORY_ENDLESS_ATTACK_WAVE_INTERVAL: int = 2
+const ENEMY_FACTORY_ENDLESS_GOLD_BASE: int = 3
+const ENEMY_FACTORY_ENDLESS_GOLD_PER_WAVE: int = 2
 
 # RELIC_SYSTEM
 const RELIC_SYSTEM_QUALITY_WEIGHTS: Dictionary[String, int] = {

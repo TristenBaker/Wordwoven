@@ -18,6 +18,7 @@ config/icon="uid://bg2ivw416ifpk"
 [autoload]
 
 AppSettings="*res://scripts/autoloads/app_settings.gd"
+PlayerProfile="*res://scripts/autoloads/player_profile.gd"
 WordNet="*res://scripts/autoloads/word_net.gd"
 RunState="*res://scripts/autoloads/run_state.gd"
 EventBus="*res://scripts/autoloads/event_bus.gd"

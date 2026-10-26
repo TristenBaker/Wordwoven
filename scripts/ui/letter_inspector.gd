@@ -49,7 +49,10 @@ func inspect(stats: LetterStats) -> void:
 	_element_label.text = stats.element_name_text().to_upper()
 	_element_label.add_theme_color_override("font_color", color)
 	_level_label.text = "Level %d" % stats.level
-	_portrait.texture = _portrait_for(stats.element)
+	_level_label.add_theme_color_override("font_color", color)
+	_portrait.texture = PlayerProfile.cosmetic_texture(
+		stats.letter, _portrait_for(stats.element)
+	)
 	_description_label.text = stats.element_detail_text()
 	_throughput_label.text = stats.throughput_text()
 	_rebuild_powers(stats, color)
@@ -107,13 +110,16 @@ func _build() -> void:
 	_letter_label = Label.new()
 	_letter_label.add_theme_font_size_override("font_size", 60)
 	_letter_label.add_theme_color_override("font_color", Color("fff7df"))
+	_letter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	identity.add_child(_letter_label)
 	_element_label = Label.new()
 	_element_label.add_theme_font_size_override("font_size", 23)
+	_element_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	identity.add_child(_element_label)
 	_level_label = Label.new()
 	_level_label.add_theme_font_size_override("font_size", 18)
 	_level_label.add_theme_color_override("font_color", Color("ddd1c2"))
+	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	identity.add_child(_level_label)
 
 	_description_label = Label.new()
@@ -170,7 +176,7 @@ func _rebuild_powers(stats: LetterStats, element_color: Color) -> void:
 		label.add_theme_font_size_override("font_size", 16)
 		label.text = "%s ×%d\n%s" % [
 			info.get("name", power_id), RunState.relics.count(power_id),
-			info.get("description", ""),
+			power_system.calculated_effect_text(power_id),
 		]
 		label.add_theme_color_override("font_color", element_color)
 		card.add_child(label)

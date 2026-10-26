@@ -32,4 +32,3 @@ func _ready() -> void:
 	assert(endings == ["restarted", "lost"])
 	print("TELEMETRY TEST PASSED: ", Telemetry.log_path)
 	get_tree().quit()
-

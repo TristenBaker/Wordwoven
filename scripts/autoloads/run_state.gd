@@ -11,12 +11,20 @@ const STARTING_HEALTH: int = Balance.RUN_STATE_STARTING_HEALTH
 const STARTING_GOLD: int = Balance.RUN_STATE_STARTING_GOLD
 const ENCOUNTERS_PER_RUN: int = Balance.RUN_STATE_ENCOUNTERS_PER_RUN
 
+enum RunMode { STORY, ENDLESS }
+
 # Set false to return to the original shared-deck and use-level system.
 var use_itemized_letters: bool = true
 
 var player_max_health: int = STARTING_HEALTH
 var player_health: int = STARTING_HEALTH
 var gold: int = STARTING_GOLD
+var gold_earned_this_run: int = 0
+var run_score_recorded: bool = false
+var run_mode: RunMode = RunMode.STORY
+var has_unseen_inventory_items: bool = false
+var auto_equip_enabled: bool = false
+var auto_equip_same_element_only: bool = false
 
 # The letter characters the player owns.
 var deck: Array[LetterStats] = []
@@ -94,12 +102,23 @@ var word_history: Array[Dictionary] = []
 var is_run_active: bool = false
 
 
+func _ready() -> void:
+	auto_equip_enabled = bool(AppSettings.preferences.get("auto_equip_enabled", false))
+	auto_equip_same_element_only = bool(
+		AppSettings.preferences.get("auto_equip_same_element_only", false)
+	)
+
+
 ## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
-func start_new_run() -> void:
+func start_new_run(mode: RunMode = RunMode.STORY) -> void:
+	run_mode = mode
 	run_starting.emit()
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
 	gold = STARTING_GOLD
+	gold_earned_this_run = 0
+	run_score_recorded = false
+	has_unseen_inventory_items = false
 	relics = []
 	key_items = []
 	tundra_intro_seen = false
@@ -155,9 +174,19 @@ func start_new_run() -> void:
 
 ## True when the next encounter is the final boss.
 func is_boss_next() -> bool:
+	if is_endless():
+		return false
 	if selected_biome == "tundra" and not route_graph_columns.is_empty():
 		return route_depth >= route_graph_columns.size()
 	return encounter_index >= ENCOUNTERS_PER_RUN
+
+
+func is_endless() -> bool:
+	return run_mode == RunMode.ENDLESS
+
+
+func endless_shop_due() -> bool:
+	return is_endless() and encounter_index > 0 and encounter_index % 5 == 0
 
 
 func advance_encounter() -> void:
@@ -216,7 +245,43 @@ func add_letter_item(item: LetterStats) -> void:
 	if item == null:
 		return
 	letter_inventory.append(item)
+	has_unseen_inventory_items = true
+	if auto_equip_enabled:
+		_try_auto_equip_item(item)
 	EventBus.emit_deck_changed()
+
+
+func set_auto_equip(enabled: bool, same_element_only: bool) -> void:
+	auto_equip_enabled = enabled
+	auto_equip_same_element_only = same_element_only
+	AppSettings.set_auto_equip_preferences(enabled, same_element_only)
+
+
+func _try_auto_equip_item(item: LetterStats) -> bool:
+	if not use_itemized_letters or not letter_inventory.has(item):
+		return false
+	var slot: String = item.letter.to_lower()
+	var current: LetterStats = equipped_letters.get(slot, null)
+	if current == null:
+		if auto_equip_same_element_only:
+			return false
+	elif item.level <= current.level or (
+		auto_equip_same_element_only and item.element != current.element
+	):
+		return false
+	letter_inventory.erase(item)
+	if current != null:
+		letter_inventory.append(current)
+	equipped_letters[slot] = item
+	return true
+
+
+func mark_inventory_items_unseen() -> void:
+	has_unseen_inventory_items = true
+
+
+func mark_inventory_seen() -> void:
+	has_unseen_inventory_items = false
 
 
 ## Adds a unique story item. Re-entering a reward screen cannot duplicate it.
@@ -256,6 +321,39 @@ func unequip_letter(slot: String) -> bool:
 	letter_inventory.append(item)
 	EventBus.emit_deck_changed()
 	return true
+
+
+## Equips only genuine upgrades. With an element lock, an occupied slot can
+## only be replaced by a higher-level item of its current element.
+func auto_equip_higher_levels(same_element_only: bool = false) -> int:
+	if not use_itemized_letters:
+		return 0
+	var changed := 0
+	for letter: String in "abcdefghijklmnopqrstuvwxyz":
+		var current: LetterStats = equipped_letters.get(letter, null)
+		var best: LetterStats = null
+		for item: LetterStats in letter_inventory:
+			if item.letter != letter:
+				continue
+			if current == null:
+				if same_element_only:
+					continue
+			elif item.level <= current.level or (
+				same_element_only and item.element != current.element
+			):
+				continue
+			if best == null or item.level > best.level:
+				best = item
+		if best == null:
+			continue
+		letter_inventory.erase(best)
+		if current != null:
+			letter_inventory.append(current)
+		equipped_letters[letter] = best
+		changed += 1
+	if changed > 0:
+		EventBus.emit_deck_changed()
+	return changed
 
 
 func rolled_letter_drop() -> LetterStats:
@@ -543,6 +641,8 @@ func available_route_enemies(limit: int = 2) -> Array[String]:
 
 func add_gold(amount: int) -> void:
 	gold += amount
+	if amount > 0:
+		gold_earned_this_run += amount
 	EventBus.emit_gold_changed(gold)
 
 
@@ -577,7 +677,8 @@ func record_word(
 	damage: float,
 	pos: String = "",
 	metadata: Dictionary = {}
-) -> void:
+) -> bool:
+	var earned_star_coin := PlayerProfile.record_unique_word(word)
 	word_history.append({
 		"word": word,
 		"enemy": enemy_name,
@@ -593,6 +694,7 @@ func record_word(
 			metadata.get("semantic_multiplier", 0.0)
 		),
 	})
+	return earned_star_coin
 
 
 func cache_encounter_modifier(

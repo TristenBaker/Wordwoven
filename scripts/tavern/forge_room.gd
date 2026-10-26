@@ -175,7 +175,7 @@ func _build_layout() -> void:
 	var inventory_box := VBoxContainer.new()
 	inventory_panel.add_child(inventory_box)
 	var inventory_title := Label.new()
-	inventory_title.text = "Loose Inventory · click to add/remove · hold for details"
+	inventory_title.text = "Loose Inventory · green border = compatible next tile · click to add/remove · hold for details"
 	inventory_title.add_theme_font_size_override("font_size", 21)
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	inventory_box.add_child(inventory_title)
@@ -249,7 +249,11 @@ func _rebuild_inventory() -> void:
 	for item: LetterStats in RunState.letter_inventory:
 		if selected_items.has(item):
 			continue
-		var button := _tile_button(item)
+		var eligible: bool = forge_system.can_extend_rule(selected_items, item)
+		var button := _tile_button(item, false, false, eligible)
+		if not selected_items.is_empty():
+			button.tooltip_text = "Eligible for the current recipe" if eligible \
+				else "Does not complete the current recipe"
 		button.pressed.connect(_toggle_item.bind(item, button))
 		inventory_grid.add_child(button)
 
@@ -273,7 +277,8 @@ func _rebuild_equipped() -> void:
 
 
 func _tile_button(
-	item: LetterStats, compact: bool = false, accepts_drop: bool = false
+	item: LetterStats, compact: bool = false, accepts_drop: bool = false,
+	eligible: bool = false
 ) -> ForgeTileButton:
 	var button := ForgeTileButton.new()
 	button.forge_owner = self
@@ -286,8 +291,9 @@ func _tile_button(
 	]
 	button.add_theme_font_size_override("font_size", 16)
 	button.add_theme_color_override("font_color", TILE_THEME.letter_color)
-	button.add_theme_stylebox_override("normal", _tile_style(item))
-	button.add_theme_stylebox_override("pressed", _tile_style(item))
+	button.add_theme_stylebox_override("normal", _tile_style(item, eligible))
+	button.add_theme_stylebox_override("hover", _tile_style(item, eligible))
+	button.add_theme_stylebox_override("pressed", _tile_style(item, eligible))
 	button.gui_input.connect(_on_item_gui_input.bind(button, item))
 	return button
 
@@ -338,7 +344,7 @@ func _unequip_from_forge(letter: String, button: Button) -> void:
 func _refresh_forge_state() -> void:
 	var rule: Dictionary = forge_system.matching_rule(selected_items)
 	if rule.is_empty():
-		rule_result.text = "Place three tiles that satisfy a conversion rule."
+		rule_result.text = forge_system.next_step_text(selected_items)
 	else:
 		rule_result.text = "Rule applied: %s\nFailure: same-level result · Success: +%d level" % [rule["name"], Balance.FORGE_LEVEL_GAIN]
 	var word_data: Dictionary = _word_data()
@@ -549,11 +555,14 @@ func _panel_style() -> StyleBoxFlat:
 	return style
 
 
-func _tile_style(item: LetterStats) -> StyleBoxFlat:
+func _tile_style(item: LetterStats, eligible: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = TILE_THEME.fill_for(item.element)
-	style.border_color = TILE_THEME.border_for(item.level)
-	style.set_border_width_all(4)
+	style.border_color = Color("a6ff9a") if eligible else TILE_THEME.border_for(item.level)
+	style.set_border_width_all(5 if eligible else 4)
+	if eligible:
+		style.shadow_color = Color("8dff83", 0.75)
+		style.shadow_size = 8
 	style.set_corner_radius_all(7)
 	return style
 

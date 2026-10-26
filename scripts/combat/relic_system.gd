@@ -44,9 +44,14 @@ func roll_choices(count: int) -> Array[String]:
 	var choices: Array[String] = []
 	if count <= 0:
 		return choices
-	var guaranteed_index: int = randi_range(0, count - 1)
+	var premium_indices: Array[int] = []
+	var premium_count: int = mini(2 if RunState.is_endless() else 1, count)
+	while premium_indices.size() < premium_count:
+		var index: int = randi_range(0, count - 1)
+		if not premium_indices.has(index):
+			premium_indices.append(index)
 	while choices.size() < count and not available.is_empty():
-		var allows_common: bool = choices.size() != guaranteed_index
+		var allows_common: bool = not premium_indices.has(choices.size())
 		var quality: String = _roll_quality(allows_common)
 		var candidates: Array[String] = []
 		for power_id: String in available:
@@ -113,6 +118,32 @@ func total_effect(effect: String) -> float:
 		if info.get("effect", "") == effect:
 			total += float(info.get("amount", 0.0))
 	return total
+
+
+func calculated_effect_text(relic_id: String) -> String:
+	var info: Dictionary = relic_info(relic_id)
+	var stacks: int = RunState.relics.count(relic_id)
+	var total: float = float(info.get("amount", 0.0)) * stacks
+	match String(info.get("effect", "")):
+		"fire_damage_multiplier", "lightning_damage_multiplier", "water_damage_multiplier", "ice_damage_multiplier", "nature_damage_multiplier", "earth_damage_multiplier", "all_element_damage_multiplier":
+			return "+%.0f%% damage total" % (total * 100.0)
+		"fire_burn_ratio":
+			return "Burn for %.0f%% of the Fire hit" % (total * 100.0)
+		"lightning_echo_chance":
+			return "%.0f%% echo chance per Lightning hit" % (total * 100.0)
+		"lightning_echo_damage":
+			return "Echoes deal %.0f%% of the original hit" % (total * 100.0)
+		"water_heal_ratio":
+			return "Heal for %.0f%% of Water damage" % (total * 100.0)
+		"ice_retaliation_reduction":
+			return "Reduce next retaliation by %d" % int(total)
+		"nature_poison_ratio":
+			return "Poison for %.0f%% of the Nature hit" % (total * 100.0)
+		"earth_guard":
+			return "Gain %d Guard" % int(total)
+		"hand_size":
+			return "+%d letters per combat hand" % int(total)
+	return String(info.get("description", ""))
 
 
 func grant_reward(relic_id: String, encounter: int) -> bool:

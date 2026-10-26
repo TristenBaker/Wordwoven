@@ -17,15 +17,13 @@ const LEAP_HEIGHT: float = 90.0
 const WARRIOR_LANDING_OFFSET: Vector2 = Vector2(-44.0, 20.0)
 const ROGUE_GRAB_OFFSET: float = -44.0
 
-@export var warrior_frames: SpriteFrames = null
-@export var healer_frames: SpriteFrames = null
-@export var rogue_frames: SpriteFrames = null
 ## Speed in pixels per second while lining up or leaving.
 @export var walk_speed: float = 520.0
 ## Speed in pixels per second of a rogue's dash.
 @export var run_speed: float = 1400.0
 
 var stats: LetterStats = null
+var cosmetic: CharacterCosmetic = null
 
 var _motion: Tween = null
 var _performing: bool = false
@@ -51,8 +49,10 @@ func _ready() -> void:
 
 func setup(new_stats: LetterStats) -> void:
 	stats = new_stats
-	sprite.sprite_frames = _frames_for(stats.element)
-	sprite.play(&"idle")
+	cosmetic = PlayerProfile.combat_cosmetic_for(stats)
+	sprite.sprite_frames = cosmetic.sprite_frames
+	sprite.scale = Vector2.ONE * cosmetic.render_scale
+	_play_action(&"idle")
 	sprite.frame = randi() % 2
 
 
@@ -71,7 +71,7 @@ func walk_to(x: float) -> void:
 		return
 	_restart_motion()
 	sprite.flip_h = x < position.x
-	sprite.play(&"walk")
+	_play_action(&"walk")
 	_motion.tween_property(self, "position:x", x, duration)
 	_motion.tween_callback(_idle)
 
@@ -83,7 +83,7 @@ func walk_out(x: float) -> void:
 	_restart_motion()
 	var duration: float = maxf(absf(x - position.x) / walk_speed, 0.1)
 	sprite.flip_h = true
-	sprite.play(&"walk")
+	_play_action(&"walk")
 	_motion.tween_property(self, "position:x", x, duration)
 	_motion.parallel().tween_property(
 		self, "modulate:a", 0.0, duration * 0.4
@@ -99,12 +99,12 @@ func perform(target: Vector2, exit_x: float, delay: float) -> void:
 	sprite.flip_h = false
 	if delay > 0.0:
 		_motion.tween_interval(delay)
-	match stats.element:
-		LetterStats.Element.FIRE, LetterStats.Element.EARTH:
+	match cosmetic.archetype:
+		CharacterCosmetic.Archetype.WARRIOR:
 			_queue_warrior_action(target)
-		LetterStats.Element.WATER, LetterStats.Element.NATURE:
+		CharacterCosmetic.Archetype.HEALER:
 			_queue_healer_action()
-		LetterStats.Element.LIGHTNING, LetterStats.Element.ICE:
+		CharacterCosmetic.Archetype.ROGUE:
 			_queue_rogue_action(target, exit_x)
 	_motion.tween_callback(_finish)
 
@@ -117,7 +117,7 @@ func _queue_warrior_action(target: Vector2) -> void:
 	var start: Vector2 = position
 	var landing: Vector2 = target + WARRIOR_LANDING_OFFSET
 	var fall_end: Vector2 = landing + Vector2(-50.0, 110.0)
-	_motion.tween_callback(sprite.play.bind(&"crouch"))
+	_motion.tween_callback(_play_action.bind(&"crouch"))
 	_motion.tween_property(
 		body, "scale", _body_scale * Vector2(1.25, 0.75), 0.06
 	)
@@ -163,7 +163,7 @@ func _queue_rogue_action(target: Vector2, exit_x: float) -> void:
 	_motion.tween_property(self, "position:x", grab_x, dash_time)
 	_motion.tween_callback(_on_rogue_grab)
 	_motion.tween_interval(0.14)
-	_motion.tween_callback(sprite.play.bind(&"run"))
+	_motion.tween_callback(_play_action.bind(&"run"))
 	_motion.tween_property(self, "position:x", exit_x, exit_time)
 	_motion.parallel().tween_property(
 		self, "modulate:a", 0.0, exit_time * 0.4
@@ -173,14 +173,14 @@ func _queue_rogue_action(target: Vector2, exit_x: float) -> void:
 # --- Action beats ----------------------------------------------------
 
 func _on_warrior_leap() -> void:
-	sprite.play(&"leap")
+	_play_action(&"leap")
 	dust.restart()
 	shadow.hide()
 	cue_requested.emit(PartySfx.Cue.JUMP)
 
 
 func _on_warrior_strike(target: Vector2) -> void:
-	sprite.play(&"slash")
+	_play_action(&"attack")
 	cue_requested.emit(PartySfx.Cue.SLASH)
 	cue_requested.emit(PartySfx.Cue.IMPACT)
 	impact_burst.position = target - position
@@ -191,7 +191,7 @@ func _on_warrior_strike(target: Vector2) -> void:
 
 
 func _on_heal_cast() -> void:
-	sprite.play(&"cast")
+	_play_action(&"cast")
 	heal_sparkles.restart()
 	_flash_effect(heal_ring, 0.4, 3.0, 0.45)
 	cue_requested.emit(PartySfx.Cue.HEAL)
@@ -199,13 +199,13 @@ func _on_heal_cast() -> void:
 
 
 func _on_rogue_dash() -> void:
-	sprite.play(&"run")
+	_play_action(&"run")
 	dust.restart()
 	cue_requested.emit(PartySfx.Cue.DASH)
 
 
 func _on_rogue_grab() -> void:
-	sprite.play(&"grab")
+	_play_action(&"grab")
 	coin_sparkle.restart()
 	cue_requested.emit(PartySfx.Cue.COIN)
 	struck.emit()
@@ -255,7 +255,7 @@ func _stop_motion() -> void:
 
 func _idle() -> void:
 	sprite.flip_h = false
-	sprite.play(&"idle")
+	_play_action(&"idle")
 
 
 func _finish() -> void:
@@ -263,16 +263,14 @@ func _finish() -> void:
 	queue_free()
 
 
-func _frames_for(element: int) -> SpriteFrames:
-	match element:
-		LetterStats.Element.FIRE, LetterStats.Element.EARTH:
-			return warrior_frames
-		LetterStats.Element.LIGHTNING, LetterStats.Element.ICE:
-			return rogue_frames
-	return healer_frames
+func _play_action(action: StringName) -> void:
+	if cosmetic != null and cosmetic.has_action(action):
+		sprite.play(cosmetic.animation_for(action))
 
 
 func _on_frame_changed() -> void:
-	var moving: bool = sprite.animation in [&"walk", &"run"]
+	var moving: bool = cosmetic != null and sprite.animation in [
+		cosmetic.animation_for(&"walk"), cosmetic.animation_for(&"run"),
+	]
 	if moving and sprite.frame % 2 == 0:
 		cue_requested.emit(PartySfx.Cue.STEP)

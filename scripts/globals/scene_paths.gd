@@ -4,7 +4,9 @@ extends RefCounted
 ## changes never require hunting through scripts for path strings.
 
 const MAIN_MENU: String = "res://scenes/main_menu.tscn"
+const MODE_SELECT: String = "res://scenes/mode_select.tscn"
 const BIOME_SELECT: String = "res://scenes/biome_select.tscn"
+const STARTER_DRAW: String = "res://scenes/events/starter_draw.tscn"
 const COMBAT: String = "res://scenes/combat/combat.tscn"
 const FIGHT_COMPLETION: String = "res://scenes/post_fight/fight_completion.tscn"
 const POWER_SELECT: String = "res://scenes/post_fight/power_select.tscn"
@@ -15,6 +17,7 @@ const TAVERN_RIGHT: String = "res://scenes/tavern/tavern_right.tscn"
 const FORGE: String = "res://scenes/tavern/forge.tscn"
 const TREASURE_ROOM: String = "res://scenes/events/treasure_room.tscn"
 const WORD_GAME: String = "res://scenes/tavern/word_game.tscn"
+const HANDWRITING_GAME: String = "res://scenes/tavern/handwriting_game.tscn"
 const ICE_FISHING: String = "res://scenes/ice_fishing.tscn"
 const TUNDRA_INTRO: String = "res://scenes/story/tundra_intro.tscn"
 const LORE_ROOM: String = "res://scenes/story/lore_room.tscn"
