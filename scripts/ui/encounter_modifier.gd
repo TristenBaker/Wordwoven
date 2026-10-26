@@ -1,7 +1,8 @@
 extends Control
 ## Preparation is separate from combat: validation only, one cached fate, one exit.
-const FATE_CLASSIFIER = preload("res://scripts/modifiers/fate_classifier.gd")
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const FATE_CLASSIFIER = preload("res://data/balance/fate_classifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
+const Balance = preload("res://data/balance/tuning.gd")
 const BODY = preload("res://assets/Fonts/Junicode.ttf")
 const BUTTON_THEME = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
 var _validator: WordValidator
@@ -29,7 +30,12 @@ func _ready() -> void:
 		RunState.next_enemy_id = pending.enemy_id
 	else:
 		var allowed: Array[String] = factory.ids_for_stage(RunState.encounter_index)
-		if not allowed.has(RunState.next_enemy_id):
+		if not allowed.has(RunState.next_enemy_id) and not (
+			DebugTools.free_map_select and RunState.selected_biome == "tundra"
+			and (RunState.next_enemy_id == factory.boss_id()
+				or RunState.next_enemy_id == Balance.TUNDRA_STARTER_ENEMY
+				or EnemyFactory.TUNDRA_REGULARS.has(RunState.next_enemy_id))
+		):
 			RunState.next_enemy_id = allowed.pick_random()
 	factory.queue_free()
 	_validator = WordValidator.new()

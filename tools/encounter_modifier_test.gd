@@ -1,5 +1,5 @@
 extends Node
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var failures: int = 0
 func check(ok: bool, label: String) -> void:
 	if not ok:
@@ -51,9 +51,8 @@ func _run() -> void:
 				check(panel.effect_label.text == entry.effect, "original panel text unchanged")
 			await get_tree().process_frame
 			check(is_equal_approx(panel.get_global_rect().position.y, combat.timer_label.get_global_rect().end.y + 10.0), "panel directly below quick-cast timer")
-			check(is_equal_approx(panel.get_global_rect().end.y + 8.0, combat.dev_kill_button.get_global_rect().position.y), "Dev Auto Kill directly below banner")
-			check(panel.get_global_rect().position.x == combat.dev_kill_button.get_global_rect().position.x and panel.get_global_rect().end.x == combat.dev_kill_button.get_global_rect().end.x, "Banner and button edges match")
-			check(combat.dev_kill_button.size == Vector2(264, 40), "Dev Auto Kill dimensions preserved")
+			check(not combat.has_node("Layout/DevKillButton"), "Dev Auto Kill is no longer on the combat screen")
+			check(DebugTools.auto_kill_button.get_parent().name == "EncounterRow", "Dev Auto Kill is in F12")
 			check(not panel.get_global_rect().intersects(combat.get_node("Layout/StatusArea").get_global_rect()), "panel clears status UI")
 			check(RunState.pending_encounter_modifier.is_empty(), "consumed once")
 			check(RunState.word_history.is_empty() and combat.cold.heat == 0 and combat.cold.turns == 0 and combat.cold.frozen.is_empty(), "preparation no combat effects")

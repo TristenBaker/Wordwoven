@@ -1,7 +1,8 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## Direct typing, flip reveals, and a persistent color-aware keyboard.
 
-const WORDS: Array[String] = ["ember", "frost", "quill", "rhyme", "stone", "thorn", "tidal", "gloom", "spark", "flame"]
+const WORDS: Array[String] = preload("res://data/balance/tuning.gd").WORD_GAME_WORDS
 const KEY_ROWS: Array[String] = ["qwertyuiop", "asdfghjkl", "zxcvbnm"]
 const BODY := preload("res://assets/Fonts/Junicode.ttf")
 const EMPTY := Color("1d2936")
@@ -24,7 +25,7 @@ func _ready() -> void:
 	_build_ui()
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if revealing or row >= 6 or not (event is InputEventKey) or not event.pressed or event.echo:
+	if revealing or row >= Balance.WORD_GAME_GUESSES or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	if event.keycode == KEY_ENTER:
 		_submit()
@@ -56,17 +57,17 @@ func _build_ui() -> void:
 	box.add_theme_constant_override("separation", 9)
 	panel.add_child(box)
 	box.add_child(_label("THE INKWELL WORD", 36, Color("a9e7f5")))
-	box.add_child(_label("Find the five-letter word in six guesses.", 18, Color("c0d1d4")))
+	box.add_child(_label("Find the %d-letter word in %d guesses." % [Balance.WORD_GAME_LENGTH, Balance.WORD_GAME_GUESSES], 18, Color("c0d1d4")))
 	var grid := GridContainer.new()
-	grid.columns = 5
+	grid.columns = Balance.WORD_GAME_LENGTH
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	grid.add_theme_constant_override("h_separation", 7)
 	grid.add_theme_constant_override("v_separation", 7)
 	box.add_child(grid)
-	for _row: int in range(6):
+	for _row: int in range(Balance.WORD_GAME_GUESSES):
 		var panel_row: Array = []
 		var label_row: Array = []
-		for _column: int in range(5):
+		for _column: int in range(Balance.WORD_GAME_LENGTH):
 			var cell := PanelContainer.new()
 			cell.custom_minimum_size = Vector2(54, 54)
 			cell.add_theme_stylebox_override("panel", _cell_style(EMPTY))
@@ -127,27 +128,27 @@ func _build_ui() -> void:
 	box.add_child(back)
 
 func _add_letter(letter: String) -> void:
-	if revealing or row >= 6 or guess.length() >= 5:
+	if revealing or row >= Balance.WORD_GAME_GUESSES or guess.length() >= Balance.WORD_GAME_LENGTH:
 		return
 	guess += letter
 	_render_typing_row()
 
 func _backspace() -> void:
-	if revealing or row >= 6 or guess.is_empty():
+	if revealing or row >= Balance.WORD_GAME_GUESSES or guess.is_empty():
 		return
 	guess = guess.left(guess.length() - 1)
 	_render_typing_row()
 
 func _render_typing_row() -> void:
-	for index: int in range(5):
+	for index: int in range(Balance.WORD_GAME_LENGTH):
 		var label: Label = cell_labels[row][index]
 		label.text = guess[index].to_upper() if index < guess.length() else ""
 
 func _submit() -> void:
-	if revealing or row >= 6:
+	if revealing or row >= Balance.WORD_GAME_GUESSES:
 		return
-	if guess.length() != 5:
-		status.text = "Use exactly five letters."
+	if guess.length() != Balance.WORD_GAME_LENGTH:
+		status.text = "Use exactly %d letters." % Balance.WORD_GAME_LENGTH
 		return
 	if WordNet.is_ready and not WordNet.word_exists(guess):
 		status.text = "That word is not in the lexicon."
@@ -157,29 +158,29 @@ func _submit() -> void:
 	await _reveal_guess(result)
 	if guess == target:
 		status.text = "Perfect. The tavern remembers \"%s\"." % guess.capitalize()
-		row = 6
+		row = Balance.WORD_GAME_GUESSES
 		return
 	row += 1
-	if row >= 6:
+	if row >= Balance.WORD_GAME_GUESSES:
 		status.text = "The word was %s. Another round is waiting." % target.to_upper()
 		return
 	guess = ""
 	revealing = false
-	status.text = "%d guesses remain." % (6 - row)
+	status.text = "%d guesses remain." % (Balance.WORD_GAME_GUESSES - row)
 
 func _score_guess(value: String) -> Array[Color]:
 	var remaining: Array[String] = []
 	for character: String in target:
 		remaining.append(character)
 	var result: Array[Color] = []
-	for index: int in range(5):
+	for index: int in range(Balance.WORD_GAME_LENGTH):
 		var letter: String = value[index]
 		if letter == target[index]:
 			result.append(CORRECT)
 			remaining.erase(letter)
 		else:
 			result.append(ABSENT)
-	for index: int in range(5):
+	for index: int in range(Balance.WORD_GAME_LENGTH):
 		var letter: String = value[index]
 		if result[index] == ABSENT and remaining.has(letter):
 			result[index] = PRESENT
@@ -187,7 +188,7 @@ func _score_guess(value: String) -> Array[Color]:
 	return result
 
 func _reveal_guess(result: Array[Color]) -> void:
-	for index: int in range(5):
+	for index: int in range(Balance.WORD_GAME_LENGTH):
 		var cell: PanelContainer = cell_panels[row][index]
 		var letter: String = guess[index]
 		var flip := create_tween()

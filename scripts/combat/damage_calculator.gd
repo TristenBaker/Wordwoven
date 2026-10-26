@@ -1,5 +1,6 @@
 class_name DamageCalculator
 extends Node
+const Balance = preload("res://data/balance/tuning.gd")
 ## Turns a validated word into damage. Combines every factor the
 ## design calls for -- letter power (classes, modifiers, levels),
 ## drawn-versus-undrawn letters, word length, part of speech, and
@@ -7,31 +8,26 @@ extends Node
 ## a full breakdown so the debug overlay can show its work.
 
 # Undrawn letters contribute only a sliver of their base power.
-const UNDRAWN_POWER_FACTOR: float = 0.2
+const UNDRAWN_POWER_FACTOR: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_UNDRAWN_POWER_FACTOR
 
 # Bonus multiplier per letter beyond a three-letter word.
-const LENGTH_BONUS_STEP: float = 0.1
+const LENGTH_BONUS_STEP: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_LENGTH_BONUS_STEP
 
 # Restored quick-cast bonus: +50% falls linearly to normal over a 20-second turn.
-const SPEED_BONUS_DURATION: float = 20.0
-const SPEED_MULTIPLIER_MAX: float = 1.5
-const SPEED_MULTIPLIER_MIN: float = 1.0
+const SPEED_BONUS_DURATION: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_SPEED_BONUS_DURATION
+const SPEED_MULTIPLIER_MAX: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_SPEED_MULTIPLIER_MAX
+const SPEED_MULTIPLIER_MIN: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_SPEED_MULTIPLIER_MIN
 
 # Damage multiplier for the word's best part of speech.
-const POS_MULTIPLIERS: Dictionary[String, float] = {
-	"v": 1.25,
-	"a": 1.15,
-	"r": 1.1,
-	"n": 1.0,
-}
+const POS_MULTIPLIERS: Dictionary[String, float] = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_POS_MULTIPLIERS
 
 # Semantic multiplier range from no counter to a direct counter.
-const SEMANTIC_MULTIPLIER_MIN: float = 0.5
-const SEMANTIC_MULTIPLIER_MAX: float = 2.0
+const SEMANTIC_MULTIPLIER_MIN: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_SEMANTIC_MULTIPLIER_MIN
+const SEMANTIC_MULTIPLIER_MAX: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_SEMANTIC_MULTIPLIER_MAX
 
 # Every Tome adds its bonus after counter scoring, without a cap.
-const TOME_MULTIPLIER_BONUS: float = 0.12
-const LANTERN_MULTIPLIER_BONUS: float = 0.08
+const TOME_MULTIPLIER_BONUS: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_TOME_MULTIPLIER_BONUS
+const LANTERN_MULTIPLIER_BONUS: float = preload("res://data/balance/tuning.gd").DAMAGE_CALCULATOR_LANTERN_MULTIPLIER_BONUS
 
 
 ## Scores a word against the enemy's tags.
@@ -54,7 +50,7 @@ func calculate(
 	var neutral_power: float = 0.0
 	for stats: LetterStats in drawn:
 		if stats.element in [LetterStats.Element.LIGHTNING, LetterStats.Element.ICE]:
-			gold += 1
+			gold += Balance.ELEMENT_CAST_GOLD
 		var contribution: float = stats.power()
 		base_power += contribution
 		var element_name: String = stats.element_name_text().to_lower()
@@ -81,7 +77,7 @@ func calculate(
 			"stats": null,
 		})
 	var length_multiplier: float = 1.0 + LENGTH_BONUS_STEP \
-			* float(maxi(word.length() - 3, 0))
+			* float(maxi(word.length() - Balance.LENGTH_BONUS_BASE, 0))
 	var pos_data: Dictionary = _part_of_speech(word, required_pos)
 	var counter: Dictionary = _best_tag_counter(
 		word, enemy_tags, required_pos
@@ -214,7 +210,7 @@ func _lightning_echo_damage(lightning_damage: float) -> Dictionary:
 	var procs: int = 0
 	var bonus: float = 0.0
 	while lightning_damage > 0.0 and chance > 0.0 \
-			and procs < 6 and randf() < chance:
+			and procs < Balance.LIGHTNING_MAX_PROCS and randf() < chance:
 		procs += 1
 		bonus += lightning_damage * damage_ratio
 	return {"procs": procs, "damage": bonus}

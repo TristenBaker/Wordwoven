@@ -33,6 +33,13 @@ func word_exists(word: String) -> bool:
 	return _reader.word_exists(word)
 
 
+## Draw from every single-letter-only WordNet form playable in combat.
+func random_combat_word(min_length: int, max_length: int = 0) -> String:
+	if not _check_ready():
+		return ""
+	return _reader.random_combat_word(min_length, max_length)
+
+
 ## POS identifiers ("n", "v", "a", "r") the word can be used as.
 func parts_of_speech(word: String) -> Array[String]:
 	if not _check_ready():

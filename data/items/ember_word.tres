@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="KeyItem" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/key_item.gd" id="1_key_item"]
+[ext_resource type="Texture2D" path="res://assets/Art/Items/fire.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_key_item")
+id = "ember_word"
+display_name = "The Ember Word"
+description = "The living word that gives speech its warmth and meaning. Its return begins to break the White Silence."
+icon = ExtResource("2_icon")

@@ -15,7 +15,7 @@ const TAVERN_PAGE: String = "res://scenes/tavern/tavern.tscn"
 @onready var word_game_button: Button = $MinigamesPopup/Center/Panel/Menu/WordGameButton
 @onready var handwriting_button: Button = $MinigamesPopup/Center/Panel/Menu/HandwritingButton
 @onready var minigames_close_button: Button = $MinigamesPopup/Center/Panel/Menu/CloseButton
-@onready var ice_fishing_button: Button = $DebugIceFishingButton
+@onready var ice_fishing_button := get_node_or_null("DebugIceFishingButton") as Button
 @onready var health_label: Label = $StatusPanel/HealthLabel
 @onready var gold_label: Label = $StatusPanel/GoldLabel
 
@@ -32,8 +32,9 @@ func _ready() -> void:
 	handwriting_button.pressed.connect(_open_handwriting_game)
 	minigames_close_button.pressed.connect(minigames_popup.hide)
 	minigames_popup.hide()
-	ice_fishing_button.visible = OS.is_debug_build()
-	ice_fishing_button.pressed.connect(_open_ice_fishing)
+	if ice_fishing_button != null:
+		ice_fishing_button.visible = OS.is_debug_build()
+		ice_fishing_button.pressed.connect(_open_ice_fishing)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	_refresh_status()
 
@@ -44,9 +45,6 @@ func _input(event: InputEvent) -> void:
 	if event.keycode == KEY_B:
 		get_viewport().set_input_as_handled()
 		_open_tavern_page()
-	elif OS.is_debug_build() and event.keycode == KEY_I:
-		get_viewport().set_input_as_handled()
-		_open_ice_fishing()
 
 
 func _open_tavern_page() -> void:
@@ -89,8 +87,6 @@ func _open_handwriting_game() -> void:
 
 func _open_ice_fishing() -> void:
 	get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
-
-
 func _on_gold_changed(_new_total: int) -> void:
 	_refresh_status()
 

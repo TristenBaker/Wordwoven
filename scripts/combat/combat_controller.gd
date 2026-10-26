@@ -1,13 +1,14 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## Runs one combat encounter as a turn state machine: the player
 ## drafts a word, the enemy takes the damage, then retaliates.
 ## Delegates the rules to DeckManager, WordValidator,
 ## DamageCalculator, and EnemyFactory child nodes and keeps only
 ## the flow and the screen updates here.
 
-const ENCOUNTER_MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const ENCOUNTER_MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var _encounter_modifier: Dictionary = {}
-var _modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+var _modifier_runtime = preload("res://data/balance/encounter_modifier_runtime.gd").new()
 
 enum State {
 	PLAYER_INPUT,
@@ -29,7 +30,7 @@ const PARTY_SETTLE_DELAY: float = 0.25
 # Fade to black between the enemy's death and the victory tale.
 const VICTORY_FADE_TIME: float = 0.35
 
-const PROMPT_ORDER: Array[String] = ["n", "v", "a", "r"]
+const PROMPT_ORDER: Array[String] = preload("res://data/balance/tuning.gd").COMBAT_CONTROLLER_PROMPT_ORDER
 
 # Adding background array
 var backgrounds: Array[Texture2D] = [
@@ -89,7 +90,6 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 		$Layout/InputArea/WordComposerRow/OutputCounters/Gold/Value
 @onready var damage_popup: Label = $Layout/DamagePopup
 @onready var pause_menu: PauseMenu = $PauseMenu
-@onready var dev_kill_button: Button = $Layout/DevKillButton
 @onready var feedback_label: Label = \
 		$Layout/FeedbackBanner/Content/FeedbackLabel
 @onready var prompt_label: Label = $Layout/FeedbackBanner/Content/PromptLabel
@@ -123,8 +123,9 @@ func _ready() -> void:
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
-	dev_kill_button.pressed.connect(_on_dev_kill_pressed)
+	DebugTools.auto_kill_requested.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
+	$Layout/WordHistoryButton.pressed.connect(_open_word_history)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
 	_move_enemy_info_beneath_endless_route()
@@ -199,11 +200,11 @@ func _start_encounter() -> void:
 	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
 	if not ENCOUNTER_MODIFIERS.eligible(_encounter_modifier, RunState.selected_biome):
 		_encounter_modifier = {}
-	_modifier_runtime = preload("res://scripts/modifiers/encounter_modifier_runtime.gd").new()
+	_modifier_runtime = preload("res://data/balance/encounter_modifier_runtime.gd").new()
 	_modifier_runtime.configure(_encounter_modifier, int(spawn_data.attack), String(spawn_data.id))
 	if _modifier_runtime.id == "frostbite_tax" and cold.enabled:
-		cold.freeze_every = 2
-		cold.heat_per_word = 2
+		cold.freeze_every = Balance.FROSTBITE_FREEZE_EVERY
+		cold.heat_per_word = Balance.FROSTBITE_HEAT_PER_WORD
 		_refresh_cold()
 	var base_spawn: Dictionary = spawn_data
 	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)
@@ -244,7 +245,11 @@ func _pick_spawn_data() -> Dictionary:
 	RunState.next_enemy_id = ""
 	if RunState.selected_biome == "tundra":
 		var allowed: Array[String] = factory.ids_for_stage(RunState.encounter_index)
-		if not allowed.has(enemy_id):
+		var debug_pick: bool = DebugTools.free_map_select and (
+			enemy_id == factory.boss_id() or enemy_id == Balance.TUNDRA_STARTER_ENEMY
+			or Balance.ENEMY_FACTORY_TUNDRA_REGULARS.has(enemy_id)
+		)
+		if not allowed.has(enemy_id) and not debug_pick:
 			enemy_id = allowed.pick_random()
 	if enemy_id.is_empty():
 		if RunState.is_boss_next():
@@ -285,7 +290,7 @@ func _on_text_submitted(_text: String) -> void:
 
 
 func _on_submit() -> void:
-	if _state != State.PLAYER_INPUT:
+	if _state != State.PLAYER_INPUT or get_tree().paused:
 		return
 	effectiveness_indicator.clear()
 	var word: String = word_input.text.strip_edges().to_lower()
@@ -313,6 +318,7 @@ func _on_submit() -> void:
 
 
 func _on_dev_kill_pressed() -> void:
+	PlayerStats.mark_debug_assisted()
 	if _state in [State.WON, State.LOST] or enemy == null \
 			or not enemy.is_alive():
 		return
@@ -340,7 +346,13 @@ func _resolve_word(word: String) -> void:
 	validator.mark_played(word)
 	var earned_star_coin := RunState.record_word(
 		word, enemy.enemy_name, enemy.tags, result["damage"],
-		required_pos
+		required_pos, {
+			"effectiveness_label": (
+				WordEffectivenessFormat.classification(result)
+			),
+			"effectiveness": result.get("effectiveness", 0.0),
+			"semantic_multiplier": result.get("semantic_multiplier", 0.0),
+		}
 	)
 	_apply_elemental_effects(result)
 	EventBus.emit_word_resolved(result)
@@ -901,3 +913,8 @@ func _log(message: String) -> void:
 
 func _update_modifier_status(word: String = "") -> void:
 	$Layout/ActiveModifierPanel.show_status(_encounter_modifier, _modifier_runtime.status(word))
+
+
+func _open_word_history() -> void:
+	if _state == State.PLAYER_INPUT:
+		pause_menu.open_history($PauseMenu/WordHistory)

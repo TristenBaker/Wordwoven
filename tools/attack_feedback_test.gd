@@ -14,7 +14,7 @@ func check(ok: bool, description: String) -> void:
 func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
-	var definitions: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/enemies.json"))
+	var definitions: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/balance/enemies.json"))
 	for id: String in definitions:
 		RunState.start_new_run()
 		RunState.selected_biome = definitions[id].get("biome", "")

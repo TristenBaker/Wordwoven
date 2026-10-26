@@ -22,6 +22,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	_test_validation(reader)
+	_test_combat_word_bank(reader)
 	_test_parts_of_speech(reader)
 	_test_similarity(reader)
 	_test_counter_damage(reader)
@@ -37,6 +38,16 @@ func _test_validation(reader: WordNetReader) -> void:
 		not reader.word_exists("zzxqjy"), "zzxqjy rejected"
 	)
 	_expect(not reader.word_exists(""), "empty rejected")
+
+
+func _test_combat_word_bank(reader: WordNetReader) -> void:
+	_expect(reader.combat_word_count() > 50000, "combat spelling bank uses the WordNet index")
+	_expect(reader.combat_bank_has("dragon"), "noun headword is in spelling bank")
+	_expect(reader.combat_bank_has("swords"), "combat-valid plural is in spelling bank")
+	for bounds: Vector2i in [Vector2i(2, 6), Vector2i(7, 9), Vector2i(10, 0)]:
+		var word: String = reader.random_combat_word(bounds.x, bounds.y)
+		_expect(not word.is_empty() and word.length() >= bounds.x \
+			and (bounds.y == 0 or word.length() <= bounds.y), "spelling sample fits its tier")
 
 
 func _test_parts_of_speech(reader: WordNetReader) -> void:

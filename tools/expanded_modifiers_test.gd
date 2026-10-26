@@ -1,6 +1,6 @@
 extends Node
-const RUNTIME = preload("res://scripts/modifiers/encounter_modifier_runtime.gd")
-const MODIFIERS = preload("res://scripts/modifiers/encounter_modifier.gd")
+const RUNTIME = preload("res://data/balance/encounter_modifier_runtime.gd")
+const MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var failures: int = 0
 func check(ok: bool, label: String) -> void:
 	if not ok:
@@ -11,8 +11,8 @@ func _ready() -> void:
 func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
-	var enemies: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/enemies.json"))
-	var tag_catalogue: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/chameleon_tags.json"))
+	var enemies: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/balance/enemies.json"))
+	var tag_catalogue: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/balance/chameleon_tags.json"))
 	for enemy_id: String in enemies:
 		check(tag_catalogue.has(enemy_id), "authored Chameleon pairs cover " + enemy_id)
 		for pair: Array in tag_catalogue[enemy_id]:
@@ -87,7 +87,7 @@ func _run() -> void:
 			await get_tree().process_frame
 			await get_tree().process_frame
 			check(panel.size.x == 264 and panel.size.y >= panel.get_combined_minimum_size().y, id + " status fits at " + str(resolution))
-			check(is_equal_approx(panel.get_global_rect().end.y + 8, combat.dev_kill_button.get_global_rect().position.y), id + " existing panel placement")
+			check(not combat.has_node("Layout/DevKillButton"), id + " debug kill control moved to F12")
 			check(not panel.get_global_rect().intersects(combat.get_node("Layout/StatusArea").get_global_rect()), id + " status does not overlap existing UI")
 		get_tree().root.size = original_size
 		combat.set_process(false) # Freeze quick-cast time while asserting exact preview equality.

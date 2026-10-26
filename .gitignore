@@ -6,3 +6,8 @@
 .vscode/settings.json
 export_presets.cfg
 .DS_Store
+
+# Generated before playtest exports
+data/telemetry_build.json
+tools/__pycache__/
+.telemetry-test/

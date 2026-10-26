@@ -2,7 +2,7 @@ class_name CounterScorer
 extends RefCounted
 ## Scores curated thematic counters and direct WordNet antonyms.
 
-const DATA_PATH: String = "res://data/tag_counters.json"
+const DATA_PATH: String = "res://data/balance/tag_counters.json"
 
 var _reader: WordNetReader = null
 var _counters: Dictionary = {}

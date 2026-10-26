@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/settings_screen.tscn" id="4_settings"]
 [ext_resource type="Texture2D" uid="uid://csopulerv0ktq" path="res://art/backgrounds/Title Background/Title Background Updated.png" id="6_background"]
 [ext_resource type="AudioStream" uid="uid://c7b8ckewcca6v" path="res://assets/Art/Music/1 - Whispers of the Eldertree (Loop).mp3" id="6_rtw2f"]
+[ext_resource type="PackedScene" path="res://scenes/ui/progress_menu.tscn" id="sprint4_menu"]
 [ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [node name="MainMenu" type="Control" unique_id=1733250631]
@@ -80,6 +81,15 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 28
 text = "Begin the Tale"
 
+[node name="AchievementsButton" type="Button" parent="CenterBox/Menu" unique_id=567036995]
+custom_minimum_size = Vector2(320, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 22
+text = "Achievements"
+
 [node name="SettingsButton" type="Button" parent="CenterBox/Menu" unique_id=1888307953]
 custom_minimum_size = Vector2(320, 44)
 layout_mode = 2
@@ -150,3 +160,6 @@ layout_mode = 1
 stream = ExtResource("6_rtw2f")
 autoplay = true
 parameters/looping = true
+
+[node name="AchievementsMenu" parent="." unique_id=655308430 instance=ExtResource("sprint4_menu")]
+layout_mode = 1

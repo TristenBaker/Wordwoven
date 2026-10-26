@@ -1,5 +1,6 @@
 class_name ForgeSystem
 extends RefCounted
+const Balance = preload("res://data/balance/tuning.gd")
 ## Centralized forge recipes. The UI only supplies selected item tiles and a
 ## word-quality result; new recipes can be added here without changing it.
 
@@ -14,36 +15,11 @@ const ELEMENTS: Array[int] = [
 
 
 func rules() -> Array[Dictionary]:
-	return [
-		{
-			"id": "perfect_copy",
-			"name": "Perfect Copy",
-			"description": "3 same letter · same level · same element",
-			"result": "Same tile",
-		},
-		{
-			"id": "elemental_shuffle",
-			"name": "Elemental Shuffle",
-			"description": "3 same letter · same level · different elements",
-			"result": "Same letter · random element",
-		},
-		{
-			"id": "letter_shuffle",
-			"name": "Letter Shuffle",
-			"description": "3 different letters · same level · same element",
-			"result": "Random letter · same element",
-		},
-		{
-			"id": "wild_transmutation",
-			"name": "Wild Transmutation",
-			"description": "3 different letters · same level · different elements",
-			"result": "Random letter · random element",
-		},
-	]
+	return Balance.FORGE_RECIPES.duplicate(true)
 
 
 func matching_rule(items: Array[LetterStats]) -> Dictionary:
-	if items.size() != 3:
+	if items.size() != Balance.FORGE_INGREDIENT_COUNT:
 		return {}
 	var same_level: bool = _all_same_level(items)
 	var same_letter: bool = _all_same_letter(items)
@@ -91,7 +67,7 @@ func forge(items: Array[LetterStats], succeeded: bool) -> LetterStats:
 	var rule: Dictionary = matching_rule(items)
 	if rule.is_empty():
 		return null
-	var level: int = items[0].level + (1 if succeeded else 0)
+	var level: int = items[0].level + (Balance.FORGE_LEVEL_GAIN if succeeded else 0)
 	var letter: String = items[0].letter
 	var element: int = items[0].element
 	match rule["id"]:

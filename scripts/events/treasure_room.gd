@@ -1,4 +1,5 @@
 extends Control
+const Balance = preload("res://data/balance/tuning.gd")
 ## A word opens the chest, then its rewards burst out and fly to the backpack.
 
 const BODY := preload("res://assets/Fonts/Junicode.ttf")
@@ -124,8 +125,8 @@ func _submit_word() -> void:
 	var score := 0
 	for character: String in word:
 		score += int(LetterStats.BASE_POWER.get(character, 1))
-	var tier := 0 if score < 8 else (1 if score < 15 else 2)
-	pending_gold = [10, 22, 38][tier]
+	var tier := 0 if score < Balance.TREASURE_MID_SCORE else (1 if score < Balance.TREASURE_HIGH_SCORE else 2)
+	pending_gold = Balance.TREASURE_GOLD[tier]
 	total_rewards = 1
 	if tier == 2 and RunState.use_itemized_letters:
 		pending_item = RunState.rolled_letter_drop()

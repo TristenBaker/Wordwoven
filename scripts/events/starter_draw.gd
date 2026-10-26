@@ -104,7 +104,7 @@ func _on_gui_input(event: InputEvent) -> void:
 	if phase == 1:
 		_pack_tiles()
 	elif phase == 2:
-		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_MODIFIER)
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
 
 
 func _pack_tiles() -> void:

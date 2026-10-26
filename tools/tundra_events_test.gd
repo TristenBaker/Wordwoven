@@ -58,6 +58,34 @@ func _setup_between_fights() -> void:
 	RunState.defeated_enemy_ids.append("frostfang_wolf")
 
 func _run() -> void:
+	get_tree().current_scene = null
+	if not WordNet.is_ready:
+		await WordNet.loading_finished
+	for id: String in TundraEventScript.IDS:
+		RunState.start_new_run()
+		RunState.selected_biome = "tundra"
+		RunState.ensure_tundra_route_plan()
+		var depth: int = int(RunState.route_activity_stages[id])
+		RunState.route_depth = depth
+		var route_key: String = "activity_" + id
+		check(RunState.begin_optional_encounter(id, route_key), "Side quest opens: " + id)
+		var event: Control = await _go(ScenePaths.TUNDRA_EVENT)
+		check(event != null and event.encounter_id == id, "Correct side quest scene: " + id)
+		_finish_event(event)
+		check(RunState.optional_encounters.has(id), "Side quest records its result: " + id)
+		event.continue_button.pressed.emit()
+		await _wait(ScenePaths.ENCOUNTER_SELECT)
+		check(RunState.route_depth == depth + 1, "Side quest advances one map room: " + id)
+		check(RunState.encounter_index == 1, "Side quest does not consume a fight: " + id)
+	var music: AudioStreamPlayer = get_tree().root.get_node_or_null("TundraSideQuestMusic")
+	if music != null:
+		music.stop()
+		music.queue_free()
+	print("Tundra optional encounters: %d failures" % failures)
+	get_tree().quit(1 if failures else 0)
+
+
+func _run_legacy() -> void:
 	# Keep this runner alive when exercising actual scene navigation.
 	get_tree().current_scene = null
 	if not WordNet.is_ready:
@@ -75,25 +103,40 @@ func _run() -> void:
 	RunState.start_new_run()
 	check(RunState.optional_encounters.is_empty() and RunState.optional_encounter_progress.is_empty() and RunState.pending_optional_encounter.is_empty(), "New run clears visits and pending event")
 	RunState.selected_biome = "tundra"
+	RunState.ensure_tundra_route_plan()
+	if RunState.route_required_activity == "ice_fishing":
+		RunState.fishing_hole_chosen = 0
+	else:
+		RunState.optional_encounters[RunState.route_required_activity] = {"skipped": true}
 	check(not RunState.begin_optional_encounter("frozen_traveler"), "No detours before first fight")
 	var fought: Array[String] = []
 	for stage: int in range(1, 7):
 		map = await _go(ScenePaths.ENCOUNTER_SELECT)
 		check(RunState.encounter_index == stage, "Monster slot preserved: %d" % stage)
-		var cards: VBoxContainer = map.get_node("MapPanel/Margin/Content/OptionalChoices/Cards")
-		check(cards.get_child_count() == (3 if stage == 2 else 0), "Optional availability: %d" % stage)
-		if stage == 2:
+		var route_activity: String = RunState.route_activity_for_stage(stage)
+		if not route_activity.is_empty() \
+				and not RunState.route_activity_resolved(route_activity):
+			RunState.route_bypassed_activities[route_activity] = true
+			map = await _go(ScenePaths.ENCOUNTER_SELECT)
+		if false and stage == 2:
 			check(not get_tree().root.has_node("TundraSideQuestMusic"), "Entering map is silent")
-			check(map.get_node("MapPanel/Margin/Content/OptionalChoices/Title").text == "Side Quests", "Side Quests heading")
-			check(not map.has_node("MapPanel/Margin/Content/OptionalChoices/Hint"), "Removed hint")
-			for id: String in TundraEventScript.IDS:
+			check(map.route_map.has_node("Activity_ice_fishing"), "Fishing is a route branch")
+			check(map.route_map.has_node("Activity_frozen_traveler"), "Side quest is a route branch")
+			var stage_before_fishing: int = RunState.encounter_index
+			map.route_map.get_node("Activity_ice_fishing").pressed.emit()
+			var fishing = await _wait(ScenePaths.ICE_FISHING)
+			check(RunState.pending_route_activity == "ice_fishing", "Fishing remembers route origin")
+			fishing.return_button.pressed.emit()
+			map = await _wait(ScenePaths.ENCOUNTER_SELECT)
+			check(RunState.encounter_index == stage_before_fishing, "Fishing cannot replace a combat")
+			for id: String in ["frozen_traveler"]:
 				var next_enemy: String = RunState.next_enemy_id
 				var pending_fate: Dictionary = RunState.pending_encounter_modifier.duplicate(true)
-				for card: Button in cards.get_children():
-					check(not card.has_node("PreviewRow/EnemyText/EnemyTags"), "Side quest has no subtitle")
-					for monster: Button in map.route_map._buttons:
-						check(not card.get_global_rect().intersects(monster.get_global_rect()), "Optional cards clear monsters")
-				cards.get_node("Event_" + id).pressed.emit()
+				var activity_path: String = "Activity_" + id
+				check(map.route_map.has_node(activity_path), "Rotating route reveals " + id)
+				var card: Button = map.route_map.get_node(activity_path)
+				check(card.has_node("PreviewRow/EnemyText/ActivitySubtitle"), "Side quest explains its route")
+				card.pressed.emit()
 				var event = await _wait(ScenePaths.TUNDRA_EVENT)
 				var music: AudioStreamPlayer = get_tree().root.get_node("TundraSideQuestMusic")
 				check(music.playing and music.bus == &"Music" and music.stream.resource_path.ends_with("2 - Crystal Veil (Loop).mp3"), "Each side quest starts Crystal Veil on Music bus")
@@ -143,9 +186,10 @@ func _run() -> void:
 				map = await _wait(ScenePaths.ENCOUNTER_SELECT)
 				check(not get_tree().root.has_node("TundraSideQuestMusic"), "Returning to map stops and removes side quest music")
 				check(RunState.encounter_index == stage and RunState.next_enemy_id == next_enemy and RunState.pending_encounter_modifier == pending_fate, "Detour preserves monster and adjective state")
-				cards = map.get_node("MapPanel/Margin/Content/OptionalChoices/Cards")
-			check(cards.get_child_count() == 0, "Completed detours disappear")
-		map.route_map._buttons[0].pressed.emit()
+			check(map.route_map.get_node("Activity_frozen_traveler").disabled, "Completed side quests remain visible but cannot repeat")
+		var combat_button: Button = _available_combat_button(map)
+		check(combat_button != null, "Current combat branch is selectable")
+		combat_button.pressed.emit()
 		var preparation = await _wait(ScenePaths.ENCOUNTER_MODIFIER)
 		preparation._input.text = "strong"
 		preparation._submit.pressed.emit()
@@ -158,7 +202,7 @@ func _run() -> void:
 		check(combat._encounter_modifier.size() > 0 and combat.timer_label.text.contains("Quick-cast"), "Modifier and quick-cast preserved")
 		check(combat.cold.enabled and combat.cold.frozen.is_empty(), "Existing cold reset preserved")
 		check(id == "frostfang_wolf" if stage == 1 else (id == "frost_wyrm" if stage == 6 else id in EnemyFactory.TUNDRA_REGULARS), "Required Tundra monster: %d" % stage)
-		combat.dev_kill_button.pressed.emit()
+		DebugTools.auto_kill_button.pressed.emit()
 		var completion = await _wait(ScenePaths.FIGHT_COMPLETION)
 		completion.continue_button.pressed.emit()
 		var powers = await _wait(ScenePaths.POWER_SELECT)
@@ -194,10 +238,42 @@ func _check_layouts() -> void:
 		viewport.add_child(map)
 		await _frames()
 		var bounds := Rect2(Vector2.ZERO, Vector2(dimensions))
-		for card: Button in map.get_node("MapPanel/Margin/Content/OptionalChoices/Cards").get_children():
+		var second_column_nodes: int = 0
+		for route_node: Dictionary in map.route_map._nodes:
+			if int(route_node.column) == 2:
+				second_column_nodes += 1
+		check(second_column_nodes >= 2, "The opening combat immediately splits into room choices")
+		for activity_id: String in ["ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest"]:
+			var activity_button: Button = map.route_map.get_node("Activity_" + activity_id)
+			var activity_detail: Label = activity_button.get_node("PreviewRow/EnemyText/ActivitySubtitle")
+			check(activity_detail.text.is_empty(), "Activity cards omit detour/required labels")
+			var activity_node: Dictionary = map.route_map._button_nodes[activity_button]
+			var same_column: int = 0
+			for route_node: Dictionary in map.route_map._nodes:
+				if int(route_node.column) == int(activity_node.column):
+					same_column += 1
+			if activity_id == RunState.route_required_activity:
+				check(same_column == 1, "Required activity is the only node in its column")
+			else:
+				check(same_column in [2, 3] and not map.route_map.has_node("Pass_" + activity_id), "Optional minigame is a real room on the combat fork")
+		for source_key: String in RunState.route_edges:
+			check(RunState.route_edges[source_key].size() <= 3, "A room exposes at most three exits")
+		for column_index: int in range(1, RunState.route_graph_columns.size() - 1):
+			var sources: Array = RunState.route_graph_columns[column_index]
+			var destinations: Array = RunState.route_graph_columns[column_index + 1]
+			if sources.size() <= 1 or destinations.size() <= 1:
+				continue
+			var fully_connected: bool = true
+			for source: String in sources:
+				if RunState.route_edges[source].size() < destinations.size():
+					fully_connected = false
+			check(not fully_connected, "Split rooms have distinct outgoing paths")
+		for index: int in map.route_map._buttons.size():
+			var card: Button = map.route_map._buttons[index]
 			check(bounds.encloses(card.get_global_rect()), "Map card fits " + str(dimensions))
-			for monster: Button in map.route_map._buttons:
-				check(not card.get_global_rect().intersects(monster.get_global_rect()), "Map cards do not overlap " + str(dimensions))
+			for other_index: int in range(index + 1, map.route_map._buttons.size()):
+				var other: Button = map.route_map._buttons[other_index]
+				check(not card.get_global_rect().intersects(other.get_global_rect()), "Route branches do not overlap " + str(dimensions))
 		map.queue_free()
 		await _frames()
 		RunState.encounter_index = 6
@@ -205,8 +281,12 @@ func _check_layouts() -> void:
 		map = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 		viewport.add_child(map)
 		await _frames()
-		check(map.route_map._buttons.size() == 1 and RunState.optional_encounter_available("icy_portal"), "Unvisited detours coexist with boss")
-		check(bounds.encloses(map.route_map._buttons[0].get_global_rect()), "Boss fits alongside detours " + str(dimensions))
+		var planned_nodes: int = 0
+		for column: Array in RunState.route_graph_columns:
+			planned_nodes += column.size()
+		check(map.route_map._buttons.size() == planned_nodes, "The entire route remains visible at the boss")
+		for card: Button in map.route_map._buttons:
+			check(bounds.encloses(card.get_global_rect()), "Boss map fits " + str(dimensions))
 		map.queue_free()
 		await _frames()
 		RunState.encounter_index = 2
@@ -248,6 +328,19 @@ func _check_layouts() -> void:
 			await _frames()
 		viewport.queue_free()
 		await _frames()
+
+
+func _available_combat_button(map: Control) -> Button:
+	for button: Button in map.route_map._buttons:
+		var node: Dictionary = map.route_map._button_nodes[button]
+		if (
+			String(node.get("type", "enemy")) in ["enemy", "boss"]
+			and int(node.get("stage", 0)) == RunState.encounter_index
+			and not button.disabled
+		):
+			return button
+	return null
+
 
 func _check_banner(event: Control, bounds: Rect2, context: String) -> void:
 	var banner: Rect2 = event.feedback_banner.get_global_rect()

@@ -1,15 +1,14 @@
 class_name EnemyFactory
 extends Node
+const Balance = preload("res://data/balance/tuning.gd")
 ## Loads enemy definitions from data and builds the spawn data for
 ## an encounter: stats plus randomly rolled word tags. Tiers gate
 ## which enemies appear at which stage of the run; the highest tier
 ## is reserved for the final boss.
 
-const ENEMIES_DATA_PATH: String = "res://data/enemies.json"
-const BOSS_TIER: int = 4
-const TUNDRA_REGULARS: Array[String] = [
-	"glacier_bear", "frozen_revenant", "winter_wraith", "tundra_behemoth",
-]
+const ENEMIES_DATA_PATH: String = "res://data/balance/enemies.json"
+const BOSS_TIER: int = preload("res://data/balance/tuning.gd").ENEMY_FACTORY_BOSS_TIER
+const TUNDRA_REGULARS: Array[String] = preload("res://data/balance/tuning.gd").ENEMY_FACTORY_TUNDRA_REGULARS
 
 # Enemy id -> definition dictionary, loaded once.
 var _definitions: Dictionary = {}
@@ -32,13 +31,15 @@ func ids_for_stage(stage: int) -> Array[String]:
 		return endless_ids
 	if RunState.selected_biome == "tundra":
 		if stage == 1:
-			return ["frostfang_wolf"]
-		if stage >= RunState.ENCOUNTERS_PER_RUN:
-			return ["frost_wyrm"]
+			return [Balance.TUNDRA_STARTER_ENEMY]
+		if RunState.is_boss_next():
+			return [Balance.TUNDRA_BOSS_ENEMY]
 		var remaining: Array[String] = []
 		for id: String in TUNDRA_REGULARS:
 			if not RunState.defeated_enemy_ids.has(id):
 				remaining.append(id)
+		if remaining.is_empty():
+			remaining = TUNDRA_REGULARS.duplicate()
 		return remaining
 	var tier: int = _tier_for_stage(stage)
 	var ids: Array[String] = []
@@ -51,7 +52,7 @@ func ids_for_stage(stage: int) -> Array[String]:
 ## The boss enemy id (first definition at the boss tier).
 func boss_id() -> String:
 	if RunState.selected_biome == "tundra":
-		return "frost_wyrm"
+		return Balance.TUNDRA_BOSS_ENEMY
 	for id: String in _definitions:
 		if _definitions[id].get("biome", "") == "" and _definitions[id]["tier"] == BOSS_TIER:
 			return id
@@ -79,15 +80,18 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 	# Regular Tundra foes grow with their chosen slot, regardless of order.
 	var growth: int = 0
 	if definition.get("biome", "") == "tundra" and enemy_id in TUNDRA_REGULARS:
-		growth = clampi(RunState.encounter_index - 2, 0, 3)
-	var health: int = int(definition["health"]) + growth * 6
-	var attack: int = int(definition["attack"]) + growth
-	var gold: int = int(definition["gold"]) + growth * 6
+		growth = clampi(
+			RunState.encounter_index - Balance.TUNDRA_GROWTH_START,
+			0, Balance.TUNDRA_GROWTH_CAP
+		)
+	var health: int = int(definition["health"]) + growth * Balance.TUNDRA_HEALTH_GROWTH
+	var attack: int = int(definition["attack"]) + growth * Balance.TUNDRA_ATTACK_GROWTH
+	var gold: int = int(definition["gold"]) + growth * Balance.TUNDRA_GOLD_GROWTH
 	if RunState.is_endless():
 		var wave: int = maxi(RunState.encounter_index - 1, 0)
-		health += wave * 9
-		attack += floori(float(wave) / 2.0)
-		gold += 3 + wave * 2
+		health += wave * Balance.ENEMY_FACTORY_ENDLESS_HEALTH_PER_WAVE
+		attack += wave / Balance.ENEMY_FACTORY_ENDLESS_ATTACK_WAVE_INTERVAL
+		gold += Balance.ENEMY_FACTORY_ENDLESS_GOLD_BASE + wave * Balance.ENEMY_FACTORY_ENDLESS_GOLD_PER_WAVE
 	return {
 		"id": enemy_id,
 		"name": definition["name"],
@@ -124,7 +128,7 @@ func build_spawn_data_with_tags(
 func _tier_for_stage(stage: int) -> int:
 	if stage >= RunState.ENCOUNTERS_PER_RUN:
 		return BOSS_TIER
-	return clampi(floor((stage + 1) / 2.0), 1, 3)
+	return clampi(floor((stage + 1) / Balance.ENEMY_STAGES_PER_TIER), 1, Balance.ENEMY_REGULAR_MAX_TIER)
 
 
 func _load_definitions() -> void:

@@ -5,6 +5,9 @@ part of speech, counter the enemy's nature, and hear your exact
 words woven into the story of its defeat.
 Built with Godot 4.7 (standard build, pure GDScript).
 
+Game balancing lives in [`data/balance/`](data/balance/README.md): tuning,
+enemy and power catalogs, word scoring, encounter rules, and rewards.
+
 Full design document: [docs/GDD.md](docs/GDD.md).
 Code style: [docs/gdscript-style.md](docs/gdscript-style.md).
 
@@ -14,7 +17,7 @@ Fight → draw letters → write a noun, base-form verb, adjective,
 or adverb as prompted → counter the enemy's tags for bonus damage
 → survive retaliation → read your victory story and choose a free
 power → recruit or dismiss letters and hear the bard at the tavern
-→ choose the next encounter → defeat the boss.
+→ follow a newly rolled route of combats and word-minigame gates → defeat the boss.
 
 ## Gameplay rules
 
@@ -95,3 +98,8 @@ F12 toggles the developer overlay in-game: full damage-math
 breakdown of the last word, a live counter tester, gold and
 healing cheats, skip-to-tavern, and forcing enemy tags or drawn
 letters.
+
+## Playtest data
+
+Offline gameplay telemetry identifies each build by Git branch and commit.
+See [playtest setup and reports](docs/telemetry.md) before exporting a test build.

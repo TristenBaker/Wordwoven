@@ -6,6 +6,7 @@ const BODY := preload("res://assets/Fonts/Junicode.ttf")
 const COIN := preload("res://assets/Art/Events/coin.png")
 const COIN_PILE := preload("res://assets/Art/Events/coin_pile.png")
 const LETTER_TILE_SCENE := preload("res://scenes/combat/letter_tile.tscn")
+const EMBER_WORD: Resource = preload("res://data/items/ember_word.tres")
 
 var reward_stage: Control
 var effects: Control
@@ -53,6 +54,8 @@ func _build_reward_stage() -> void:
 	board.add_child(content)
 	content.add_child(_label("MONSTER DROPS", 42, Color("ffe08a")))
 	content.add_child(_label("%s left behind:" % RunState.pending_victory_enemy, 22, Color("f6ead4")))
+	if RunState.is_boss_next():
+		content.add_child(_label("KEY ITEM FOUND: %s" % EMBER_WORD.display_name, 19, Color("ffcf69")))
 	var rewards := HBoxContainer.new()
 	rewards.custom_minimum_size = Vector2(550, 176)
 	rewards.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -93,6 +96,8 @@ func _build_reward_stage() -> void:
 	reward_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
 	reward_prompt.add_theme_constant_override("outline_size", 5)
 	reward_stage.add_child(reward_prompt)
+
+
 func _on_reward_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		return
@@ -201,6 +206,8 @@ func _reward_board_style() -> StyleBoxFlat:
 func _finish_rewards() -> void:
 	var defeated_boss := RunState.is_boss_next()
 	var visit_endless_shop := RunState.endless_shop_due()
+	if defeated_boss:
+		RunState.grant_key_item(EMBER_WORD)
 	RunState.advance_encounter()
 	RunState.clear_pending_victory()
 	if defeated_boss:

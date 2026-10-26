@@ -1,7 +1,7 @@
 class_name TundraEvents
 extends RefCounted
 ## Optional rewards use existing RunState APIs; combat-local systems remain untouched.
-const DATA_PATH: String = "res://data/tundra_events.json"
+const DATA_PATH: String = "res://data/balance/tundra_events.json"
 const IDS: Array[String] = ["frozen_traveler", "treasure_chest", "icy_portal"]
 
 static func definition(id: String) -> Dictionary:
@@ -24,9 +24,9 @@ static func frame_texture(data: Dictionary, frame: int) -> AtlasTexture:
 
 static func rules(id: String) -> GDScript:
 	match id:
-		"frozen_traveler": return preload("res://scripts/encounters/traveler_rescue.gd")
-		"icy_portal": return preload("res://scripts/encounters/portal_stabilization.gd")
-		"treasure_chest": return preload("res://scripts/encounters/chest_locks.gd")
+		"frozen_traveler": return preload("res://data/balance/traveler_rescue.gd")
+		"icy_portal": return preload("res://data/balance/portal_stabilization.gd")
+		"treasure_chest": return preload("res://data/balance/chest_locks.gd")
 	return null
 
 static func progress(id: String) -> Dictionary:

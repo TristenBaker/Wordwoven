@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://db4pb4ibjilog"]
 
+[ext_resource type="PackedScene" path="res://scenes/ui/player_statistics.tscn" id="sprint4_stats"]
+
 [ext_resource type="Script" uid="uid://bf4la1dd76dyw" path="res://scripts/ui/run_summary.gd" id="1_summary"]
 [ext_resource type="Texture2D" uid="uid://b04nyp4knpk2l" path="res://art/backgrounds/Defeat.png" id="2_hppug"]
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="2_title"]
@@ -34,7 +36,7 @@ grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="CenterBox" unique_id=838602790]
 layout_mode = 2
-theme_override_constants/separation = 28
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="TitleLabel" type="Label" parent="CenterBox/Menu" unique_id=1093796759]
@@ -49,6 +51,9 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
+
+[node name="PlayerStatistics" parent="CenterBox/Menu" instance=ExtResource("sprint4_stats")]
+layout_mode = 2
 
 [node name="MenuButton" type="Button" parent="CenterBox/Menu" unique_id=1797901670]
 custom_minimum_size = Vector2(240, 52)

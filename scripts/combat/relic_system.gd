@@ -2,16 +2,11 @@ class_name RelicSystem
 extends RefCounted
 ## Owns the power catalog, weighted rarity rolls, and reward guard.
 
-const RELICS_DATA_PATH: String = "res://data/relics.json"
+const RELICS_DATA_PATH: String = "res://data/balance/relics.json"
 
 var _relics: Dictionary = {}
 
-const QUALITY_WEIGHTS: Dictionary[String, int] = {
-	"common": 60,
-	"uncommon": 20,
-	"rare": 15,
-	"legendary": 5,
-}
+const QUALITY_WEIGHTS: Dictionary[String, int] = preload("res://data/balance/tuning.gd").RELIC_SYSTEM_QUALITY_WEIGHTS
 
 const QUALITY_COLORS: Dictionary[String, Color] = {
 	"common": Color("d8d1c1"),

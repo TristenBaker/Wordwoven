@@ -19,6 +19,8 @@ const TREASURE_ROOM: String = "res://scenes/events/treasure_room.tscn"
 const WORD_GAME: String = "res://scenes/tavern/word_game.tscn"
 const HANDWRITING_GAME: String = "res://scenes/tavern/handwriting_game.tscn"
 const ICE_FISHING: String = "res://scenes/ice_fishing.tscn"
+const TUNDRA_INTRO: String = "res://scenes/story/tundra_intro.tscn"
+const LORE_ROOM: String = "res://scenes/story/lore_room.tscn"
 const ENCOUNTER_SELECT: String = \
 		"res://scenes/encounter_select.tscn"
 const RUN_WON: String = "res://scenes/run_won.tscn"
@@ -27,3 +29,4 @@ const RUN_LOST: String = "res://scenes/run_lost.tscn"
 const ENCOUNTER_MODIFIER: String = "res://scenes/pre_fight/encounter_modifier.tscn"
 
 const TUNDRA_EVENT: String = "res://scenes/encounters/tundra_event.tscn"
+const HANGMAN: String = "res://scenes/encounters/hangman.tscn"

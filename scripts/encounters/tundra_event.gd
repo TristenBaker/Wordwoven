@@ -196,5 +196,8 @@ func _sync_feedback_banner() -> void:
 	feedback_banner.visible = not _finished and not feedback.text.strip_edges().is_empty()
 
 func _return_to_map() -> void:
+	if RunState.optional_encounters.has(encounter_id) \
+			and RunState.pending_route_activity == encounter_id:
+		RunState.finish_route_activity()
 	RunState.pending_optional_encounter = ""
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
