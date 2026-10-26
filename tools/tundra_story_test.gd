@@ -60,7 +60,11 @@ func _ready() -> void:
 	add_child(boss_loot)
 	await get_tree().process_frame
 	check(RunState.has_key_item(EMBER_WORD.id), "The boss reward grants the Ember Word")
-	check(boss_loot.title_label.text == EMBER_WORD.display_name, "The boss reward names the item")
+	check(
+		boss_loot.key_item_label != null
+		and boss_loot.key_item_label.text.contains(EMBER_WORD.display_name),
+		"The boss reward names the item"
+	)
 	var repeated_loot: Control = load(ScenePaths.LOOT_DROP).instantiate()
 	add_child(repeated_loot)
 	await get_tree().process_frame

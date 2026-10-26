@@ -11,6 +11,7 @@ const EMBER_WORD: Resource = preload("res://data/items/ember_word.tres")
 var reward_stage: Control
 var effects: Control
 var reward_prompt: Label
+var key_item_label: Label
 var gold_reward: TextureRect
 var tile_reward: LetterTile
 var phase := 0
@@ -55,7 +56,12 @@ func _build_reward_stage() -> void:
 	content.add_child(_label("MONSTER DROPS", 42, Color("ffe08a")))
 	content.add_child(_label("%s left behind:" % RunState.pending_victory_enemy, 22, Color("f6ead4")))
 	if RunState.is_boss_next():
-		content.add_child(_label("KEY ITEM FOUND: %s" % EMBER_WORD.display_name, 19, Color("ffcf69")))
+		RunState.grant_key_item(EMBER_WORD)
+		key_item_label = _label(
+			"KEY ITEM FOUND: %s" % EMBER_WORD.display_name,
+			19, Color("ffcf69")
+		)
+		content.add_child(key_item_label)
 	var rewards := HBoxContainer.new()
 	rewards.custom_minimum_size = Vector2(550, 176)
 	rewards.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -206,8 +212,6 @@ func _reward_board_style() -> StyleBoxFlat:
 func _finish_rewards() -> void:
 	var defeated_boss := RunState.is_boss_next()
 	var visit_endless_shop := RunState.endless_shop_due()
-	if defeated_boss:
-		RunState.grant_key_item(EMBER_WORD)
 	RunState.advance_encounter()
 	RunState.clear_pending_victory()
 	if defeated_boss:
