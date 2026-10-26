@@ -379,7 +379,8 @@ func record_word(
 	tags: Array[String],
 	damage: float,
 	pos: String = ""
-) -> void:
+) -> bool:
+	var earned_star_coin := PlayerProfile.record_unique_word(word)
 	word_history.append({
 		"word": word,
 		"enemy": enemy_name,
@@ -388,6 +389,7 @@ func record_word(
 		"pos": pos,
 		"encounter": encounter_index,
 	})
+	return earned_star_coin
 
 
 func cache_encounter_modifier(enemy_id: String, word: String, modifier_id: String) -> Dictionary:

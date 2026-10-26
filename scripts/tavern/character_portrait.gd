@@ -47,7 +47,8 @@ func texture_for(stats: LetterStats) -> Texture2D:
 	var tiers: Array[Texture2D] = _tiers_for(stats.element)
 	if tiers.is_empty():
 		return null
-	return tiers[clampi(stats.level - 1, 0, tiers.size() - 1)]
+	var default_texture: Texture2D = tiers[clampi(stats.level - 1, 0, tiers.size() - 1)]
+	return PlayerProfile.cosmetic_texture(stats.letter, default_texture)
 
 
 func _tiers_for(element: int) -> Array[Texture2D]:

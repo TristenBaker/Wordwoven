@@ -107,9 +107,14 @@ func effect_text() -> String:
 func throughput_text() -> String:
 	var base: int = BASE_POWER.get(letter, 1)
 	var level_multiplier: float = 1.0 + LEVEL_POWER_STEP * float(level - 1)
-	var text := "Damage: %d base × %.2f level = %.1f %s per use." % [
-		base, level_multiplier, power(), element_name_text(),
+	var element_multiplier := DamageCalculator.elemental_potency_multiplier(
+		element_name_text().to_lower()
+	)
+	var text := "Damage: %d base × %.2f level × %.2f active elemental potency = %.1f %s per use." % [
+		base, level_multiplier, element_multiplier,
+		power() * element_multiplier, element_name_text(),
 	]
+	text += " Before word bonuses and enemy affinity."
 	if modifier == Modifier.HEAVY:
 		text += " Heavy adds +4 before elemental effects."
 	elif modifier == Modifier.KEEN:

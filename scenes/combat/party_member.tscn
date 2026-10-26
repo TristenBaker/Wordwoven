@@ -1,9 +1,7 @@
 [gd_scene format=3 uid="uid://dpnvyruifir1a"]
 
 [ext_resource type="Script" uid="uid://da3viasnx3gq1" path="res://scripts/combat/party_member.gd" id="1_member"]
-[ext_resource type="SpriteFrames" uid="uid://bcgxp2tgc1k4b" path="res://art/party/chibi/warrior_frames.tres" id="2_warrior"]
-[ext_resource type="SpriteFrames" uid="uid://rhqol2mmdd3" path="res://art/party/chibi/healer_frames.tres" id="3_healer"]
-[ext_resource type="SpriteFrames" uid="uid://6y71lmp4m64" path="res://art/party/chibi/rogue_frames.tres" id="4_rogue"]
+[ext_resource type="SpriteFrames" uid="uid://bcgxp2tgc1k4b" path="res://art/party/chibi/warrior_frames.tres" id="2_default_frames"]
 [ext_resource type="Texture2D" uid="uid://csmwwxdgx7uqt" path="res://art/party/effects/spark.png" id="5_spark"]
 [ext_resource type="Texture2D" uid="uid://2fqg3bgal80w" path="res://art/party/effects/heal_ring.png" id="6_ring"]
 [ext_resource type="Texture2D" uid="uid://b21yqufcf7lhg" path="res://art/party/effects/impact_burst.png" id="7_burst"]
@@ -15,9 +13,6 @@ colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
 
 [node name="PartyMember" type="Node2D"]
 script = ExtResource("1_member")
-warrior_frames = ExtResource("2_warrior")
-healer_frames = ExtResource("3_healer")
-rogue_frames = ExtResource("4_rogue")
 
 [node name="Shadow" type="Sprite2D" parent="."]
 position = Vector2(0, -1)
@@ -48,7 +43,7 @@ color = Color(0.86, 0.76, 0.6, 0.8)
 scale = Vector2(3, 3)
 
 [node name="Sprite" type="AnimatedSprite2D" parent="Body"]
-sprite_frames = ExtResource("2_warrior")
+sprite_frames = ExtResource("2_default_frames")
 animation = &"idle"
 offset = Vector2(0, -13)
 

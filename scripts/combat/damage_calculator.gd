@@ -176,6 +176,20 @@ func _empty_elemental_damage() -> Dictionary:
 	}
 
 
+## Shared by combat previews and letter information. Word and enemy-specific
+## multipliers are applied separately, but every persistent/relic potency bonus
+## must pass through this one function.
+static func elemental_potency_multiplier(
+	element_name: String, relic_system: RelicSystem = null
+) -> float:
+	var effects := relic_system if relic_system != null else RelicSystem.new()
+	return (
+		1.0
+		+ effects.total_effect("all_element_damage_multiplier")
+		+ effects.total_effect(element_name + "_damage_multiplier")
+	) * PlayerProfile.element_potency_multiplier(element_name)
+
+
 func _apply_affinities(
 	base_damage: Dictionary, word_multiplier: float, affinities: Dictionary
 ) -> Dictionary:
@@ -183,9 +197,9 @@ func _apply_affinities(
 	var relic_system: RelicSystem = RelicSystem.new()
 	for element_name: String in damage:
 		var affinity: float = float(affinities.get(element_name, 1.0))
-		var power_multiplier: float = 1.0 \
-			+ relic_system.total_effect("all_element_damage_multiplier") \
-			+ relic_system.total_effect(element_name + "_damage_multiplier")
+		var power_multiplier := elemental_potency_multiplier(
+			element_name, relic_system
+		)
 		damage[element_name] = float(base_damage[element_name]) \
 			* word_multiplier * affinity * power_multiplier
 	return damage

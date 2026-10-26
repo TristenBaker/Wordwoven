@@ -35,6 +35,10 @@ static func create_for(stats: LetterStats) -> LetterTooltip:
 func _content_for(stats: LetterStats) -> String:
 	var element_color: Color = _element_color(stats.element)
 	var color_code: String = element_color.to_html(false)
+	var multiplier := DamageCalculator.elemental_potency_multiplier(
+		stats.element_name_text().to_lower()
+	)
+	var current_damage := stats.power() * multiplier
 	var lines: Array[String] = [
 		"[center][font_size=24][b]%s[/b][/font_size][/center]" % stats.letter.to_upper(),
 		"[center][color=#%s][b]%s[/b][/color][/center]" % [
@@ -45,8 +49,11 @@ func _content_for(stats: LetterStats) -> String:
 		],
 		"",
 		stats.element_detail_text(),
-		"[b]Base contribution:[/b] [color=#%s][b]%.1f %s damage[/b][/color] per use." % [
-			color_code, stats.power(), stats.element_name_text(),
+		"[b]Current contribution:[/b] [color=#%s][b]%.1f %s damage[/b][/color] per use." % [
+			color_code, current_damage, stats.element_name_text(),
+		],
+		"[b]Calculation:[/b] %.1f tile power × %.2f active elemental potency. Before word bonuses and enemy affinity." % [
+			stats.power(), multiplier,
 		],
 		"",
 		"[b]Affected by powers:[/b]",

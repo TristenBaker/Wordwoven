@@ -50,7 +50,9 @@ func inspect(stats: LetterStats) -> void:
 	_element_label.add_theme_color_override("font_color", color)
 	_level_label.text = "Level %d" % stats.level
 	_level_label.add_theme_color_override("font_color", color)
-	_portrait.texture = _portrait_for(stats.element)
+	_portrait.texture = PlayerProfile.cosmetic_texture(
+		stats.letter, _portrait_for(stats.element)
+	)
 	_description_label.text = stats.element_detail_text()
 	_throughput_label.text = stats.throughput_text()
 	_rebuild_powers(stats, color)

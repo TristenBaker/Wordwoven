@@ -1,10 +1,11 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [ext_resource type="Script" path="res://scripts/ui/equipment_overlay.gd" id="1_script"]
 [ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="2_body"]
 [ext_resource type="Texture2D" path="res://assets/Art/Events/WW_backpack.png" id="3_backpack"]
+[ext_resource type="Texture2D" path="res://assets/Art/Items/starcoin.png" id="4_starcoin"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.105, 0.05, 0.02, 0.98)
@@ -45,10 +46,35 @@ offset_left = -108.0
 offset_top = -108.0
 offset_right = -30.0
 offset_bottom = -30.0
-tooltip_text = "Open backpack — letters and powers"
+tooltip_text = "Open backpack — letters and powers\nStarCoins can be spent after the run ends."
 ignore_texture_size = true
 stretch_mode = 0
 texture_normal = ExtResource("3_backpack")
+
+[node name="StarCoinIcon" type="TextureRect" parent="EquipButton"]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 67.0
+offset_right = 25.0
+offset_bottom = 87.0
+mouse_filter = 2
+texture = ExtResource("4_starcoin")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StarCoinCount" type="Label" parent="EquipButton"]
+layout_mode = 0
+offset_left = 25.0
+offset_top = 67.0
+offset_right = 86.0
+offset_bottom = 89.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.89, 0.95, 1, 1)
+theme_override_colors/font_outline_color = Color(0.07, 0.025, 0.12, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_body")
+theme_override_font_sizes/font_size = 17
+text = "0"
 
 [node name="EquipmentPanel" type="PanelContainer" parent="."]
 layout_mode = 1

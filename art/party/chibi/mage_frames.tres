@@ -1,0 +1,84 @@
+[gd_resource type="SpriteFrames" load_steps=11 format=3]
+
+[ext_resource type="Texture2D" path="res://art/party/chibi/mage.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_idle_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_walk_3"]
+atlas = ExtResource("1_sheet")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(512, 0, 64, 64)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_cast_2")
+}],
+"loop": 0,
+"name": &"cast",
+"speed": 14.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_idle_1")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_walk_3")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 12.0
+}]
