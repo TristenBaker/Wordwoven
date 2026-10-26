@@ -129,6 +129,27 @@ const WORD_GAME_WORDS: Array[String] = ["ember", "frost", "quill", "rhyme", "sto
 # ENCOUNTER_SELECT
 const ENCOUNTER_SELECT_CHOICE_COUNT: int = 2
 
+# TUNDRA EXPEDITION ROUTE
+# Total columns are start + intermediate columns + boss.
+const ROUTE_INTERMEDIATE_COLUMNS: int = 7
+const ROUTE_MIN_NODES_PER_COLUMN: int = 3
+const ROUTE_MAX_NODES_PER_COLUMN: int = 3
+const ROUTE_MIN_COMBATS_PER_PATH: int = 4
+# Room categories stay visible for the whole expedition so route choices can
+# be planned in advance. Exact enemy details are revealed only when nearby.
+const ROUTE_REVEAL_DISTANCE: int = 99
+const ROUTE_ELITE_HEALTH_MULTIPLIER: float = 1.35
+const ROUTE_ELITE_ATTACK_MULTIPLIER: float = 1.25
+const ROUTE_ELITE_GOLD_MULTIPLIER: float = 1.6
+const ROUTE_ACTIVITY_WEIGHTS: Dictionary[String, int] = {
+	"treasure": 18,
+	"letter_reward": 18,
+	"relic_reward": 13,
+	"recovery": 15,
+	"forge": 10,
+	"random_event": 16,
+}
+
 # DECK_MANAGER
 const DECK_MANAGER_HAND_SIZE: int = 8
 

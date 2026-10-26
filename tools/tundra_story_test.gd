@@ -18,10 +18,10 @@ func _ready() -> void:
 	RunState.ensure_tundra_route_plan()
 
 	check(
-		RunState.route_graph_columns[3] == [
-			"activity_lore_room_0", "activity_lore_room_1",
-		],
-		"The lore room appears early on both established branches"
+		RunState.route_graph_columns[3].size() == 3
+		and String(RunState.route_nodes[RunState.route_graph_columns[3][0]].content_id) == "lore_room"
+		and String(RunState.route_nodes[RunState.route_graph_columns[3][1]].content_id) == "lore_room",
+		"The lore room appears early on two established branches"
 	)
 
 	var intro: Control = load(ScenePaths.TUNDRA_INTRO).instantiate()
@@ -36,7 +36,7 @@ func _ready() -> void:
 	intro.queue_free()
 
 	RunState.pending_route_activity = "lore_room"
-	RunState.pending_route_key = "activity_lore_room_0"
+	RunState.pending_route_key = String(RunState.route_graph_columns[3][0])
 	var lore: Control = load(ScenePaths.LORE_ROOM).instantiate()
 	add_child(lore)
 	await get_tree().process_frame
@@ -54,7 +54,7 @@ func _ready() -> void:
 
 	RunState.pending_route_activity = ""
 	RunState.pending_route_key = ""
-	RunState.route_depth = RunState.route_graph_columns.size()
+	RunState.debug_jump_to_route_node(RunState.route_boss_key, 0)
 	RunState.begin_victory("Frost Wyrm", 100)
 	var boss_loot: Control = load(ScenePaths.LOOT_DROP).instantiate()
 	add_child(boss_loot)

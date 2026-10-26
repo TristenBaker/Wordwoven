@@ -3,7 +3,8 @@ extends Control
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 const Balance = preload("res://data/balance/tuning.gd")
 const FISHING_ICON: Texture2D = preload("res://assets/Art/Items/dead fish.png")
-const HANGMAN_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
+const RELIC_TRIAL_ICON: Texture2D = preload("res://assets/Art/Items/route_relic_trial.png")
+const FORGE_ICON: Texture2D = preload("res://assets/Art/Items/route_forge.png")
 const LORE_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
 const ROUTE_ACTIVITY_ORDER: Array[String] = [
 	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
@@ -49,7 +50,7 @@ func _ready() -> void:
 		else:
 			title_label.text = "Chart Your Course"
 			subtitle_label.text = \
-					"Each room advances the journey. Your route closes paths behind you."
+					"Plan ahead: every future room type is shown. Each choice closes other paths."
 		if DebugTools.free_map_select:
 			title_label.text = "Free Encounter Select"
 			subtitle_label.text = "Debug mode: choose any room on the map."
@@ -81,12 +82,11 @@ func _build_tundra_route() -> Array[Dictionary]:
 		var depth: int = column_index + 1
 		var column_nodes: Array[Dictionary] = []
 		for route_key: String in RunState.route_graph_columns[column_index]:
-			if route_key == "boss":
-				column_nodes.append(_boss_node(depth))
-			elif route_key.begins_with("activity_"):
-				column_nodes.append(_activity_node(route_key, depth))
-			else:
+			var model: Dictionary = RunState.route_nodes[route_key]
+			if String(model.node_type) in ["normal_combat", "elite_combat", "boss"]:
 				column_nodes.append(_combat_node(route_key, depth))
+			else:
+				column_nodes.append(_activity_node(route_key, depth))
 		_append_column(nodes, column_nodes, depth, "")
 	for node: Dictionary in nodes:
 		node["next_keys"] = RunState.route_edges.get(
@@ -109,60 +109,52 @@ func _append_column(
 
 
 func _combat_node(route_key: String, depth: int) -> Dictionary:
-	var slot: int = int(route_key.get_slice("_", 2))
-	if DebugTools.free_map_select:
-		var enemy_id: String = Balance.TUNDRA_STARTER_ENEMY if depth == 1 else \
-			RunState.route_enemy_order[(depth + slot) % RunState.route_enemy_order.size()]
-		var debug_node: Dictionary = factory.build_spawn_data(enemy_id)
-		debug_node.merge({
-			"type": "enemy", "stage": depth, "slot": slot,
-			"route_key": route_key, "state": "available",
-		}, true)
-		return debug_node
+	var model: Dictionary = RunState.route_nodes[route_key]
+	var slot: int = int(model.lane)
+	var reveal: String = String(model.reveal_state)
+	var state: String = "available" if DebugTools.free_map_select else String(model.visit_state)
+	var node_type: String = String(model.node_type)
+	var is_boss: bool = node_type == "boss"
 	var node: Dictionary = {
-		"type": "enemy", "stage": depth, "slot": slot,
+		"type": "boss" if is_boss else "enemy", "stage": depth, "slot": slot,
 		"route_key": route_key,
-		"id": "", "name": "Unknown Foe", "tags": ["Combat"],
-		"state": "locked",
+		"id": String(model.content_id), "name": "Unknown Route",
+		"tags": [], "state": state,
+		"node_type": node_type, "reward_tier": int(model.reward_tier),
+		"threat_tier": int(model.threat_tier), "reveal_state": reveal,
 	}
-	if depth < RunState.route_depth:
-		var chosen_key: String = String(RunState.route_chosen_nodes.get(
-				depth, ""
-		))
-		var history_index: int = _combat_history_index(depth)
-		if route_key == chosen_key and history_index < RunState.defeated_enemy_history.size():
-			var enemy_id: String = RunState.defeated_enemy_history[history_index]
-			node = factory.build_spawn_data(enemy_id)
-			node.merge({
-				"type": "enemy", "stage": depth, "slot": slot,
-				"route_key": route_key,
-				"state": "completed",
-			}, true)
-		else:
-			node["name"] = "Path Not Taken"
-			node["tags"] = ["Bypassed"]
-			node["state"] = "bypassed"
+	if reveal == "hidden":
+		node.name = "Unknown"
+		node.tooltip = "This distant route has not been revealed."
 		return node
-	if depth > RunState.route_depth:
+	if reveal == "silhouette":
+		# Show the foe and encounter class now so the route is strategically
+		# readable; health, attack, and rewards remain hidden until nearby.
+		node = factory.build_spawn_data(String(model.content_id))
+		var future_name: String = String(node.get("name", "Combat"))
+		if node_type == "elite_combat":
+			future_name = "Elite " + future_name
+		node.merge({
+			"type": "boss" if is_boss else "enemy", "stage": depth,
+			"slot": slot, "route_key": route_key, "state": state,
+			"name": future_name,
+			"tags": ["Elite" if node_type == "elite_combat" else "Combat"],
+			"tooltip": "Future encounter · details revealed when you approach.",
+			"node_type": node_type, "reward_tier": int(model.reward_tier),
+			"threat_tier": int(model.threat_tier), "reveal_state": reveal,
+		}, true)
 		return node
-	var ids: Array[String]
-	if depth == 1:
-		ids = factory.ids_for_stage(1)
-	else:
-		ids = RunState.available_route_enemies(CHOICE_COUNT)
-	if slot >= ids.size():
-		node["name"] = "Path Closed"
-		node["tags"] = ["No foe remains"]
-		node["state"] = "bypassed"
-		return node
-	node = factory.build_spawn_data(ids[slot])
+	node = factory.build_spawn_data(String(model.content_id))
 	node.merge({
-		"type": "enemy", "stage": depth, "slot": slot,
-		"route_key": route_key,
-		"state": "available",
+		"type": "boss" if is_boss else "enemy", "stage": depth,
+		"slot": slot, "route_key": route_key, "state": state,
+		"node_type": node_type, "reward_tier": int(model.reward_tier),
+		"threat_tier": int(model.threat_tier), "reveal_state": reveal,
 	}, true)
-	if not RunState.route_key_available(route_key):
-		node["state"] = "locked"
+	if node_type == "elite_combat":
+		node.name = "Elite " + String(node.name)
+		node.tags = ["Elite", "Threat %d" % int(model.threat_tier)]
+		node.tooltip = "Elite combat · greater danger · reward tier %d" % int(model.reward_tier)
 	return node
 
 
@@ -175,22 +167,21 @@ func _combat_history_index(depth: int) -> int:
 
 
 func _boss_node(depth: int) -> Dictionary:
-	var data: Dictionary = factory.build_spawn_data(factory.boss_id())
-	var available: bool = DebugTools.free_map_select or (depth == RunState.route_depth \
-			and RunState.route_key_available("boss"))
-	data.merge({
-		"type": "boss", "stage": depth, "slot": 0,
-		"route_key": "boss", "state": "available" if available else "locked",
-	}, true)
-	return data
+	return _combat_node(RunState.route_boss_key, depth)
 
 
 func _activity_node(route_key: String, depth: int) -> Dictionary:
-	var route_id: String = route_key.trim_prefix("activity_")
-	var id: String = RunState.route_activity_id(route_id)
+	var model: Dictionary = RunState.route_nodes[route_key]
+	var id: String = String(model.content_id)
+	var node_type: String = String(model.node_type)
+	var reveal: String = String(model.reveal_state)
 	var data: Dictionary
-	var completed: bool = RunState.route_activity_completed(id)
-	if id == "ice_fishing":
+	if reveal == "hidden":
+		data = {"name": "Unknown", "tooltip": "This distant route has not been revealed."}
+	elif reveal == "silhouette":
+		data = _future_activity_preview(id, node_type)
+		data["tooltip"] = "Future room · reward tier %d" % int(model.reward_tier)
+	elif id == "ice_fishing":
 		data = {
 			"name": "Ice Fishing",
 			"subtitle": "Warm-word challenge",
@@ -206,35 +197,56 @@ func _activity_node(route_key: String, depth: int) -> Dictionary:
 			"preview_texture": LORE_ICON,
 			"accent": Color("9edcf2"),
 		}
+	elif id == "forge":
+		data = {
+			"name": "Runic Forge", "subtitle": "Improve letters",
+			"tooltip": "Use your loose letters to forge an upgrade.",
+			"preview_texture": FORGE_ICON, "accent": Color("d88acb"),
+		}
 	else:
 		data = TundraEventScript.definition(id)
 		data["subtitle"] = String(data.get("mini_game", "Side Quest"))
 		data["tooltip"] = String(data.get("description", ""))
-		data["preview_texture"] = HANGMAN_ICON if id == "hangman" else TundraEventScript.frame_texture(data, 0)
+		data["preview_texture"] = RELIC_TRIAL_ICON if id == "hangman" else TundraEventScript.frame_texture(data, 0)
 		data["accent"] = Color("a98de0")
-	var state: String = "locked"
-	var chosen: bool = String(RunState.route_chosen_nodes.get(depth, "")) == route_key
-	if completed and chosen:
-		state = "completed"
-	elif depth < RunState.route_depth:
-		state = "bypassed"
-	elif depth == RunState.route_depth:
-		var available: bool
-		if id == "ice_fishing":
-			available = RunState.fishing_route_available()
-		elif id == "lore_room":
-			available = RunState.lore_room_available()
-		else:
-			available = RunState.optional_encounter_available(id)
-		if not RunState.route_key_available(route_key):
-			available = false
-		state = "available" if available else "locked"
+	var state: String = "available" if DebugTools.free_map_select else String(model.visit_state)
 	data.merge({
-		"type": "activity", "activity_id": route_id, "stage": depth,
-		"slot": 0, "route_key": route_key,
-		"state": "available" if DebugTools.free_map_select else state,
+		"type": "activity", "activity_id": route_key, "stage": depth,
+		"slot": int(model.lane), "route_key": route_key, "state": state,
+		"node_type": node_type, "reward_tier": int(model.reward_tier),
+		"threat_tier": int(model.threat_tier), "reveal_state": reveal,
 	}, true)
 	return data
+
+
+func _activity_category_name(node_type: String) -> String:
+	match node_type:
+		"treasure": return "Treasure"
+		"letter_reward": return "Letter Reward"
+		"relic_reward": return "Relic Trial"
+		"recovery": return "Warmth"
+		"forge": return "Forge"
+		"lore": return "Lore"
+	return "Tundra Event"
+
+
+func _future_activity_preview(id: String, node_type: String) -> Dictionary:
+	if id == "ice_fishing":
+		return {"name": "Ice Fishing", "preview_texture": FISHING_ICON, "accent": Color("78c9ec")}
+	if id == "lore_room":
+		return {"name": "Voice in the Ice", "preview_texture": LORE_ICON, "accent": Color("9edcf2")}
+	if id == "forge":
+		return {"name": "Runic Forge", "preview_texture": FORGE_ICON, "accent": Color("d88acb")}
+	if id == "hangman":
+		return {"name": "Relic Trial", "preview_texture": RELIC_TRIAL_ICON, "accent": Color("a98de0")}
+	var definition: Dictionary = TundraEventScript.definition(id)
+	if not definition.is_empty():
+		return {
+			"name": String(definition.get("name", _activity_category_name(node_type))),
+			"preview_texture": TundraEventScript.frame_texture(definition, 0),
+			"accent": Color("a98de0"),
+		}
+	return {"name": _activity_category_name(node_type), "accent": Color("a98de0")}
 
 
 func _on_choice_pressed(enemy_id: String) -> void:
@@ -244,20 +256,16 @@ func _on_choice_pressed(enemy_id: String) -> void:
 
 func _on_route_node_selected(route_key: String) -> void:
 	if DebugTools.free_map_select:
-		var depth: int = RunState.route_graph_columns.size() if route_key == "boss" else \
-			int(route_key.get_slice("_", 1))
+		var depth: int = int(RunState.route_nodes.get(route_key, {}).get("column", 0)) + 1
 		if not RunState.debug_jump_to_route_node(route_key, depth):
 			return
-	RunState.record_route_choice(RunState.route_depth, route_key)
+		return
+	if RunState.select_route_node(route_key):
+		RunState.activate_pending_route_node()
 
 
-func _on_activity_pressed(route_id: String) -> void:
-	var route_key: String = "activity_" + route_id
-	var id: String = RunState.route_activity_id(route_id)
-	if DebugTools.free_map_select:
-		var depth: int = int(RunState.route_activity_stages.get(route_id, -1))
-		if not RunState.debug_jump_to_route_node(route_key, depth):
-			return
+func _on_activity_pressed(route_key: String) -> void:
+	var id: String = RunState.route_activity_id(route_key)
 	if id == "ice_fishing":
 		if RunState.begin_fishing_route(route_key):
 			get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)
@@ -265,6 +273,10 @@ func _on_activity_pressed(route_id: String) -> void:
 	if id == "lore_room":
 		if RunState.begin_lore_room(route_key):
 			get_tree().change_scene_to_file(ScenePaths.LORE_ROOM)
+		return
+	if id == "forge":
+		if RunState.begin_route_utility(id, route_key):
+			get_tree().change_scene_to_file(ScenePaths.FORGE)
 		return
 	if RunState.begin_optional_encounter(id, route_key):
 		get_tree().change_scene_to_file(ScenePaths.HANGMAN if id == "hangman" else ScenePaths.TUNDRA_EVENT)

@@ -2,7 +2,7 @@ extends Control
 ## A route room that reveals why the Frost Wyrm imposed the White Silence.
 
 const LINES: Array[String] = [
-	"A voice is trapped inside the glacier. \nIt is old, and full of fear. \n[i]promises become threats, and names become weapons.[/i]",
+	"A voice is trapped inside the glacier. \n\nIt is old, and full of fear. \n\n[i]promises become threats, and names become weapons.[/i]",
 	"[i]A frozen word cannot lie.[/i]",
 	"[i]When every voice is still, meaning will remain pure.[/i]\n\nTo preserve language by silencing everyone who could change it.",
 	"The Frost Wyrm has the Ember Word..."
