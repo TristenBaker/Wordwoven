@@ -2,6 +2,7 @@ extends Node
 signal run_started
 signal run_starting
 const Balance: GDScript = preload("res://data/balance/tuning.gd")
+const RouteGenerator: GDScript = preload("res://scripts/run/expedition_route_generator.gd")
 ## Holds the state of the current roguelike run: player health,
 ## gold, the letter deck, relics, progress, and the word history
 ## that the tavern storyteller retells. Survives scene changes;
@@ -58,6 +59,16 @@ var route_graph_columns: Array = []
 var route_edges: Dictionary = {}
 var route_chosen_nodes: Dictionary = {}
 var _last_route_signature: String = ""
+# Authoritative seeded route model. The legacy arrays above are projections
+# retained while older non-map callers migrate to the graph API.
+var route_seed: int = 0
+var route_nodes: Dictionary = {}
+var route_start_key: String = ""
+var route_boss_key: String = ""
+var route_current_key: String = ""
+var route_pending_destination: String = ""
+var route_completed_keys: Array[String] = []
+var route_bypassed_keys: Array[String] = []
 
 # Completed fights and their chosen relics prevent repeated rewards.
 var completed_encounters: Array[int] = []
@@ -137,6 +148,14 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	route_graph_columns.clear()
 	route_edges.clear()
 	route_chosen_nodes.clear()
+	route_seed = 0
+	route_nodes.clear()
+	route_start_key = ""
+	route_boss_key = ""
+	route_current_key = ""
+	route_pending_destination = ""
+	route_completed_keys.clear()
+	route_bypassed_keys.clear()
 	completed_encounters = []
 	defeated_enemy_ids = []
 	defeated_enemy_history = []
@@ -176,8 +195,9 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 func is_boss_next() -> bool:
 	if is_endless():
 		return false
-	if selected_biome == "tundra" and not route_graph_columns.is_empty():
-		return route_depth >= route_graph_columns.size()
+	if selected_biome == "tundra" and not route_nodes.is_empty() \
+			and not route_current_key.is_empty():
+		return route_current_key == route_boss_key
 	return encounter_index >= ENCOUNTERS_PER_RUN
 
 
@@ -191,8 +211,12 @@ func endless_shop_due() -> bool:
 
 func advance_encounter() -> void:
 	encounter_index += 1
-	if selected_biome == "tundra" and not route_graph_columns.is_empty():
-		route_depth = mini(route_depth + 1, route_graph_columns.size())
+	if selected_biome == "tundra" and route_nodes.has(route_current_key):
+		route_depth = mini(
+			int(route_nodes[route_current_key].column) + 2,
+			route_graph_columns.size()
+		)
+		_refresh_route_states()
 
 
 ## Records a victory once before its relic can be claimed.
@@ -203,12 +227,14 @@ func complete_encounter(enemy_id: String = "") -> void:
 		defeated_enemy_ids.append(enemy_id)
 	if not completed_encounters.has(encounter_index):
 		completed_encounters.append(encounter_index)
+	complete_current_route_node()
 
 
 ## Treasure rooms occupy an encounter stage without recording a defeated foe.
 func complete_treasure_room() -> void:
 	if not completed_encounters.has(encounter_index):
 		completed_encounters.append(encounter_index)
+	complete_current_route_node()
 
 
 func begin_victory(enemy_name: String, gold_earned: int) -> void:
@@ -360,6 +386,8 @@ func rolled_letter_drop() -> LetterStats:
 	var maximum_level: int = mini(
 		Balance.DROP_MAX_LEVEL, Balance.DROP_LEVEL_OFFSET + encounter_index
 	)
+	if String(current_route_node().get("node_type", "")) == "elite_combat":
+		maximum_level = mini(Balance.DROP_MAX_LEVEL, maximum_level + 1)
 	return rolled_letter_drop_at_level(randi_range(1, maximum_level))
 
 
@@ -420,7 +448,7 @@ func fishing_route_available() -> bool:
 
 
 func begin_fishing_route(route_key: String = "") -> bool:
-	if not fishing_route_available():
+	if not fishing_route_available() or not _route_key_is_active(route_key):
 		return false
 	pending_route_activity = "ice_fishing"
 	pending_route_key = route_key
@@ -430,11 +458,15 @@ func begin_fishing_route(route_key: String = "") -> bool:
 func finish_route_activity() -> void:
 	if pending_route_activity.is_empty():
 		return
-	if not pending_route_key.is_empty():
-		record_route_choice(route_depth, pending_route_key)
+	complete_current_route_node()
 	pending_route_activity = ""
 	pending_route_key = ""
-	route_depth = mini(route_depth + 1, route_graph_columns.size())
+	if route_nodes.has(route_current_key):
+		route_depth = mini(
+			int(route_nodes[route_current_key].column) + 2,
+			route_graph_columns.size()
+		)
+	_refresh_route_states()
 
 
 func ensure_route_enemy_order() -> void:
@@ -442,81 +474,70 @@ func ensure_route_enemy_order() -> void:
 
 
 func ensure_tundra_route_plan() -> void:
-	if not route_graph_columns.is_empty():
+	if not route_nodes.is_empty():
 		return
-	route_enemy_order = Balance.ENEMY_FACTORY_TUNDRA_REGULARS.duplicate()
-	route_enemy_order.shuffle()
-	var activity_ids: Array[String] = [
-		"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
-	]
-	activity_ids.shuffle()
-	# Route depth is separate from fight count. Combat-only layers 1, 3, 5,
-	# and 7 guarantee four fights, while an activity consumes its own room and
-	# advances the expedition instead of returning to a battle at the same depth.
-	route_graph_columns = [
-		["combat_1_0"],
-		["activity_" + activity_ids[0], "activity_" + activity_ids[1]],
-		["combat_3_0", "combat_3_1"],
-		["combat_4_0", "activity_" + activity_ids[2]],
-		["combat_5_0", "combat_5_1"],
-		["activity_lore_room"],
-		["combat_7_0", "combat_7_1"],
-		["boss"],
-	]
-	# Keep the lore room as the sole required node at depth six. Optional
-	# activities may vary at the earlier split columns without creating a route
-	# that bypasses or dead-ends after the story beat.
-	var hangman_column: int = [1, 3].pick_random()
-	route_graph_columns[hangman_column].append("activity_hangman")
-	for column_index: int in route_graph_columns.size():
-		for key: String in route_graph_columns[column_index]:
-			if key.begins_with("activity_"):
-				route_activity_stages[key.trim_prefix("activity_")] = column_index + 1
-	_build_route_graph()
-	var signature: String = "%s|%s" % [str(route_graph_columns), str(route_enemy_order)]
-	if signature == _last_route_signature:
-		route_enemy_order.reverse()
-		signature = "%s|%s" % [str(route_graph_columns), str(route_enemy_order)]
-	_last_route_signature = signature
+	initialize_tundra_route()
 
 
-func _build_route_graph() -> void:
+func initialize_tundra_route(seed_override: int = 0) -> void:
+	if selected_biome != "tundra":
+		return
+	if not route_nodes.is_empty() and seed_override == 0:
+		return
+	route_seed = seed_override if seed_override != 0 else int(Time.get_unix_time_from_system() * 1000.0) ^ Time.get_ticks_msec()
+	var generated: Dictionary = RouteGenerator.generate(route_seed, selected_biome)
+	route_nodes = generated.nodes
+	route_start_key = String(generated.start_key)
+	route_boss_key = String(generated.boss_key)
+	route_graph_columns = generated.columns
+	route_current_key = ""
+	route_pending_destination = ""
+	route_completed_keys.clear()
+	route_bypassed_keys.clear()
+	route_chosen_nodes.clear()
+	route_activity_stages.clear()
+	route_enemy_order.clear()
 	route_edges.clear()
-	for column_index: int in range(route_graph_columns.size() - 1):
-		var sources: Array = route_graph_columns[column_index]
-		var destinations: Array = route_graph_columns[column_index + 1]
-		for source_index: int in sources.size():
-			var source: String = String(sources[source_index])
-			if sources.size() == 1:
-				route_edges[source] = destinations.duplicate()
-			else:
-				route_edges[source] = [String(
-					destinations[source_index % destinations.size()]
-				)]
-				if destinations.size() > sources.size():
-					route_edges[source].append(String(destinations[-1]))
-	# The opening room always visibly fans into the complete first decision.
-	route_edges["combat_1_0"] = route_graph_columns[1].duplicate()
+	for route_key: String in route_nodes:
+		var node: Dictionary = route_nodes[route_key]
+		route_edges[route_key] = node.next_keys.duplicate()
+		var content_id: String = String(node.content_id)
+		if String(node.node_type) in ["normal_combat", "elite_combat"]:
+			route_enemy_order.append(content_id)
+		elif not content_id.is_empty() and String(node.node_type) != "boss":
+			route_activity_stages[route_key] = int(node.column) + 1
+	route_depth = 1
+	_refresh_route_states()
 
 
 func record_route_choice(depth: int, route_key: String) -> void:
-	route_chosen_nodes[depth] = route_key
+	if select_route_node(route_key):
+		activate_pending_route_node()
 
 
 func route_predecessor_for_stage(stage: int) -> String:
 	ensure_tundra_route_plan()
-	if stage <= 1:
-		return ""
-	return String(route_chosen_nodes.get(stage - 1, ""))
+	return route_current_key
 
 
 func required_route_activity_at(stage: int) -> String:
 	ensure_tundra_route_plan()
 	var column: Array = route_graph_columns[stage - 1] if stage > 0 \
 			and stage <= route_graph_columns.size() else []
-	if column.size() == 1 and String(column[0]).begins_with("activity_"):
-		return String(column[0]).trim_prefix("activity_")
+	if column.size() == 1:
+		var key: String = String(column[0])
+		if route_nodes.has(key) and not String(route_nodes[key].content_id).is_empty():
+			return String(route_nodes[key].content_id)
 	return ""
+
+
+func route_activity_id(route_key_or_id: String) -> String:
+	if route_nodes.has(route_key_or_id):
+		return String(route_nodes[route_key_or_id].content_id)
+	var id: String = route_key_or_id.trim_prefix("activity_")
+	if id.begins_with("lore_room_"):
+		return "lore_room"
+	return id
 
 
 func route_activity_completed(id: String) -> bool:
@@ -536,7 +557,7 @@ func lore_room_available() -> bool:
 
 
 func begin_lore_room(route_key: String) -> bool:
-	if not lore_room_available() or not route_key_available(route_key):
+	if not lore_room_available() or not _route_key_is_active(route_key):
 		return false
 	pending_route_activity = "lore_room"
 	pending_route_key = route_key
@@ -567,18 +588,110 @@ func bypass_route_activity(id: String) -> bool:
 
 func route_activity_for_stage(stage: int) -> String:
 	ensure_tundra_route_plan()
-	for id: String in route_activity_stages:
-		if int(route_activity_stages[id]) == stage:
-			return id
+	if stage > 0 and stage <= route_graph_columns.size():
+		for key: String in route_graph_columns[stage - 1]:
+			if route_nodes.has(key):
+				var type: String = String(route_nodes[key].node_type)
+				if type not in ["normal_combat", "elite_combat", "boss"]:
+					return String(route_nodes[key].content_id)
 	return ""
 
 
 func route_key_available(route_key: String) -> bool:
 	ensure_tundra_route_plan()
-	if route_depth <= 1:
-		return route_key == "combat_1_0"
-	var predecessor: String = route_predecessor_for_stage(route_depth)
-	return route_edges.get(predecessor, []).has(route_key)
+	if not route_nodes.has(route_key) or route_pending_destination != "":
+		return false
+	return String(route_nodes[route_key].visit_state) == "available"
+
+
+func select_route_node(route_key: String) -> bool:
+	if not route_key_available(route_key):
+		return false
+	route_pending_destination = route_key
+	var selected_column: int = int(route_nodes[route_key].column)
+	var reachable: Dictionary = _reachable_from(route_key)
+	for key: String in route_nodes:
+		var node: Dictionary = route_nodes[key]
+		if int(node.column) < selected_column or key == route_key \
+				or route_completed_keys.has(key):
+			continue
+		if not reachable.has(key) and not route_bypassed_keys.has(key):
+			route_bypassed_keys.append(key)
+	_refresh_route_states()
+	return true
+
+
+func activate_pending_route_node() -> bool:
+	if route_pending_destination.is_empty() or not route_nodes.has(route_pending_destination):
+		return false
+	route_current_key = route_pending_destination
+	route_pending_destination = ""
+	var node: Dictionary = route_nodes[route_current_key]
+	route_depth = int(node.column) + 1
+	route_chosen_nodes[route_depth] = route_current_key
+	if String(node.node_type) in ["normal_combat", "elite_combat", "boss"]:
+		next_enemy_id = String(node.content_id)
+	_refresh_route_states()
+	return true
+
+
+func complete_current_route_node() -> bool:
+	if route_current_key.is_empty() or route_completed_keys.has(route_current_key):
+		return false
+	route_completed_keys.append(route_current_key)
+	_refresh_route_states()
+	return true
+
+
+func current_route_node() -> Dictionary:
+	return route_nodes.get(route_current_key, {})
+
+
+func _route_key_is_active(route_key: String) -> bool:
+	return route_key.is_empty() or route_key == route_current_key
+
+
+func _reachable_from(start_key: String) -> Dictionary:
+	var result: Dictionary = {}
+	var pending: Array[String] = [start_key]
+	while not pending.is_empty():
+		var key: String = pending.pop_back()
+		if result.has(key):
+			continue
+		result[key] = true
+		for next_key: String in route_edges.get(key, []):
+			pending.append(next_key)
+	return result
+
+
+func _refresh_route_states() -> void:
+	if route_nodes.is_empty():
+		return
+	var current_column: int = -1
+	if route_nodes.has(route_current_key):
+		current_column = int(route_nodes[route_current_key].column)
+	var available: Array = [route_start_key] if route_current_key.is_empty() else \
+			route_edges.get(route_current_key, []) if route_completed_keys.has(route_current_key) else []
+	for key: String in route_nodes:
+		var node: Dictionary = route_nodes[key]
+		if route_bypassed_keys.has(key):
+			node.visit_state = "bypassed"
+		elif key == route_current_key:
+			node.visit_state = "current"
+		elif route_completed_keys.has(key):
+			node.visit_state = "completed"
+		elif available.has(key):
+			node.visit_state = "available"
+		else:
+			node.visit_state = "locked"
+		var distance: int = int(node.column) - current_column
+		if node.visit_state in ["current", "completed", "available"] or distance <= 1:
+			node.reveal_state = "revealed"
+		else:
+			# Future room categories remain visible from the beginning. Exact
+			# occupants and stats are still held back until the route gets close.
+			node.reveal_state = "silhouette"
+		route_nodes[key] = node
 
 
 ## Developer-only map jump. Preserve the run's inventory while making the
@@ -586,12 +699,13 @@ func route_key_available(route_key: String) -> bool:
 func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
 	PlayerStats.mark_debug_assisted()
 	ensure_tundra_route_plan()
-	if depth < 1 or depth > route_graph_columns.size() \
-			or not route_graph_columns[depth - 1].has(route_key):
+	if not route_nodes.has(route_key):
 		return false
-	route_depth = depth
-	encounter_index = ENCOUNTERS_PER_RUN if route_key == "boss" else \
-		mini(1 + int(floor(float(depth) / 2.0)), ENCOUNTERS_PER_RUN - 1)
+	route_current_key = route_key
+	route_pending_destination = ""
+	route_depth = int(route_nodes[route_key].column) + 1
+	encounter_index = ENCOUNTERS_PER_RUN if route_key == route_boss_key else \
+		mini(1 + int(floor(float(route_depth) / 2.0)), ENCOUNTERS_PER_RUN - 1)
 	is_run_active = true
 	completed_encounters.erase(ENCOUNTERS_PER_RUN)
 	pending_route_activity = ""
@@ -600,20 +714,18 @@ func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
 	clear_pending_victory()
-	for previous_depth: int in route_chosen_nodes.keys():
-		if previous_depth >= depth:
-			route_chosen_nodes.erase(previous_depth)
-	if depth > 1:
-		for predecessor: String in route_graph_columns[depth - 2]:
-			if route_edges.get(predecessor, []).has(route_key):
-				route_chosen_nodes[depth - 1] = predecessor
-				break
-	if route_key.begins_with("activity_"):
-		var activity_id: String = route_key.trim_prefix("activity_")
+	route_completed_keys.erase(route_key)
+	route_bypassed_keys.erase(route_key)
+	var type: String = String(route_nodes[route_key].node_type)
+	if type not in ["normal_combat", "elite_combat", "boss"]:
+		var activity_id: String = route_activity_id(route_key)
 		optional_encounters.erase(activity_id)
 		optional_encounter_progress.erase(activity_id)
 		if activity_id == "ice_fishing":
 			fishing_hole_chosen = -1
+	else:
+		next_enemy_id = String(route_nodes[route_key].content_id)
+	_refresh_route_states()
 	return true
 
 
@@ -734,9 +846,17 @@ func optional_encounter_available(id: String) -> bool:
 
 
 func begin_optional_encounter(id: String, route_key: String = "") -> bool:
-	if not optional_encounter_available(id):
+	if not optional_encounter_available(id) or not _route_key_is_active(route_key):
 		return false
 	pending_optional_encounter = id
+	pending_route_activity = id
+	pending_route_key = route_key
+	return true
+
+
+func begin_route_utility(id: String, route_key: String) -> bool:
+	if id != "forge" or not _route_key_is_active(route_key):
+		return false
 	pending_route_activity = id
 	pending_route_key = route_key
 	return true

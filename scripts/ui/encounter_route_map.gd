@@ -12,7 +12,8 @@ signal route_node_selected(route_key: String)
 
 const STAGE_COUNT: int = Balance.RUN_STATE_ENCOUNTERS_PER_RUN
 const MAP_PADDING_X: float = 66.0
-const COLOR_TRAIL: Color = Color(0.27, 0.34, 0.32, 0.78)
+const COLOR_TRAIL: Color = Color(0.43, 0.47, 0.47, 0.88)
+const COLOR_TRAVELED: Color = Color(0.34, 0.9, 0.61, 0.96)
 const COLOR_CLEARED: Color = Color(0.76, 0.62, 0.32, 1.0)
 const COLOR_CURRENT: Color = Color(0.34, 0.9, 0.61, 1.0)
 const COLOR_LOCKED: Color = Color(0.22, 0.28, 0.28, 1.0)
@@ -23,7 +24,6 @@ const COLOR_INK: Color = Color(0.9, 0.88, 0.76, 0.92)
 
 var _stage: int = 1
 var _column_count: int = STAGE_COUNT
-var _current_column: int = 1
 var _nodes: Array[Dictionary] = []
 var _buttons: Array[Button] = []
 var _button_nodes: Dictionary = {}
@@ -33,13 +33,8 @@ func setup_full(stage: int, nodes: Array[Dictionary]) -> void:
 	_stage = clampi(stage, 1, STAGE_COUNT)
 	_nodes = nodes
 	_column_count = STAGE_COUNT
-	_current_column = 1
 	for node: Dictionary in _nodes:
 		_column_count = maxi(_column_count, int(node.get("column_count", 0)))
-		if String(node.get("state", "locked")) == "available":
-			var column: int = int(node.get("column", node.get("stage", 1)))
-			if _current_column == 1 or column < _current_column:
-				_current_column = column
 	_rebuild_buttons()
 	queue_redraw()
 
@@ -81,7 +76,9 @@ func _draw() -> void:
 func _draw_connections() -> void:
 	var origin := Vector2(MAP_PADDING_X * 0.42, size.y * 0.5)
 	for node: Dictionary in _nodes_at_column(1):
-		_draw_dotted_line(origin, _node_point(node), _edge_color(1), 3.0)
+		var state: String = String(node.get("state", "locked"))
+		var color: Color = COLOR_TRAVELED if state in ["current", "completed"] else COLOR_TRAIL
+		_draw_route_line(origin, _node_point(node), color, 3.0)
 	for column: int in range(1, _column_count):
 		for from_node: Dictionary in _nodes_at_column(column):
 			for to_node: Dictionary in _nodes_at_column(column + 1):
@@ -90,17 +87,9 @@ func _draw_connections() -> void:
 						String(to_node.get("route_key", ""))
 				):
 					continue
-				var destination_state: String = String(
-						to_node.get("state", "locked")
-				)
-				var color: Color = COLOR_TRAIL
-				if destination_state == "available":
-					color = COLOR_CURRENT
-				elif destination_state == "completed":
-					color = Color(COLOR_CLEARED, 0.78)
-				_draw_dotted_line(
+				_draw_route_line(
 						_node_point(from_node), _node_point(to_node),
-						color, 3.0
+						_connection_color(from_node, to_node), 3.0
 				)
 
 
@@ -121,11 +110,14 @@ func _draw_stage_labels() -> void:
 		_draw_centered_text(Vector2(_column_x(column), 17.0), label, color, 11)
 
 
-func _edge_color(destination_column: int) -> Color:
-	if destination_column < _current_column:
-		return Color(COLOR_CLEARED, 0.78)
-	if destination_column == _current_column:
-		return COLOR_CURRENT
+func _connection_color(from_node: Dictionary, to_node: Dictionary) -> Color:
+	var from_state: String = String(from_node.get("state", "locked"))
+	var to_state: String = String(to_node.get("state", "locked"))
+	# Only the committed path behind the player is green. Available exits and
+	# every unchosen future connection remain neutral gray until selected.
+	if from_state in ["current", "completed"] \
+			and to_state in ["current", "completed"]:
+		return COLOR_TRAVELED
 	return COLOR_TRAIL
 
 
@@ -145,6 +137,7 @@ func _rebuild_buttons() -> void:
 	for node: Dictionary in _nodes:
 		_add_node_button(node)
 	_layout_buttons.call_deferred()
+	_focus_first_available.call_deferred()
 
 
 func _add_node_button(data: Dictionary) -> void:
@@ -159,7 +152,7 @@ func _add_node_button(data: Dictionary) -> void:
 		button.name = "Activity_" + id
 	elif type == "pass":
 		button.name = "Pass_" + id
-	button.custom_minimum_size = Vector2(118, 58)
+	button.custom_minimum_size = Vector2(70, 70)
 	button.disabled = state != "available"
 	button.focus_mode = Control.FOCUS_ALL if not button.disabled else Control.FOCUS_NONE
 	button.tooltip_text = _tooltip(data)
@@ -173,7 +166,9 @@ func _add_node_button(data: Dictionary) -> void:
 	button.add_theme_stylebox_override("disabled", _node_style(accent, false, state))
 	if state == "available":
 		if type == "activity":
-			button.pressed.connect(activity_selected.emit.bind(id))
+			button.pressed.connect(_emit_activity_selected.bind(
+				id, String(data.get("route_key", ""))
+			))
 		elif type == "pass":
 			button.pressed.connect(activity_bypassed.emit.bind(id))
 		else:
@@ -193,15 +188,33 @@ func _emit_enemy_selected(enemy_id: String, route_key: String) -> void:
 	enemy_selected.emit(enemy_id)
 
 
+func _emit_activity_selected(activity_id: String, route_key: String) -> void:
+	route_node_selected.emit(route_key)
+	activity_selected.emit(activity_id)
+
+
+func _focus_first_available() -> void:
+	for button: Button in _buttons:
+		if not button.disabled:
+			button.grab_focus()
+			return
+
+
 func _tooltip(data: Dictionary) -> String:
+	var display_name: String = String(data.get("name", "Unknown encounter"))
+	if String(data.get("reveal_state", "revealed")) == "hidden":
+		display_name = "Unknown encounter"
 	var tooltip: String = String(data.get("tooltip", ""))
 	if tooltip.is_empty() and int(data.get("health", 0)) > 0:
 		tooltip = "Health %d  •  Attack %d  •  Reward %dg" % [
 			data.get("health", 0), data.get("attack", 0), data.get("gold", 0),
 		]
 	var state: String = String(data.get("state", "locked"))
+	tooltip = (display_name + ("\n" + tooltip if not tooltip.is_empty() else "")).strip_edges()
 	if state == "locked":
-		return (tooltip + "\nLocked until this stage.").strip_edges()
+		return (tooltip + "\nNot connected to your current position.").strip_edges()
+	if state == "current":
+		return (tooltip + "\nYou are here.").strip_edges()
 	if state == "completed":
 		return (tooltip + "\nCompleted.").strip_edges()
 	if state == "bypassed":
@@ -210,86 +223,29 @@ func _tooltip(data: Dictionary) -> String:
 
 
 func _add_node_content(button: Button, data: Dictionary) -> void:
-	var row := HBoxContainer.new()
-	row.name = "PreviewRow"
-	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 7.0
-	row.offset_right = -7.0
-	row.offset_top = 6.0
-	row.offset_bottom = -6.0
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 6)
-	button.add_child(row)
-
 	var preview := TextureRect.new()
 	preview.name = "MonsterPreview"
-	preview.custom_minimum_size = Vector2(38, 38)
-	preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	preview.offset_left = 8.0
+	preview.offset_top = 8.0
+	preview.offset_right = -8.0
+	preview.offset_bottom = -8.0
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.texture = data.get("preview_texture") \
 			if data.has("preview_texture") else _preview_texture(data)
-	row.add_child(preview)
-
-	var text_box := VBoxContainer.new()
-	text_box.name = "EnemyText"
-	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_box.add_theme_constant_override("separation", 0)
-	row.add_child(text_box)
-
-	var name_label := Label.new()
-	name_label.text = _short_name(String(data.get("name", "Unknown")))
-	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.add_theme_font_size_override("font_size", 13)
-	name_label.add_theme_color_override("font_color", COLOR_INK)
-	text_box.add_child(name_label)
-
-	var detail := Label.new()
-	if String(data.get("type", "enemy")) == "activity":
-		detail.name = "ActivitySubtitle"
-	var state: String = String(data.get("state", "locked"))
-	if state == "completed":
-		detail.text = "✓ Cleared"
-	elif state == "bypassed":
-		detail.text = "Not taken"
-	elif String(data.get("type", "enemy")) == "activity":
-		detail.text = ""
-		detail.hide()
-	elif String(data.get("type", "enemy")) == "pass":
-		detail.text = "Skip detour"
-	else:
-		var tags: Array = data.get("tags", [])
-		detail.text = String(tags[0]) if not tags.is_empty() else "Combat"
-	detail.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	detail.add_theme_font_size_override("font_size", 10)
-	detail.add_theme_color_override("font_color", Color(COLOR_INK, 0.72))
-	text_box.add_child(detail)
-
-
-func _short_name(full_name: String) -> String:
-	match full_name:
-		"Frozen Revenant": return "Revenant"
-		"Tundra Behemoth": return "Behemoth"
-		"Frozen Traveler": return "Traveler"
-		"Treasure Chest": return "Treasure"
-		"Unknown Foe": return "Battle"
-	return full_name
+	button.add_child(preview)
 
 
 func _layout_buttons() -> void:
 	if _buttons.is_empty() or size.x <= 0.0:
 		return
-	var width: float = clampf(_column_spacing() - 12.0, 82.0, 118.0)
 	for button: Button in _buttons:
 		var node: Dictionary = _button_nodes[button]
-		button.custom_minimum_size.x = width
-		button.size = button.custom_minimum_size
+		button.custom_minimum_size = Vector2(70, 70)
+		button.size = Vector2(70, 70)
 		button.position = _node_point(node) - button.size * 0.5
 
 
@@ -298,7 +254,7 @@ func _node_point(node: Dictionary) -> Vector2:
 	var lane: int = int(node.get("lane", 0))
 	var spacing: float = 0.0
 	if count > 1:
-		spacing = minf(82.0, (size.y - 88.0) / float(count - 1))
+		spacing = minf(128.0, (size.y - 80.0) / float(count - 1))
 	var total_height: float = spacing * float(count - 1)
 	return Vector2(
 			_column_x(int(node.get("column", node.get("stage", 1)))),
@@ -313,15 +269,13 @@ func _column_x(column: int) -> float:
 	)
 
 
-func _column_spacing() -> float:
-	return (size.x - MAP_PADDING_X * 2.0) / float(maxi(_column_count - 1, 1))
-
-
 func _node_accent(data: Dictionary) -> Color:
 	var state: String = String(data.get("state", "locked"))
 	var type: String = String(data.get("type", "enemy"))
 	if type == "boss":
 		return COLOR_BOSS
+	if state == "current":
+		return COLOR_CURRENT
 	if type == "enemy":
 		return COLOR_COMBAT if state in ["available", "completed"] else COLOR_LOCKED
 	if state == "completed":
@@ -349,6 +303,8 @@ func _node_style(accent: Color, highlighted: bool, state: String) -> StyleBoxFla
 		style.bg_color = Color(0.09, 0.105, 0.105, 0.96)
 	elif state == "completed":
 		style.bg_color = Color(0.14, 0.12, 0.07, 0.96)
+	elif state == "current":
+		style.bg_color = Color(0.07, 0.2, 0.16, 0.98)
 	if highlighted:
 		style.bg_color = style.bg_color.lightened(0.13)
 		accent = accent.lightened(0.18)
@@ -360,16 +316,17 @@ func _node_style(accent: Color, highlighted: bool, state: String) -> StyleBoxFla
 	return style
 
 
-func _draw_dotted_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
+func _draw_route_line(from: Vector2, to: Vector2, color: Color, width: float) -> void:
 	var distance: float = from.distance_to(to)
 	if distance <= 0.0:
 		return
 	var direction: Vector2 = (to - from) / distance
-	var cursor: float = 0.0
-	while cursor < distance:
-		var dash_end: float = minf(cursor + 8.0, distance)
-		draw_line(from + direction * cursor, from + direction * dash_end, color, width, true)
-		cursor += 14.0
+	draw_line(from, to, color, width, true)
+	var tip: Vector2 = to - direction * 4.0
+	var side: Vector2 = direction.orthogonal() * 5.0
+	draw_colored_polygon(PackedVector2Array([
+		tip, tip - direction * 11.0 + side, tip - direction * 11.0 - side,
+	]), color)
 
 
 func _draw_centered_text(

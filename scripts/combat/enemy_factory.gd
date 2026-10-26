@@ -30,6 +30,11 @@ func ids_for_stage(stage: int) -> Array[String]:
 				endless_ids.append(id)
 		return endless_ids
 	if RunState.selected_biome == "tundra":
+		var route_node: Dictionary = RunState.current_route_node()
+		if String(route_node.get("node_type", "")) in [
+			"normal_combat", "elite_combat", "boss",
+		]:
+			return [String(route_node.content_id)]
 		if stage == 1:
 			return [Balance.TUNDRA_STARTER_ENEMY]
 		if RunState.is_boss_next():
@@ -84,9 +89,18 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 			RunState.encounter_index - Balance.TUNDRA_GROWTH_START,
 			0, Balance.TUNDRA_GROWTH_CAP
 		)
+	var elite: bool = false
+	var route_node: Dictionary = RunState.current_route_node()
+	if not route_node.is_empty():
+		elite = String(route_node.get("node_type", "")) == "elite_combat" \
+				and String(route_node.get("content_id", "")) == enemy_id
 	var health: int = int(definition["health"]) + growth * Balance.TUNDRA_HEALTH_GROWTH
 	var attack: int = int(definition["attack"]) + growth * Balance.TUNDRA_ATTACK_GROWTH
 	var gold: int = int(definition["gold"]) + growth * Balance.TUNDRA_GOLD_GROWTH
+	if elite:
+		health = ceili(health * Balance.ROUTE_ELITE_HEALTH_MULTIPLIER)
+		attack = ceili(attack * Balance.ROUTE_ELITE_ATTACK_MULTIPLIER)
+		gold = ceili(gold * Balance.ROUTE_ELITE_GOLD_MULTIPLIER)
 	if RunState.is_endless():
 		var wave: int = maxi(RunState.encounter_index - 1, 0)
 		health += wave * Balance.ENEMY_FACTORY_ENDLESS_HEALTH_PER_WAVE
@@ -112,6 +126,7 @@ func build_spawn_data(enemy_id: String) -> Dictionary:
 		"cell_width": int(definition.get("cell_width", 0)),
 		"cell_height": int(definition.get("cell_height", 0)),
 		"animations": definition.get("animations", {}),
+		"elite": elite,
 	}
 
 

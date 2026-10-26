@@ -18,8 +18,10 @@ func _ready() -> void:
 	RunState.ensure_tundra_route_plan()
 
 	check(
-		RunState.route_graph_columns[5] == ["activity_lore_room"],
-		"The lore room is a required route room, not a same-tier detour"
+		RunState.route_graph_columns[3].size() == 3
+		and String(RunState.route_nodes[RunState.route_graph_columns[3][0]].content_id) == "lore_room"
+		and String(RunState.route_nodes[RunState.route_graph_columns[3][1]].content_id) == "lore_room",
+		"The lore room appears early on two established branches"
 	)
 
 	var intro: Control = load(ScenePaths.TUNDRA_INTRO).instantiate()
@@ -34,23 +36,35 @@ func _ready() -> void:
 	intro.queue_free()
 
 	RunState.pending_route_activity = "lore_room"
-	RunState.pending_route_key = "activity_lore_room"
+	RunState.pending_route_key = String(RunState.route_graph_columns[3][0])
 	var lore: Control = load(ScenePaths.LORE_ROOM).instantiate()
 	add_child(lore)
 	await get_tree().process_frame
 	check(lore.story_text.text.contains("glacier"), "The lore room reveals a frozen memory")
-	check(lore.continue_button.text == "Skip Cutscene", "The lore cutscene is skippable")
+	check(
+		lore.get_node("BlackBackground").color == Color.BLACK,
+		"The lore cutscene uses a completely black background"
+	)
+	check(
+		lore.get_node_or_null("Center/LorePanel") == null
+		and lore.get_node_or_null("Center/StoryText") != null,
+		"The lore cutscene displays only its white poem text"
+	)
 	lore.queue_free()
 
 	RunState.pending_route_activity = ""
 	RunState.pending_route_key = ""
-	RunState.route_depth = RunState.route_graph_columns.size()
+	RunState.debug_jump_to_route_node(RunState.route_boss_key, 0)
 	RunState.begin_victory("Frost Wyrm", 100)
 	var boss_loot: Control = load(ScenePaths.LOOT_DROP).instantiate()
 	add_child(boss_loot)
 	await get_tree().process_frame
 	check(RunState.has_key_item(EMBER_WORD.id), "The boss reward grants the Ember Word")
-	check(boss_loot.title_label.text == EMBER_WORD.display_name, "The boss reward names the item")
+	check(
+		boss_loot.key_item_label != null
+		and boss_loot.key_item_label.text.contains(EMBER_WORD.display_name),
+		"The boss reward names the item"
+	)
 	var repeated_loot: Control = load(ScenePaths.LOOT_DROP).instantiate()
 	add_child(repeated_loot)
 	await get_tree().process_frame
