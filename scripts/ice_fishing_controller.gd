@@ -1,5 +1,6 @@
 extends Control
 const Balance = preload("res://data/balance/tuning.gd")
+const TutorialFlow = preload("res://scripts/ui/tutorial_presenter.gd")
 ## Three one-use fishing holes. A chosen hole reveals a fish, then asks the
 ## player to copy a WordNet-derived sequence of warm-related words within one
 ## continuous eight-second countdown.
@@ -66,7 +67,6 @@ func _ready() -> void:
 	# Match combat typing: Enter submits without releasing the keyboard field.
 	word_input.keep_editing_on_text_submit = true
 	word_input.text_submitted.connect(_on_text_submitted)
-	start_fishing_button.pressed.connect(_dismiss_tutorial)
 	retry_button.pressed.connect(_show_hole_selection)
 	return_button.pressed.connect(_return_from_fishing)
 	word_timer.timeout.connect(_on_word_timer_timeout)
@@ -126,26 +126,18 @@ func _prepare_word_pool() -> void:
 
 
 func _show_entry_screen() -> void:
-	if RunState.fishing_tutorial_seen or RunState.fishing_hole_chosen >= 0:
-		_show_hole_selection()
-	else:
-		_show_tutorial()
-
-
-func _show_tutorial() -> void:
-	_state = FishingState.CHOOSING_HOLE
-	word_timer.stop()
-	_set_fishing_visible(false)
-	hole_selection_panel.hide()
-	result_panel.hide()
-	tutorial_panel.show()
-	subtitle_label.show()
-	start_fishing_button.grab_focus()
-
-
-func _dismiss_tutorial() -> void:
-	RunState.fishing_tutorial_seen = true
 	_show_hole_selection()
+	call_deferred("_show_hole_tutorial")
+
+
+func _show_hole_tutorial() -> void:
+	TutorialFlow.show(self, "ice_fishing_holes", [
+		{
+			"target": hole_selection_panel,
+			"title": "Choose one hole",
+			"body": "Pick any opening in the ice. The choice is final for this run.",
+		},
+	])
 
 
 func _add_wordnet_word(candidate: String) -> void:
@@ -200,7 +192,7 @@ func _select_hole(hole_index: int) -> void:
 	_fish = _roll_fish()
 	_build_challenge_words(int(_fish["words"]))
 	_current_word_index = 0
-	_state = FishingState.FISHING
+	_state = FishingState.CHOOSING_HOLE
 	hole_selection_panel.hide()
 	tutorial_panel.hide()
 	result_panel.hide()
@@ -225,10 +217,35 @@ func _select_hole(hole_index: int) -> void:
 	]
 	feedback_label.text = "The fish is biting—type the word shown above."
 	timer_bar.max_value = WORD_SECONDS
-	word_input.editable = true
+	word_input.editable = false
 	word_input.clear()
-	submit_button.disabled = false
+	submit_button.disabled = true
 	_update_challenge_display()
+	var tutorial_shown: bool = TutorialFlow.show(
+		self, "ice_fishing_words", [
+			{
+				"target": target_panel,
+				"title": "Copy the word",
+				"body": "Type each warm word exactly as shown, then press Enter.",
+			},
+			{
+				"target": timer_bar,
+				"title": "One shared clock",
+				"body": "You have eight seconds for the entire sequence. The timer never resets.",
+			},
+		], _begin_fishing_challenge
+	)
+	if not tutorial_shown:
+		_begin_fishing_challenge()
+
+
+func _begin_fishing_challenge() -> void:
+	if _selected_hole < 0 or _challenge_words.is_empty():
+		return
+	_state = FishingState.FISHING
+	word_input.editable = true
+	submit_button.disabled = false
+	timer_bar.value = WORD_SECONDS
 	word_timer.start(WORD_SECONDS)
 	call_deferred("_focus_word_input")
 

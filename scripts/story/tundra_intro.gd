@@ -2,19 +2,16 @@ extends Control
 ## A short, text-first prologue shown when a tundra run begins.
 
 const LINES: Array[String] = [
-	"The Fr[color=#8eeaff]o[/color]st Wyrm stole the [color=#ffbd5a]EMBER WORD[/color].",
-	"The word that gives speech warmth and meaning.",
-	"Without it, w[color=#8eeaff]□[/color]rds freeze before they can be sp[color=#8eeaff]_[/color]ken.",
-	"Names fade. Voices fail. Only the c[color=#8eeaff]□[/color]ld endure.",
+	"The Frost Wyrm stole the EMBER WORD. \nThe word that gives speech warmth and meaning.",
+	"Without it, words freeze before they can be spoken. \nNames fade. Voices fail. Only the cold endure.",
 	"Your letters are still alive.",
-	"Carry them across Frostveil. Break the [color=#bdefff]WHITE SILENCE[/color].",
+	"Take them to restore the silence...",
 ]
 
 const FADE_SECONDS: float = 0.65
 const HOLD_SECONDS: float = 2.35
 
-@onready var story_text: RichTextLabel = $Center/StoryPanel/Content/StoryText
-@onready var continue_button: Button = $Center/StoryPanel/Content/ContinueButton
+@onready var story_text: RichTextLabel = $Center/StoryText
 
 var line_index: int = 0
 var _ending: bool = false
@@ -26,15 +23,15 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred(ScenePaths.BIOME_SELECT)
 		return
 	RunState.tundra_intro_seen = true
-	continue_button.pressed.connect(_finish_cutscene)
-	continue_button.text = "Skip Cutscene"
-	continue_button.grab_focus()
 	story_text.modulate.a = 0.0
 	_play_sequence()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
+	var mouse_skip: bool = event is InputEventMouseButton \
+			and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
+	if event.is_action_pressed("ui_accept") \
+			or event.is_action_pressed("ui_cancel") or mouse_skip:
 		get_viewport().set_input_as_handled()
 		_finish_cutscene()
 

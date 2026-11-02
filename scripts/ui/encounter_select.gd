@@ -6,6 +6,8 @@ const FISHING_ICON: Texture2D = preload("res://assets/Art/Items/dead fish.png")
 const RELIC_TRIAL_ICON: Texture2D = preload("res://assets/Art/Items/route_relic_trial.png")
 const FORGE_ICON: Texture2D = preload("res://assets/Art/Items/route_forge.png")
 const LORE_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
+const INK_ICON: Texture2D = preload("res://assets/Art/Items/ink.png")
+const LETTER_ICON: Texture2D = preload("res://assets/Art/LetterArt/Letter_W.png")
 const ROUTE_ACTIVITY_ORDER: Array[String] = [
 	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
 ]
@@ -39,11 +41,18 @@ func _ready() -> void:
 		detours.visible = false
 	if RunState.selected_biome == "tundra":
 		RunState.ensure_tundra_route_plan()
+		if RunState.playtest_route_complete():
+			get_tree().change_scene_to_file.call_deferred(ScenePaths.RUN_WON)
+			return
 		progress_label.text = "ROOM %d / %d   •   %d FIGHTS WON" % [
 			RunState.route_depth, RunState.route_graph_columns.size(),
 			RunState.encounter_index - 1,
 		]
-		if RunState.is_boss_next():
+		if RunState.playtest_route:
+			title_label.text = "Playtest Run"
+			subtitle_label.text = \
+					"One fight, then every minigame. Follow the single route to the end."
+		elif RunState.is_boss_next():
 			title_label.text = "The End of the Road"
 			subtitle_label.text = \
 					"One final gate remains. Defeat its guardian to finish the run."
@@ -203,6 +212,18 @@ func _activity_node(route_key: String, depth: int) -> Dictionary:
 			"tooltip": "Use your loose letters to forge an upgrade.",
 			"preview_texture": FORGE_ICON, "accent": Color("d88acb"),
 		}
+	elif id == "word_game":
+		data = {
+			"name": "Inkwell Word", "subtitle": "Word deduction",
+			"tooltip": "Find the hidden word before your guesses run out.",
+			"preview_texture": INK_ICON, "accent": Color("8ed9e8"),
+		}
+	elif id == "handwriting_game":
+		data = {
+			"name": "Letter Tracing", "subtitle": "Handwriting challenge",
+			"tooltip": "Trace a word one letter at a time.",
+			"preview_texture": LETTER_ICON, "accent": Color("efc866"),
+		}
 	else:
 		data = TundraEventScript.definition(id)
 		data["subtitle"] = String(data.get("mini_game", "Side Quest"))
@@ -266,6 +287,13 @@ func _on_route_node_selected(route_key: String) -> void:
 
 func _on_activity_pressed(route_key: String) -> void:
 	var id: String = RunState.route_activity_id(route_key)
+	if id in ["word_game", "handwriting_game"]:
+		if RunState.begin_playtest_minigame(id, route_key):
+			get_tree().change_scene_to_file(
+				ScenePaths.WORD_GAME if id == "word_game" \
+				else ScenePaths.HANDWRITING_GAME
+			)
+		return
 	if id == "ice_fishing":
 		if RunState.begin_fishing_route(route_key):
 			get_tree().change_scene_to_file(ScenePaths.ICE_FISHING)

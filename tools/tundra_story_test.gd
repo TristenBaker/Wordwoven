@@ -32,7 +32,11 @@ func _ready() -> void:
 		str(intro.LINES).contains("□") or str(intro.LINES).contains("_"),
 		"The tundra intro visually freezes or removes letters"
 	)
-	check(intro.continue_button.text == "Skip Cutscene", "The intro is skippable")
+	check(
+		intro.get_node_or_null("Center/StoryPanel") == null
+		and intro.get_node_or_null("Center/StoryText") != null,
+		"The intro uses the same simple text-only presentation as the lore room"
+	)
 	intro.queue_free()
 
 	RunState.pending_route_activity = "lore_room"

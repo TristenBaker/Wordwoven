@@ -1,6 +1,18 @@
-[gd_resource type="SpriteFrames" load_steps=11 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://bpnfaxo05gm8l"]
 
-[ext_resource type="Texture2D" path="res://art/party/chibi/mage.png" id="1_sheet"]
+[ext_resource type="Texture2D" uid="uid://y5ep0irsdra0" path="res://art/party/chibi/mage.png" id="1_sheet"]
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
+atlas = ExtResource("1_sheet")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
+atlas = ExtResource("1_sheet")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
+atlas = ExtResource("1_sheet")
+region = Rect2(512, 0, 64, 64)
 
 [sub_resource type="AtlasTexture" id="Atlas_idle_0"]
 atlas = ExtResource("1_sheet")
@@ -25,18 +37,6 @@ region = Rect2(256, 0, 64, 64)
 [sub_resource type="AtlasTexture" id="Atlas_walk_3"]
 atlas = ExtResource("1_sheet")
 region = Rect2(320, 0, 64, 64)
-
-[sub_resource type="AtlasTexture" id="Atlas_cast_0"]
-atlas = ExtResource("1_sheet")
-region = Rect2(384, 0, 64, 64)
-
-[sub_resource type="AtlasTexture" id="Atlas_cast_1"]
-atlas = ExtResource("1_sheet")
-region = Rect2(448, 0, 64, 64)
-
-[sub_resource type="AtlasTexture" id="Atlas_cast_2"]
-atlas = ExtResource("1_sheet")
-region = Rect2(512, 0, 64, 64)
 
 [resource]
 animations = [{

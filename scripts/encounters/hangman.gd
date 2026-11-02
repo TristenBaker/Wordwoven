@@ -1,6 +1,7 @@
 extends Control
 
 const Rules = preload("res://scripts/encounters/hangman_rules.gd")
+const TutorialFlow = preload("res://scripts/ui/tutorial_presenter.gd")
 const FONT = preload("res://assets/Fonts/Junicode.ttf")
 const TITLE_FONT = preload("res://assets/Fonts/BLKCHCRY.TTF")
 
@@ -19,6 +20,7 @@ var timer_bar: ProgressBar
 var feedback: Label
 var submit_button: Button
 var clear_button: Button
+var word_row: GridContainer
 var hand_row: GridContainer
 var result_label: Label
 var continue_button: Button
@@ -61,10 +63,37 @@ func _start_puzzle(tier_override: int = -1) -> bool:
 	finished = false
 	puzzle = next_puzzle
 	_build_ui()
+	set_process(false)
+	var tutorial_shown: bool = TutorialFlow.show(
+		self, "hangman", [
+			{
+				"target": word_row,
+				"title": "Complete the word",
+				"body": "Fill the blank letters from left to right.",
+			},
+			{
+				"target": hand_row,
+				"title": "Use the letter bank",
+				"body": "Type or click available letters. Decoys are mixed in.",
+			},
+			{
+				"target": timer_bar,
+				"title": "Keep moving",
+				"body": "Wrong guesses clear your blanks, but the clock keeps running.",
+			},
+		], _begin_puzzle_timer
+	)
+	if not tutorial_shown:
+		_begin_puzzle_timer()
+	return true
+
+
+func _begin_puzzle_timer() -> void:
+	if puzzle.is_empty() or finished:
+		return
 	deadline_ms = Time.get_ticks_msec() + int(float(puzzle.seconds) * 1000.0)
 	set_process(true)
 	_process(0.0)
-	return true
 
 
 func _on_debug_reset_requested(tier_override: int) -> void:
@@ -159,7 +188,7 @@ func _build_ui() -> void:
 	timer_bar.value = float(puzzle.seconds)
 	timer_bar.show_percentage = false
 	box.add_child(timer_bar)
-	var word_row := GridContainer.new()
+	word_row = GridContainer.new()
 	word_row.columns = mini(14, String(puzzle.word).length())
 	word_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	word_row.add_theme_constant_override("h_separation", 4)

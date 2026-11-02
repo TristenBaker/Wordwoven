@@ -220,5 +220,7 @@ func _finish_rewards() -> void:
 		get_tree().change_scene_to_file(
 			ScenePaths.TAVERN if visit_endless_shop else ScenePaths.COMBAT
 		)
+	elif RunState.playtest_route:
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
 	else:
 		get_tree().change_scene_to_file(ScenePaths.TAVERN)

@@ -116,6 +116,13 @@ size_flags_horizontal = 3
 tooltip_text = "Open the Tundra map and pick any encounter, regardless of route progress."
 text = "Pick Any Encounter"
 
+[node name="PlaytestRunButton" type="Button" parent="Panel/Box"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+tooltip_text = "Start one combat followed by every minigame on a linear route."
+text = "DEV: Start Playtest Run"
+
 [node name="HangmanRow" type="HBoxContainer" parent="Panel/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
