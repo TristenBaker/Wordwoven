@@ -30,6 +30,8 @@ var star_coins := 0
 var seen_words: Dictionary = {}
 var element_upgrade_levels: Dictionary = {}
 var letter_cosmetics: Dictionary = {}
+var combat_tutorial_seen: bool = false
+var session_tutorials_seen: Dictionary = {}
 
 
 func _ready() -> void:
@@ -38,6 +40,7 @@ func _ready() -> void:
 
 func load_profile() -> void:
 	star_coins = 0
+	combat_tutorial_seen = false
 	seen_words.clear()
 	element_upgrade_levels.clear()
 	letter_cosmetics.clear()
@@ -66,6 +69,22 @@ func save_profile() -> void:
 	config.set_value("profile", "element_upgrade_levels", element_upgrade_levels)
 	config.set_value("profile", "letter_cosmetics", letter_cosmetics)
 	config.save(PROFILE_PATH)
+
+
+func mark_combat_tutorial_seen() -> void:
+	if combat_tutorial_seen:
+		return
+	# Session-only while the tutorial is being tested: reopening the game
+	# creates a fresh autoload and makes the tutorial available again.
+	combat_tutorial_seen = true
+
+
+func has_seen_session_tutorial(tutorial_id: String) -> bool:
+	return session_tutorials_seen.has(tutorial_id)
+
+
+func mark_session_tutorial_seen(tutorial_id: String) -> void:
+	session_tutorials_seen[tutorial_id] = true
 
 
 ## Returns true only for a word that has never rewarded a StarCoin before.

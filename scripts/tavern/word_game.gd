@@ -1,5 +1,6 @@
 extends Control
 const Balance = preload("res://data/balance/tuning.gd")
+const TutorialFlow = preload("res://scripts/ui/tutorial_presenter.gd")
 ## Direct typing, flip reveals, and a persistent color-aware keyboard.
 
 const WORDS: Array[String] = preload("res://data/balance/tuning.gd").WORD_GAME_WORDS
@@ -19,10 +20,28 @@ var cell_labels: Array[Array] = []
 var key_buttons: Dictionary[String, Button] = {}
 var key_ranks: Dictionary[String, int] = {}
 var status: Label
+var word_grid: GridContainer
+var keyboard_zone: HBoxContainer
 
 func _ready() -> void:
 	target = WORDS.pick_random()
 	_build_ui()
+	call_deferred("_show_tutorial")
+
+
+func _show_tutorial() -> void:
+	TutorialFlow.show(self, "word_game", [
+		{
+			"target": word_grid,
+			"title": "Find the hidden word",
+			"body": "Type a valid five-letter word, then press Enter to submit it.",
+		},
+		{
+			"target": keyboard_zone,
+			"title": "Read the colors",
+			"body": "Green is correctly placed, gold is elsewhere, and gray is absent.",
+		},
+	])
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if revealing or row >= Balance.WORD_GAME_GUESSES or not (event is InputEventKey) or not event.pressed or event.echo:
@@ -58,12 +77,12 @@ func _build_ui() -> void:
 	panel.add_child(box)
 	box.add_child(_label("THE INKWELL WORD", 36, Color("a9e7f5")))
 	box.add_child(_label("Find the %d-letter word in %d guesses." % [Balance.WORD_GAME_LENGTH, Balance.WORD_GAME_GUESSES], 18, Color("c0d1d4")))
-	var grid := GridContainer.new()
-	grid.columns = Balance.WORD_GAME_LENGTH
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	grid.add_theme_constant_override("h_separation", 7)
-	grid.add_theme_constant_override("v_separation", 7)
-	box.add_child(grid)
+	word_grid = GridContainer.new()
+	word_grid.columns = Balance.WORD_GAME_LENGTH
+	word_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	word_grid.add_theme_constant_override("h_separation", 7)
+	word_grid.add_theme_constant_override("v_separation", 7)
+	box.add_child(word_grid)
 	for _row: int in range(Balance.WORD_GAME_GUESSES):
 		var panel_row: Array = []
 		var label_row: Array = []
@@ -72,7 +91,7 @@ func _build_ui() -> void:
 			cell.custom_minimum_size = Vector2(54, 54)
 			cell.add_theme_stylebox_override("panel", _cell_style(EMPTY))
 			cell.pivot_offset = Vector2(27, 27)
-			grid.add_child(cell)
+			word_grid.add_child(cell)
 			var label := Label.new()
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -85,7 +104,7 @@ func _build_ui() -> void:
 		cell_labels.append(label_row)
 	status = _label("", 17, Color("99b5bd"))
 	box.add_child(status)
-	var keyboard_zone := HBoxContainer.new()
+	keyboard_zone = HBoxContainer.new()
 	keyboard_zone.alignment = BoxContainer.ALIGNMENT_CENTER
 	keyboard_zone.add_theme_constant_override("separation", 10)
 	box.add_child(keyboard_zone)
@@ -123,9 +142,17 @@ func _build_ui() -> void:
 	enter.pressed.connect(_submit)
 	action_keys.add_child(enter)
 	var back := Button.new()
-	back.text = "Return to Tavern"
-	back.pressed.connect(func(): get_tree().change_scene_to_file(ScenePaths.TAVERN))
+	back.text = "Return to Playtest Route" \
+			if RunState.pending_route_activity == "word_game" else "Return to Tavern"
+	back.pressed.connect(_leave_game)
 	box.add_child(back)
+
+
+func _leave_game() -> void:
+	if RunState.finish_playtest_minigame("word_game"):
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+		return
+	get_tree().change_scene_to_file(ScenePaths.TAVERN)
 
 func _add_letter(letter: String) -> void:
 	if revealing or row >= Balance.WORD_GAME_GUESSES or guess.length() >= Balance.WORD_GAME_LENGTH:

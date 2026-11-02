@@ -23,6 +23,7 @@ var gold: int = STARTING_GOLD
 var gold_earned_this_run: int = 0
 var run_score_recorded: bool = false
 var run_mode: RunMode = RunMode.STORY
+var playtest_route: bool = false
 var has_unseen_inventory_items: bool = false
 var auto_equip_enabled: bool = false
 var auto_equip_same_element_only: bool = false
@@ -123,6 +124,7 @@ func _ready() -> void:
 ## Starts either the legacy shared deck or ten randomly equipped ARPG letters.
 func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	run_mode = mode
+	playtest_route = false
 	run_starting.emit()
 	player_max_health = STARTING_HEALTH
 	player_health = STARTING_HEALTH
@@ -189,6 +191,95 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	run_started.emit()
 	EventBus.emit_deck_changed()
 	EventBus.emit_gold_changed(gold)
+
+
+## Developer showcase: one fight followed by every current minigame, with no
+## branches or boss. It uses the regular route APIs so each room exercises the
+## same launch and completion flow as a normal expedition.
+func start_playtest_run() -> void:
+	start_new_run(RunMode.STORY)
+	playtest_route = true
+	selected_biome = "tundra"
+	tundra_intro_seen = true
+	_initialize_playtest_route()
+
+
+func _initialize_playtest_route() -> void:
+	const ROOMS: Array[Dictionary] = [
+		{"node_type": "normal_combat", "content_id": "frostfang_wolf"},
+		{"node_type": "letter_reward", "content_id": "ice_fishing"},
+		{"node_type": "relic_reward", "content_id": "hangman"},
+		{"node_type": "recovery", "content_id": "frozen_traveler"},
+		{"node_type": "treasure", "content_id": "treasure_chest"},
+		{"node_type": "random_event", "content_id": "icy_portal"},
+		{"node_type": "minigame", "content_id": "word_game"},
+		{"node_type": "minigame", "content_id": "handwriting_game"},
+	]
+	route_seed = -1
+	route_nodes.clear()
+	route_graph_columns.clear()
+	route_edges.clear()
+	route_completed_keys.clear()
+	route_bypassed_keys.clear()
+	route_chosen_nodes.clear()
+	route_activity_stages.clear()
+	route_enemy_order.clear()
+	route_current_key = ""
+	route_pending_destination = ""
+	route_boss_key = ""
+	for column: int in ROOMS.size():
+		var key := "playtest_%d" % column
+		var next_keys: Array[String] = []
+		if column + 1 < ROOMS.size():
+			next_keys.append("playtest_%d" % (column + 1))
+		var room: Dictionary = ROOMS[column]
+		route_nodes[key] = {
+			"route_key": key,
+			"column": column,
+			"lane": 0,
+			"lane_count": 1,
+			"node_type": String(room.node_type),
+			"content_id": String(room.content_id),
+			"next_keys": next_keys,
+			"reward_tier": 1,
+			"threat_tier": 1 if column == 0 else 0,
+			"reveal_state": "revealed",
+			"visit_state": "locked",
+			"biome": selected_biome,
+		}
+		route_graph_columns.append([key])
+		route_edges[key] = next_keys.duplicate()
+		if column == 0:
+			route_enemy_order.append(String(room.content_id))
+		else:
+			route_activity_stages[key] = column + 1
+	route_start_key = "playtest_0"
+	route_depth = 1
+	_refresh_route_states()
+
+
+func begin_playtest_minigame(id: String, route_key: String) -> bool:
+	if not playtest_route or id not in ["word_game", "handwriting_game"] \
+			or not _route_key_is_active(route_key) \
+			or not pending_route_activity.is_empty():
+		return false
+	pending_route_activity = id
+	pending_route_key = route_key
+	return true
+
+
+func finish_playtest_minigame(id: String) -> bool:
+	if not playtest_route or pending_route_activity != id:
+		return false
+	finish_route_activity()
+	return true
+
+
+func playtest_route_complete() -> bool:
+	if not playtest_route or route_graph_columns.is_empty():
+		return false
+	var final_key: String = String(route_graph_columns[-1][0])
+	return route_completed_keys.has(final_key)
 
 
 ## True when the next encounter is the final boss.

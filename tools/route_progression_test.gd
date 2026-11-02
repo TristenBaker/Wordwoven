@@ -111,8 +111,8 @@ func _ready() -> void:
 		if button is IceHoleButton and button.text.is_empty():
 			holes += 1
 	check(holes == 3, "Fishing presents three illustrated ice holes")
-	check(fishing.tutorial_panel.visible, "Fishing opens with its first-time tutorial")
-	fishing._dismiss_tutorial()
+	check(not fishing.tutorial_panel.visible and fishing.hole_selection_panel.visible,
+			"Fishing uses the shared contextual tutorial instead of the old instruction page")
 	fishing._warm_word_pool.clear()
 	for warm_word: String in ["warm", "hot", "heated", "sunny", "summer"]:
 		fishing._warm_word_pool.append(warm_word)

@@ -1,0 +1,99 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/combat_tutorial.gd" id="1_script"]
+[ext_resource type="FontFile" path="res://assets/Fonts/Junicode.ttf" id="2_font"]
+[ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="3_buttons"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.035, 0.055, 0.06, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.38, 0.94, 0.72, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBox_empty"]
+
+[node name="CombatTutorial" type="Control"]
+z_index = 200
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_script")
+
+[node name="LessonPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(390, 0)
+layout_mode = 0
+offset_left = 60.0
+offset_top = 60.0
+offset_right = 450.0
+offset_bottom = 205.0
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="Margin" type="MarginContainer" parent="LessonPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 11
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 11
+
+[node name="Content" type="VBoxContainer" parent="LessonPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="StepLabel" type="Label" parent="LessonPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.94, 0.72, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "1 / 3"
+
+[node name="Title" type="Label" parent="LessonPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.5, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 23
+text = "Build a word"
+
+[node name="Body" type="Label" parent="LessonPanel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.95, 0.91, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 17
+text = "Tutorial copy"
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="LessonPanel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SkipButton" type="Button" parent="LessonPanel/Margin/Content/Actions"]
+custom_minimum_size = Vector2(72, 32)
+layout_mode = 2
+theme = ExtResource("3_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 14
+text = "Skip"
+
+[node name="Spacer" type="Control" parent="LessonPanel/Margin/Content/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="NextButton" type="Button" parent="LessonPanel/Margin/Content/Actions"]
+custom_minimum_size = Vector2(124, 32)
+layout_mode = 2
+theme = ExtResource("3_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 15
+text = "Next"

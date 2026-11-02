@@ -70,15 +70,9 @@ func _draw() -> void:
 	if size.x <= MAP_PADDING_X * 2.0:
 		return
 	_draw_connections()
-	_draw_origin()
 
 
 func _draw_connections() -> void:
-	var origin := Vector2(MAP_PADDING_X * 0.42, size.y * 0.5)
-	for node: Dictionary in _nodes_at_column(1):
-		var state: String = String(node.get("state", "locked"))
-		var color: Color = COLOR_TRAVELED if state in ["current", "completed"] else COLOR_TRAIL
-		_draw_route_line(origin, _node_point(node), color, 3.0)
 	for column: int in range(1, _column_count):
 		for from_node: Dictionary in _nodes_at_column(column):
 			for to_node: Dictionary in _nodes_at_column(column + 1):
@@ -91,14 +85,6 @@ func _draw_connections() -> void:
 						_node_point(from_node), _node_point(to_node),
 						_connection_color(from_node, to_node), 3.0
 				)
-
-
-func _draw_origin() -> void:
-	var origin := Vector2(MAP_PADDING_X * 0.42, size.y * 0.5)
-	draw_circle(origin, 15.0, COLOR_CLEARED.darkened(0.35))
-	draw_arc(origin, 15.0, 0.0, TAU, 28, COLOR_CLEARED, 3.0, true)
-	_draw_centered_text(origin + Vector2(0, 32), "CAMP", COLOR_INK, 11)
-
 
 func _draw_stage_labels() -> void:
 	for column: int in range(1, _column_count + 1):
