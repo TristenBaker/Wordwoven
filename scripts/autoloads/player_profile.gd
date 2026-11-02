@@ -4,6 +4,7 @@ extends Node
 signal star_coins_changed(total: int)
 
 const PROFILE_PATH := "user://player_profile.cfg"
+const TALENTS := preload("res://data/balance/talents.gd")
 const ELEMENTS: Array[String] = ["fire", "lightning", "water", "ice", "nature", "earth"]
 const COSMETICS: Dictionary[String, String] = {
 	"warrior": "Warrior",
@@ -27,6 +28,8 @@ const COSMETIC_RESOURCES: Dictionary[String, CharacterCosmetic] = {
 }
 
 var star_coins := 0
+var total_star_coins := 0
+var talent_allocations: Dictionary = {}
 var seen_words: Dictionary = {}
 var element_upgrade_levels: Dictionary = {}
 var letter_cosmetics: Dictionary = {}
@@ -38,6 +41,8 @@ func _ready() -> void:
 
 func load_profile() -> void:
 	star_coins = 0
+	total_star_coins = 0
+	talent_allocations.clear()
 	seen_words.clear()
 	element_upgrade_levels.clear()
 	letter_cosmetics.clear()
@@ -52,6 +57,24 @@ func load_profile() -> void:
 	var saved_levels: Dictionary = config.get_value("profile", "element_upgrade_levels", {})
 	for element: String in ELEMENTS:
 		element_upgrade_levels[element] = maxi(0, int(saved_levels.get(element, 0)))
+	# Old ranks cost one coin each. Refund every rank when migrating to talents.
+	var legacy_spent := 0
+	for value: int in element_upgrade_levels.values():
+		legacy_spent += value
+	total_star_coins = maxi(0, int(config.get_value("profile", "total_star_coins", star_coins + legacy_spent)))
+	var saved_talents: Dictionary = config.get_value("profile", "talent_allocations", {})
+	# Catalog order is parent-first; reject orphaned or unaffordable saved nodes.
+	for id: String in TALENTS.NODES:
+		if saved_talents.has(id) and allocated_talent_points() < total_star_coins and _talent_parents_owned(id):
+			var rank := maxi(0, int(saved_talents[id]))
+			if not TALENTS.NODES[id].get("repeatable", false):
+				rank = mini(rank, 1)
+			rank = mini(rank, total_star_coins - allocated_talent_points())
+			if rank > 0:
+				talent_allocations[id] = rank
+	star_coins = total_star_coins - allocated_talent_points()
+	for element: String in ELEMENTS:
+		element_upgrade_levels[element] = 0
 	var saved_cosmetics: Dictionary = config.get_value("profile", "letter_cosmetics", {})
 	for letter: String in saved_cosmetics:
 		var cosmetic: String = saved_cosmetics[letter]
@@ -62,6 +85,8 @@ func load_profile() -> void:
 func save_profile() -> void:
 	var config := ConfigFile.new()
 	config.set_value("profile", "star_coins", star_coins)
+	config.set_value("profile", "total_star_coins", total_star_coins)
+	config.set_value("profile", "talent_allocations", talent_allocations)
 	config.set_value("profile", "seen_words", seen_words.keys())
 	config.set_value("profile", "element_upgrade_levels", element_upgrade_levels)
 	config.set_value("profile", "letter_cosmetics", letter_cosmetics)
@@ -74,52 +99,85 @@ func record_unique_word(word: String) -> bool:
 	if normalized.is_empty() or seen_words.has(normalized):
 		return false
 	seen_words[normalized] = true
+	total_star_coins += 1
 	star_coins += 1
 	save_profile()
 	star_coins_changed.emit(star_coins)
 	return true
-
-
-func potency_level(element: String) -> int:
-	return int(element_upgrade_levels.get(element.to_lower(), 0))
 
 
 func element_potency_multiplier(element: String) -> float:
-	# A deliberately modest permanent gain: +3% per rank.
-	return 1.0 + float(potency_level(element)) * 0.03
-
-
-func upgrade_cost(element: String) -> int:
-	return 1
-
-
-func buy_element_upgrade(element: String) -> bool:
-	var key := element.to_lower()
-	if not ELEMENTS.has(key):
-		return false
-	var cost := upgrade_cost(key)
-	if star_coins < cost:
-		return false
-	star_coins -= cost
-	element_upgrade_levels[key] = potency_level(key) + 1
-	save_profile()
-	star_coins_changed.emit(star_coins)
-	return true
-
-
-func refund_element_upgrade(element: String) -> bool:
-	var key := element.to_lower()
-	if not ELEMENTS.has(key) or potency_level(key) <= 0:
-		return false
-	element_upgrade_levels[key] = potency_level(key) - 1
-	star_coins += 1
-	save_profile()
-	star_coins_changed.emit(star_coins)
-	return true
+	# Talent potency joins acquired powers through RelicSystem.total_effect.
+	return 1.0
 
 
 func add_dev_star_coin() -> void:
+	total_star_coins += 1
 	star_coins += 1
+	save_profile()
+	star_coins_changed.emit(star_coins)
+
+
+func talent_effect(effect: String) -> float:
+	var amount := 0.0
+	for id: String in talent_allocations:
+		amount += float(TALENTS.NODES.get(id, {}).get("effects", {}).get(effect, 0.0)) * talent_rank(id)
+	return amount
+
+
+func talent_rank(id: String) -> int:
+	return int(talent_allocations.get(id, 0))
+
+
+func allocated_talent_points() -> int:
+	var total := 0
+	for id: String in talent_allocations:
+		total += talent_rank(id)
+	return total
+
+
+func _talent_parents_owned(id: String) -> bool:
+	for parent: String in TALENTS.NODES[id].requires:
+		if not talent_allocations.has(parent):
+			return false
+	return true
+
+
+func can_allocate_talent(id: String) -> bool:
+	return TALENTS.NODES.has(id) and (not talent_allocations.has(id) or TALENTS.NODES[id].get("repeatable", false)) and star_coins > 0 and _talent_parents_owned(id)
+
+
+func allocate_talent(id: String) -> bool:
+	if not can_allocate_talent(id):
+		return false
+	talent_allocations[id] = talent_rank(id) + 1
+	_commit_talents()
+	return true
+
+
+func refund_talent(id: String) -> void:
+	if talent_rank(id) > 1:
+		talent_allocations[id] = talent_rank(id) - 1
+	else:
+		talent_allocations.erase(id)
+	# Removing a prerequisite refunds its descendants as well.
+	var changed := true
+	while changed:
+		changed = false
+		for owned: String in talent_allocations.keys():
+			if not _talent_parents_owned(owned):
+				talent_allocations.erase(owned)
+				changed = true
+	_commit_talents()
+
+
+func reset_talents() -> void:
+	talent_allocations.clear()
+	_commit_talents()
+
+
+func _commit_talents() -> void:
+	star_coins = total_star_coins - allocated_talent_points()
 	save_profile()
 	star_coins_changed.emit(star_coins)
 
