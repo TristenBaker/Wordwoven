@@ -31,6 +31,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if get_tree().get_first_node_in_group("talent_overlay") != null:
+		return
 	if event is InputEventKey and event.pressed and not event.echo \
 			and event.keycode == KEY_ESCAPE:
 		if visible and _history_open:

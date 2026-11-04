@@ -1,4 +1,5 @@
 extends Control
+@export var embedded := false
 ## Right tavern room: the dealer offers six itemized letters each shop phase.
 
 const LETTER_TILE_SCENE: PackedScene = preload("res://scenes/combat/letter_tile.tscn")
@@ -15,7 +16,7 @@ const LETTER_TILE_SCENE: PackedScene = preload("res://scenes/combat/letter_tile.
 
 func _ready() -> void:
 	dealer_button.pressed.connect(_open_menu)
-	close_button.pressed.connect(menu_panel.hide)
+	close_button.pressed.connect(_return_to_hub if embedded else menu_panel.hide)
 	back_button.pressed.connect(_return_to_hub)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	EventBus.deck_changed.connect(_rebuild_offers)
@@ -26,6 +27,11 @@ func _ready() -> void:
 	_rebuild_offers()
 	_refresh_status()
 	menu_panel.hide()
+	if embedded:
+		for child: Node in get_children():
+			if child is CanvasItem:
+				child.hide()
+		_open_menu()
 
 
 func _input(event: InputEvent) -> void:
@@ -208,4 +214,7 @@ func _refresh_status() -> void:
 
 
 func _return_to_hub() -> void:
+	if embedded:
+		get_parent().queue_free()
+		return
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)

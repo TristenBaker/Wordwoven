@@ -299,6 +299,14 @@ custom_minimum_size = Vector2(420, 68)
 theme_override_font_sizes/font_size = 21
 text = "Letter Tracing\nTrace each character before time runs out"
 
+[node name="HandwritingLabButton" type="Button" parent="MinigamesPopup/Center/Panel/Menu"]
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+layout_mode = 2
+custom_minimum_size = Vector2(420, 68)
+theme_override_font_sizes/font_size = 21
+text = "Handwriting Lab\nTest the forge's letter recognition"
+
 [node name="CloseButton" type="Button" parent="MinigamesPopup/Center/Panel/Menu"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"

@@ -58,6 +58,8 @@ var _state: State = State.PLAYER_INPUT
 var _relic_system: RelicSystem = RelicSystem.new()
 var _previous_drawn: Array[LetterStats] = []
 var _damage_popup_tween: Tween = null
+signal secondary_damage_presented
+var _secondary_damage_active := 0
 var _retaliation_reduction: int = 0
 var _guard: int = 0
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
@@ -89,16 +91,13 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 		$Layout/InputArea/WordComposerRow/WordTileBoard
 @onready var damage_output: Label = \
 		$Layout/InputArea/WordComposerRow/OutputCounters/Damage/Value
-@onready var heal_output: Label = \
-		$Layout/InputArea/WordComposerRow/OutputCounters/Heal/Value
-@onready var gold_output: Label = \
-		$Layout/InputArea/WordComposerRow/OutputCounters/Gold/Value
 @onready var damage_popup: Label = $Layout/DamagePopup
 @onready var pause_menu: PauseMenu = $PauseMenu
 @onready var feedback_label: Label = \
 		$Layout/FeedbackBanner/Content/FeedbackLabel
 @onready var prompt_label: Label = $Layout/FeedbackBanner/Content/PromptLabel
 @onready var feedback_banner: PanelContainer = $Layout/FeedbackBanner
+var _feedback_timer: Timer
 @onready var effectiveness_indicator: PanelContainer = $Layout/EffectivenessIndicator
 @onready var log_label: RichTextLabel = \
 		$Layout/SidePanel/LogLabel
@@ -119,6 +118,12 @@ var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 
 
 func _ready() -> void:
+	enemy.damage_received.connect(_on_enemy_damage_received)
+	_feedback_timer = Timer.new()
+	_feedback_timer.one_shot = true
+	_feedback_timer.wait_time = 3.0
+	_feedback_timer.timeout.connect(_set_player_feedback.bind(""))
+	add_child(_feedback_timer)
 	# Enter normally makes a LineEdit release editing focus. The field is the
 	# invisible keyboard source for the tile board, so retain that focus and
 	# let the combat state machine decide when input is unavailable instead.
@@ -128,6 +133,7 @@ func _ready() -> void:
 	word_input.text_changed.connect(_on_text_changed)
 	word_tile_board.focus_requested.connect(_focus_word_input)
 	pause_menu.resumed.connect(_restore_composer_after_pause)
+	$EquipmentOverlay.talents_closed.connect(_restore_composer_after_pause)
 	DebugTools.auto_kill_requested.connect(_on_dev_kill_pressed)
 	log_toggle_button.toggled.connect(_on_log_toggled)
 	$Layout/WordHistoryButton.pressed.connect(_open_word_history)
@@ -351,6 +357,10 @@ func _restore_composer_after_pause() -> void:
 		call_deferred("_focus_word_input")
 
 
+func can_open_talents() -> bool:
+	return _state == State.PLAYER_INPUT and not _combat_tutorial_active
+
+
 func _on_text_submitted(_text: String) -> void:
 	_on_submit()
 
@@ -402,6 +412,8 @@ func _resolve_word(word: String) -> void:
 		word, drawn, undrawn, enemy.tags, required_pos,
 		enemy.affinities, true, _turn_elapsed_seconds
 	)
+	# Preserve the same final multipliers for each pre-rolled echo.
+	var echo_share: float = float(result.lightning_bonus) * float(result.speed_multiplier) / maxf(float(result.damage), 0.0001)
 	# Restore the original encounter-only final damage factor.
 	result["damage"] = float(result["damage"]) * ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
 	_modifier_runtime.modify_result(result, word)
@@ -442,12 +454,31 @@ func _resolve_word(word: String) -> void:
 		await party_stage.impact_landed
 	if _state != State.RESOLVING:
 		return
-	_show_damage_popup(result["damage"])
 	if earned_star_coin:
 		_show_star_coin_reward(word)
-	enemy.take_damage(result["damage"])
+	await _apply_cast_hits(result, echo_share)
 	if enemy.is_alive():
 		_enemy_turn()
+
+
+func _apply_cast_hits(result: Dictionary, echo_share: float) -> void:
+	var total := maxi(0, int(round(float(result.damage))))
+	var count: int = int(result.get("lightning_procs", 0))
+	var echo_total := clampi(int(round(total * echo_share)), 0, total) if count > 0 else 0
+	enemy.take_damage(total - echo_total)
+	# Cumulative rounding keeps all hits equal to the original rounded total.
+	var applied := 0
+	for index: int in count:
+		if not enemy.is_alive() or _state != State.RESOLVING:
+			break
+		await get_tree().create_timer(0.28, false).timeout
+		if not enemy.is_alive() or _state != State.RESOLVING:
+			break
+		var cumulative := int(round(float(echo_total) * (index + 1) / count))
+		var hit := cumulative - applied
+		applied = cumulative
+		if hit > 0:
+			enemy.take_damage(hit, "lightning")
 
 
 func _on_gold_stolen(amount: int) -> void:
@@ -471,6 +502,7 @@ func _enemy_turn() -> void:
 		_log("Burn scorches the %s for %.0f damage." % [
 			enemy.enemy_name, burn_damage
 		])
+		await get_tree().create_timer(0.45, false).timeout
 	if not enemy.is_alive():
 		return
 	var poison_damage: float = enemy.consume_poison()
@@ -478,6 +510,7 @@ func _enemy_turn() -> void:
 		_log("Poison withers the %s for %.0f damage." % [
 			enemy.enemy_name, poison_damage
 		])
+		await get_tree().create_timer(0.45, false).timeout
 	if not enemy.is_alive():
 		return
 	var plan: Dictionary = _modifier_runtime.retaliation_plan(enemy.attack)
@@ -502,7 +535,7 @@ func _enemy_turn() -> void:
 		_log("DROWSY: the %s snores through its turn. 'Five more minutes of villainy...'" % enemy.enemy_name)
 	elif plan.kind == "self_hit":
 		_log("CLUMSY: the %s trips over its own threat and hits itself for %d damage!" % [enemy.enemy_name, int(round(float(plan.self_damage)))])
-		enemy.take_damage(float(plan.self_damage))
+		enemy.take_damage(float(plan.self_damage), "recoil")
 	else:
 		_log("The %s retaliates for %d damage!" % [enemy.enemy_name, retaliation])
 		strike_fx.play(retaliation, $Layout)
@@ -563,6 +596,8 @@ func _on_enemy_died() -> void:
 func _play_victory_transition() -> void:
 	if party_stage.is_performing():
 		await party_stage.performance_finished
+	if _secondary_damage_active > 0:
+		await secondary_damage_presented
 	await enemy.play_death()
 	var fade: Tween = create_tween()
 	fade.tween_property(
@@ -617,12 +652,17 @@ func _layout_feedback_banner() -> void:
 func _set_player_feedback(message: String) -> void:
 	feedback_label.text = message
 	feedback_label.visible = not message.is_empty()
-	prompt_label.visible = message.is_empty()
+	# Keep the requested part of speech visible even while explaining a rejection.
+	prompt_label.show()
+	_feedback_timer.stop()
+	if not message.is_empty():
+		_feedback_timer.start()
+	_queue_feedback_layout()
 
 
 func _refresh_prompt() -> void:
 	var article: String = "an" if required_pos in ["a", "r"] else "a"
-	prompt_label.text = "Write %s %s to shape your tale" % [
+	prompt_label.text = "Write %s %s" % [
 		article, WordNet.pos_name(required_pos),
 	]
 	if required_pos == "v":
@@ -662,7 +702,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 	_update_modifier_status(word)
 	word_tile_board.set_word(word, drawn)
 	if word.is_empty() or enemy == null or not enemy.is_alive():
-		_set_output_counters(0, 0, 0)
+		_set_estimated_damage(0)
 		_set_health_previews(0, 0)
 		effectiveness_indicator.clear(_state != State.PLAYER_INPUT)
 		return
@@ -677,9 +717,7 @@ func _refresh_word_composer(raw_word: String, split: Dictionary = {}) -> void:
 			effectiveness_indicator.show_preview(result)
 		else:
 			effectiveness_indicator.clear()
-	_set_output_counters(
-		int(round(float(result["damage"]))), int(result["water_heal"]), int(result["gold"])
-	)
+	_set_estimated_damage(int(round(float(result["damage"]))))
 	_set_health_previews(
 		int(round(float(result["damage"]))), int(result["water_heal"])
 	)
@@ -692,10 +730,11 @@ func _update_timer_display() -> void:
 	]
 
 
-func _set_output_counters(damage: int, healing: int, gold: int) -> void:
+func _set_estimated_damage(damage: int) -> void:
 	damage_output.text = str(damage)
-	heal_output.text = str(healing)
-	gold_output.text = str(gold)
+	# Keep larger late-run numbers inside the quiet center of the badge.
+	var font_size := clampi(100 / maxi(3, damage_output.text.length()), 16, 34)
+	damage_output.add_theme_font_size_override("font_size", font_size)
 
 
 func _set_health_previews(damage: int, healing: int) -> void:
@@ -745,6 +784,23 @@ func _fly_tile_to_board(
 	tween.tween_property(flying, "global_position", target.position, 0.24)
 	tween.tween_property(flying, "size", target.size, 0.24)
 	tween.chain().tween_callback(flying.queue_free)
+
+
+func _on_enemy_damage_received(amount: int, kind: String) -> void:
+	if kind == "hit":
+		_show_damage_popup(amount)
+		return
+	var fx := ElementalHitFx.new()
+	fx.amount = amount
+	fx.kind = kind
+	_secondary_damage_active += 1
+	fx.finished.connect(func():
+		_secondary_damage_active -= 1
+		if _secondary_damage_active == 0:
+			secondary_damage_presented.emit()
+	)
+	add_child(fx)
+	fx.global_position = enemy.strike_point()
 
 
 func _show_damage_popup(amount: float) -> void:
@@ -800,7 +856,7 @@ func _show_star_coin_reward(word: String) -> void:
 	ding.bus = &"SFX"
 	effect.add_child(ding)
 	ding.play()
-	var target: Vector2 = $EquipmentOverlay/EquipButton.get_global_rect().get_center() \
+	var target: Vector2 = $EquipmentOverlay/TalentButton.get_global_rect().get_center() \
 		- coin.size * 0.5
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(coin, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

@@ -1,4 +1,5 @@
 extends Control
+@export var embedded := false
 ## Left tavern room: the barkeeper sells the existing restorative meal.
 
 @onready var economy: EconomySystem = $Systems/EconomySystem
@@ -15,11 +16,16 @@ extends Control
 func _ready() -> void:
 	barkeeper_button.pressed.connect(_open_menu)
 	meal_button.pressed.connect(_buy_meal)
-	close_button.pressed.connect(menu_panel.hide)
+	close_button.pressed.connect(_return_to_hub if embedded else menu_panel.hide)
 	back_button.pressed.connect(_return_to_hub)
 	EventBus.gold_changed.connect(_on_gold_changed)
 	_refresh()
 	menu_panel.hide()
+	if embedded:
+		for child: Node in get_children():
+			if child is CanvasItem:
+				child.hide()
+		_open_menu()
 
 
 func _input(event: InputEvent) -> void:
@@ -60,4 +66,7 @@ func _refresh() -> void:
 
 
 func _return_to_hub() -> void:
+	if embedded:
+		get_parent().queue_free()
+		return
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)

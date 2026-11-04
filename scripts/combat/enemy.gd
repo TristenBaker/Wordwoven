@@ -4,6 +4,7 @@ extends Control
 ## displays its sprite, health, and tags, and reports damage taken.
 
 signal died()
+signal damage_received(amount: int, kind: String)
 ## Emitted on the attack animation's contact frame, or when it is cut short.
 signal attack_landed()
 signal animation_finished(anim_name: String)
@@ -142,11 +143,13 @@ func play_attack() -> void:
 	await attack_landed
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, kind: String = "hit") -> void:
 	clear_damage_preview()
 	_health = maxi(_health - int(round(amount)), 0)
 	_refresh_health()
 	_play_hit()
+	if int(round(amount)) > 0:
+		damage_received.emit(int(round(amount)), kind)
 	EventBus.emit_enemy_damaged(amount)
 	if _health <= 0:
 		died.emit()
@@ -160,7 +163,7 @@ func consume_burn() -> float:
 	var damage: float = _burn_damage
 	_burn_damage = 0.0
 	if damage > 0.0 and is_alive():
-		take_damage(damage)
+		take_damage(damage, "burn")
 	return damage
 
 
@@ -172,7 +175,7 @@ func consume_poison() -> float:
 	var damage: float = _poison_damage
 	_poison_damage = 0.0
 	if damage > 0.0 and is_alive():
-		take_damage(damage)
+		take_damage(damage, "poison")
 	return damage
 
 

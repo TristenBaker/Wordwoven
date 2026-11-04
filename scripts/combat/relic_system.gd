@@ -112,7 +112,7 @@ func _roll_quality(allows_common: bool = true) -> String:
 
 
 func total_effect(effect: String) -> float:
-	var total: float = 0.0
+	var total: float = PlayerProfile.talent_effect(effect)
 	for relic_id: String in RunState.relics:
 		var info: Dictionary = relic_info(relic_id)
 		if info.get("effect", "") == effect:

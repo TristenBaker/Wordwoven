@@ -19,41 +19,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/active_modifier_panel.tscn" id="modifier_panel"]
 [ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_damage"]
-bg_color = Color(0.72, 0.16, 0.13, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.52, 0.42, 1)
-corner_radius_top_left = 30
-corner_radius_top_right = 30
-corner_radius_bottom_right = 30
-corner_radius_bottom_left = 30
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_heal"]
-bg_color = Color(0.18, 0.58, 0.31, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.55, 1, 0.66, 1)
-corner_radius_top_left = 30
-corner_radius_top_right = 30
-corner_radius_bottom_right = 30
-corner_radius_bottom_left = 30
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gold"]
-bg_color = Color(0.78, 0.57, 0.09, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.9, 0.4, 1)
-corner_radius_top_left = 30
-corner_radius_top_right = 30
-corner_radius_bottom_right = 30
-corner_radius_bottom_left = 30
+[ext_resource type="Texture2D" path="res://assets/Art/Items/element_damage_badge.png" id="damage_badge"]
 
 [node name="Combat" type="Control" unique_id=1426086097]
 layout_mode = 3
@@ -261,9 +227,9 @@ anchor_top = 0.52
 anchor_right = 0.75
 anchor_bottom = 0.8
 offset_left = 130.0
-offset_top = 85.600006
+offset_top = 61.600006
 offset_right = 130.0
-offset_bottom = 85.599976
+offset_bottom = 61.599976
 scale = Vector2(0.65, 0.65)
 theme_override_constants/separation = 6
 
@@ -278,45 +244,44 @@ size_flags_horizontal = 3
 script = ExtResource("9_word_board")
 
 [node name="OutputCounters" type="HBoxContainer" parent="Layout/InputArea/WordComposerRow" unique_id=1117535502]
-custom_minimum_size = Vector2(186, 0)
+custom_minimum_size = Vector2(78, 78)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Damage" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters" unique_id=1976600980]
-custom_minimum_size = Vector2(56, 56)
+[node name="Damage" type="Control" parent="Layout/InputArea/WordComposerRow/OutputCounters" unique_id=1976600980]
+custom_minimum_size = Vector2(78, 78)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_damage")
+tooltip_text = "Estimated damage for this word."
+
+[node name="Badge" type="TextureRect" parent="Layout/InputArea/WordComposerRow/OutputCounters/Damage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("damage_badge")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Damage" unique_id=591143500]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 22
-text = "0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Heal" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters" unique_id=2019099469]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_heal")
-
-[node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Heal" unique_id=1389754120]
-layout_mode = 2
-theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 22
-text = "0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Gold" type="PanelContainer" parent="Layout/InputArea/WordComposerRow/OutputCounters" unique_id=292887639]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_gold")
-
-[node name="Value" type="Label" parent="Layout/InputArea/WordComposerRow/OutputCounters/Gold" unique_id=241020030]
-layout_mode = 2
-theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1, 0.98, 0.92, 1)
+theme_override_colors/font_outline_color = Color(0.03, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 3
 text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -349,7 +314,7 @@ placeholder_text = "spell a word..."
 max_length = 24
 
 [node name="FeedbackBanner" type="PanelContainer" parent="Layout" unique_id=966469229]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("feedback_frame")
@@ -372,8 +337,10 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 22
-text = "Write a noun to shape your tale"
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_outline_color = Color(0.05, 0.025, 0.015, 1)
+theme_override_constants/outline_size = 2
+text = "Write a noun"
 horizontal_alignment = 1
 autowrap_mode = 3
 

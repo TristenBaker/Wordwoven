@@ -41,6 +41,7 @@ func _build() -> void:
 	items_hud.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	items_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(items_hud)
+	TalentAccessButton.beside_bag(self, items_hud)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
