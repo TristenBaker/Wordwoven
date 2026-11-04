@@ -120,9 +120,6 @@ const ECONOMY_SYSTEM_MIN_DECK_SIZE: int = 10
 const ECONOMY_SYSTEM_MEAL_PRICE: int = 15
 const ECONOMY_SYSTEM_MEAL_HEAL: int = 10
 
-# FORGE_ROOM
-const FORGE_ROOM_BASE_SUCCESS_CHANCE: float = 0.70
-
 # WORD_GAME
 const WORD_GAME_WORDS: Array[String] = ["ember", "frost", "quill", "rhyme", "stone", "thorn", "tidal", "gloom", "spark", "flame"]
 
@@ -160,9 +157,6 @@ const TUNDRA_GOLD_GROWTH: int = 6
 const TUNDRA_ATTACK_GROWTH: int = 1
 const TUNDRA_GROWTH_START: int = 2
 const TUNDRA_GROWTH_CAP: int = 3
-const FORGE_MAX_QUALITY_SCORE: float = 16.0
-const FORGE_MULTIPLIER_MIN: float = 0.80
-const FORGE_MULTIPLIER_MAX: float = 1.30
 const TREASURE_MID_SCORE: int = 8
 const TREASURE_HIGH_SCORE: int = 15
 const TREASURE_GOLD: Array[int] = [10, 22, 38]
@@ -178,24 +172,24 @@ const FORGE_RECIPES: Array[Dictionary] = [
 			"id": "perfect_copy",
 			"name": "Perfect Copy",
 			"description": "%d same letter · same level · same element" % FORGE_INGREDIENT_COUNT,
-			"result": "Same tile",
+			"result": "Drawn letter · same element · +%d level" % FORGE_LEVEL_GAIN,
 		},
 		{
 			"id": "elemental_shuffle",
 			"name": "Elemental Shuffle",
 			"description": "%d same letter · same level · different elements" % FORGE_INGREDIENT_COUNT,
-			"result": "Same letter · random element",
+			"result": "Drawn letter · random element · +%d level" % FORGE_LEVEL_GAIN,
 		},
 		{
 			"id": "letter_shuffle",
 			"name": "Letter Shuffle",
 			"description": "%d different letters · same level · same element" % FORGE_INGREDIENT_COUNT,
-			"result": "Random letter · same element",
+			"result": "Drawn letter · same element · +%d level" % FORGE_LEVEL_GAIN,
 		},
 		{
 			"id": "wild_transmutation",
 			"name": "Wild Transmutation",
 			"description": "%d different letters · same level · different elements" % FORGE_INGREDIENT_COUNT,
-			"result": "Random letter · random element",
+			"result": "Drawn letter · random element · +%d level" % FORGE_LEVEL_GAIN,
 		},
 	]

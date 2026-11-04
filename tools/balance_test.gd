@@ -41,8 +41,8 @@ func _run() -> void:
 	for index: int in 3:
 		ingredients.append(LetterStats.create_item("a", LetterStats.Element.FIRE, 2))
 	var forge := ForgeSystem.new()
-	check(forge.forge(ingredients, true).level == 3, "Successful forge preserves level gain")
-	check(forge.forge(ingredients, false).level == 2, "Failed forge preserves level")
+	check(forge.forge(ingredients, "z").level == 3, "Drawn forge preserves level gain")
+	check(forge.forge(ingredients, "z").letter == "z", "Recognized letter overrides recipe letter")
 	for id: String in TundraEvents.IDS:
 		check(not TundraEvents.definition(id).is_empty(), "Optional encounter catalog resolves " + id)
 		check(TundraEvents.rules(id) != null, "Optional encounter rules resolve " + id)

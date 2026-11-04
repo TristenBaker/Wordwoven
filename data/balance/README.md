@@ -6,7 +6,7 @@ live-reload system.
 
 | File | What to change |
 | --- | --- |
-| `tuning.gd` | Starting health/gold, run length, starter count, letter power and leveling, hand size, damage multipliers, quick-cast timing, loot level caps, enemy growth, rarity weights, shop prices, forge odds, treasure rewards, cold rules, fishing tables and word-game limits |
+| `tuning.gd` | Starting health/gold, run length, starter count, letter power and leveling, hand size, damage multipliers, quick-cast timing, loot level caps, enemy growth, rarity weights, shop prices, forge recipes and level gain, treasure rewards, cold rules, fishing tables and word-game limits |
 | `enemies.json` | Enemy health, attack, gold, tiers, tags and elemental affinities |
 | `relics.json` | Power effects, amounts, rarity and descriptions |
 | `tag_counters.json` | Curated words that counter each enemy tag |

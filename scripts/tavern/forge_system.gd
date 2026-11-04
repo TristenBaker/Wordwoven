@@ -1,8 +1,7 @@
 class_name ForgeSystem
 extends RefCounted
 const Balance = preload("res://data/balance/tuning.gd")
-## Centralized forge recipes. The UI only supplies selected item tiles and a
-## word-quality result; new recipes can be added here without changing it.
+## Recipes determine eligibility and element; offline recognition supplies the letter.
 
 const ELEMENTS: Array[int] = [
 	LetterStats.Element.FIRE,
@@ -21,6 +20,11 @@ func rules() -> Array[Dictionary]:
 func matching_rule(items: Array[LetterStats]) -> Dictionary:
 	if items.size() != Balance.FORGE_INGREDIENT_COUNT:
 		return {}
+	var seen: Array[LetterStats] = []
+	for item: LetterStats in items:
+		if item == null or seen.has(item):
+			return {}
+		seen.append(item)
 	var same_level: bool = _all_same_level(items)
 	var same_letter: bool = _all_same_letter(items)
 	var same_element: bool = _all_same_element(items)
@@ -38,7 +42,7 @@ func matching_rule(items: Array[LetterStats]) -> Dictionary:
 
 
 func can_extend_rule(selected: Array[LetterStats], candidate: LetterStats) -> bool:
-	if candidate == null or selected.has(candidate) or selected.size() >= 3:
+	if candidate == null or selected.has(candidate) or selected.size() >= Balance.FORGE_INGREDIENT_COUNT:
 		return false
 	if selected.is_empty():
 		return true
@@ -54,29 +58,26 @@ func can_extend_rule(selected: Array[LetterStats], candidate: LetterStats) -> bo
 
 func next_step_text(selected: Array[LetterStats]) -> String:
 	if selected.is_empty():
-		return "Choose a tile. Matching-level tiles will light up."
+		return "Choose %d matching tiles." % Balance.FORGE_INGREDIENT_COUNT
 	if selected.size() == 1:
-		return "Choose a second tile at Level %d. Highlighted tiles are eligible." % selected[0].level
+		return "Choose another Level %d tile." % selected[0].level
 	if selected.size() == 2:
-		return "Choose one highlighted Level %d tile to complete a recipe." % selected[0].level
+		return "Choose one highlighted tile."
 	var rule: Dictionary = matching_rule(selected)
 	return "Recipe ready: %s." % rule.get("name", "Unknown")
 
 
-func forge(items: Array[LetterStats], succeeded: bool) -> LetterStats:
+func forge(items: Array[LetterStats], recognized_letter: String) -> LetterStats:
 	var rule: Dictionary = matching_rule(items)
-	if rule.is_empty():
+	var letter := recognized_letter.to_lower()
+	if rule.is_empty() or letter.length() != 1 or not LetterStats.BASE_POWER.has(letter):
 		return null
-	var level: int = items[0].level + (Balance.FORGE_LEVEL_GAIN if succeeded else 0)
-	var letter: String = items[0].letter
+	var level: int = items[0].level + Balance.FORGE_LEVEL_GAIN
 	var element: int = items[0].element
 	match rule["id"]:
 		"elemental_shuffle":
 			element = ELEMENTS.pick_random()
-		"letter_shuffle":
-			letter = _random_letter()
 		"wild_transmutation":
-			letter = _random_letter()
 			element = ELEMENTS.pick_random()
 	return LetterStats.create_item(letter, element, level)
 
@@ -118,10 +119,3 @@ func _all_different_elements(items: Array[LetterStats]) -> bool:
 			return false
 		values.append(item.element)
 	return true
-
-
-func _random_letter() -> String:
-	var letters: Array[String] = []
-	for letter: String in LetterStats.BASE_POWER:
-		letters.append(letter)
-	return letters.pick_random()

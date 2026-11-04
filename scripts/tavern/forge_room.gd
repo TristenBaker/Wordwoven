@@ -1,12 +1,10 @@
 extends Control
 const Balance = preload("res://data/balance/tuning.gd")
-## First playable forge: choose three loose tiles, satisfy a conversion rule,
-## then supply a word to influence the upgrade roll.
+## Sacrifice a matched trio and draw the letter the offline model will forge.
 
 const TILE_THEME: LetterTileTheme = preload(
 	"res://assets/Themes/letter_tiles/default_letter_tile_theme.tres"
 )
-const BASE_SUCCESS_CHANCE: float = preload("res://data/balance/tuning.gd").FORGE_ROOM_BASE_SUCCESS_CHANCE
 
 var forge_system := ForgeSystem.new()
 var selected_items: Array[LetterStats] = []
@@ -15,9 +13,9 @@ var rules_box: VBoxContainer
 var inventory_grid: ForgeInventoryGrid
 var equipped_grid: GridContainer
 var rule_result: Label
-var chance_label: Label
 var feedback_label: Label
-var word_input: LineEdit
+var drawing_overlay: Control
+var drawing_board: ForgeDrawingBoard
 var forge_button: Button
 var effects_layer: Control
 var is_forging: bool = false
@@ -64,10 +62,6 @@ func _build_layout() -> void:
 	close.text = "Return to Tavern"
 	close.pressed.connect(_return_to_tavern)
 	header.add_child(close)
-	var subtitle := Label.new()
-	subtitle.text = "Combine three loose tiles. A well-chosen word can temper the result."
-	subtitle.add_theme_color_override("font_color", Color("dfc8aa"))
-	page.add_child(subtitle)
 
 	var main_row := HBoxContainer.new()
 	main_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -80,7 +74,7 @@ func _build_layout() -> void:
 	var rules_layout := VBoxContainer.new()
 	rules_panel.add_child(rules_layout)
 	var rules_title := Label.new()
-	rules_title.text = "Conversion Rules"
+	rules_title.text = "Recipes"
 	rules_title.add_theme_font_size_override("font_size", 21)
 	rules_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rules_layout.add_child(rules_title)
@@ -104,12 +98,12 @@ func _build_layout() -> void:
 	forge_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	forge_scroll.add_child(forge_box)
 	var board_title := Label.new()
-	board_title.text = "Forge Board · choose 3 tiles"
+	board_title.text = "Combine %d Tiles" % Balance.FORGE_INGREDIENT_COUNT
 	board_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	board_title.add_theme_font_size_override("font_size", 21)
 	forge_box.add_child(board_title)
 	board = GridContainer.new()
-	board.columns = 3
+	board.columns = Balance.FORGE_INGREDIENT_COUNT
 	board.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	board.add_theme_constant_override("h_separation", 7)
 	board.add_theme_constant_override("v_separation", 7)
@@ -119,29 +113,10 @@ func _build_layout() -> void:
 	rule_result.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rule_result.add_theme_color_override("font_color", Color("ffe59b"))
 	forge_box.add_child(rule_result)
-	var cost_label := Label.new()
-	cost_label.text = "Forge cost: no gold in this prototype"
-	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost_label.add_theme_color_override("font_color", Color("e6a969"))
-	forge_box.add_child(cost_label)
-	var prompt := Label.new()
-	prompt.text = "The forging went ______."
-	prompt.add_theme_font_size_override("font_size", 18)
-	prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	forge_box.add_child(prompt)
-	word_input = LineEdit.new()
-	word_input.placeholder_text = "Type a real word"
-	word_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	word_input.text_changed.connect(_on_word_changed)
-	word_input.text_submitted.connect(_on_word_submitted)
-	forge_box.add_child(word_input)
-	chance_label = Label.new()
-	chance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	forge_box.add_child(chance_label)
 	forge_button = Button.new()
 	forge_button.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
 	forge_button.theme_type_variation = &"WordWovenActionButton"
-	forge_button.text = "Forge"
+	forge_button.text = "Draw & Forge"
 	forge_button.custom_minimum_size = Vector2(0, 42)
 	forge_button.pressed.connect(_forge)
 	forge_box.add_child(forge_button)
@@ -157,7 +132,8 @@ func _build_layout() -> void:
 	var equipped_box := VBoxContainer.new()
 	equipped_panel.add_child(equipped_box)
 	var equipped_title := Label.new()
-	equipped_title.text = "Equipped Tiles · reference only"
+	equipped_title.text = "Equipped"
+	equipped_title.tooltip_text = "Click a tile to unequip it. Hold for details."
 	equipped_title.add_theme_font_size_override("font_size", 21)
 	equipped_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	equipped_box.add_child(equipped_title)
@@ -175,7 +151,8 @@ func _build_layout() -> void:
 	var inventory_box := VBoxContainer.new()
 	inventory_panel.add_child(inventory_box)
 	var inventory_title := Label.new()
-	inventory_title.text = "Loose Inventory · green border = compatible next tile · click to add/remove · hold for details"
+	inventory_title.text = "Inventory"
+	inventory_title.tooltip_text = "Drag or click tiles to add them. Green borders highlight compatible tiles. Hold for details."
 	inventory_title.add_theme_font_size_override("font_size", 21)
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	inventory_box.add_child(inventory_title)
@@ -190,6 +167,8 @@ func _build_layout() -> void:
 
 
 func _refresh() -> void:
+	if is_forging:
+		return
 	var still_owned: Array[LetterStats] = []
 	for item: LetterStats in selected_items:
 		if RunState.letter_inventory.has(item):
@@ -222,7 +201,7 @@ func _rebuild_rules() -> void:
 
 func _rebuild_board() -> void:
 	_clear(board)
-	for index: int in range(9):
+	for index: int in range(Balance.FORGE_INGREDIENT_COUNT):
 		if index < selected_items.size():
 			var item: LetterStats = selected_items[index]
 			var button := _tile_button(item, true, true)
@@ -346,77 +325,135 @@ func _refresh_forge_state() -> void:
 	if rule.is_empty():
 		rule_result.text = forge_system.next_step_text(selected_items)
 	else:
-		rule_result.text = "Rule applied: %s\nFailure: same-level result · Success: +%d level" % [rule["name"], Balance.FORGE_LEVEL_GAIN]
-	var word_data: Dictionary = _word_data()
-	if selected_items.size() != Balance.FORGE_INGREDIENT_COUNT:
-		chance_label.text = "Forge cost: none in this prototype"
-		forge_button.disabled = true
-		return
-	if not word_data["valid"]:
-		chance_label.text = word_data["reason"]
-		forge_button.disabled = true
-		return
-	var chance: float = _success_chance(word_data["multiplier"])
-	chance_label.text = "Word score %d · Tempering ×%.2f · Success %.0f%%" % [
-		word_data["score"], word_data["multiplier"], chance * 100.0,
-	]
+		rule_result.text = "%s\n%s" % [rule["name"], rule["result"]]
 	forge_button.disabled = rule.is_empty()
 
 
-func _word_data() -> Dictionary:
-	var word: String = word_input.text.strip_edges().to_lower()
-	if word.length() < WordValidator.MINIMUM_LENGTH:
-		return {"valid": false, "reason": "Enter a real word to temper the forge."}
-	if not WordNet.is_ready:
-		return {"valid": false, "reason": "The lexicon is still loading."}
-	if not WordNet.word_exists(word):
-		return {"valid": false, "reason": "That word is not in the lexicon."}
-	var score: int = 0
-	for character: String in word:
-		score += int(LetterStats.BASE_POWER.get(character, 1))
-	var quality: float = clampf(float(score) / Balance.FORGE_MAX_QUALITY_SCORE, 0.0, 1.0)
-	return {
-		"valid": true,
-		"score": score,
-		"multiplier": lerpf(Balance.FORGE_MULTIPLIER_MIN, Balance.FORGE_MULTIPLIER_MAX, quality),
-	}
-
-
-func _success_chance(word_multiplier: float) -> float:
-	return clampf(BASE_SUCCESS_CHANCE * word_multiplier, 0.0, 1.0)
-
-
 func _forge() -> void:
-	if is_forging:
+	if is_forging or is_instance_valid(drawing_overlay):
 		return
-	var rule: Dictionary = forge_system.matching_rule(selected_items)
-	var word_data: Dictionary = _word_data()
-	if rule.is_empty() or not word_data["valid"]:
+	if forge_system.matching_rule(selected_items).is_empty():
 		_refresh_forge_state()
 		return
-	var succeeded: bool = randf() < _success_chance(word_data["multiplier"])
-	var result: LetterStats = forge_system.forge(selected_items, succeeded)
+	if not ForgeLetterRecognizer.available():
+		feedback_label.text = "The forge's recognition model could not be loaded. No tiles consumed."
+		return
+	_open_drawing()
+
+
+func _open_drawing() -> void:
+	drawing_overlay = Control.new()
+	drawing_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	drawing_overlay.z_index = 30
+	add_child(drawing_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.025, 0.015, 0.04, 0.95)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	drawing_overlay.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	drawing_overlay.add_child(center)
+	var panel := _panel()
+	panel.custom_minimum_size = Vector2(520, 520)
+	center.add_child(panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 14)
+	panel.add_child(content)
+	var title := Label.new()
+	title.text = "DRAW A LETTER"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	content.add_child(title)
+	var note := Label.new()
+	note.text = "A–Z · The recognized letter is final.\nForging consumes your %d tiles." % Balance.FORGE_INGREDIENT_COUNT
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.add_theme_font_size_override("font_size", 16)
+	content.add_child(note)
+	var drawing_area := Control.new()
+	drawing_area.custom_minimum_size = Vector2(440, 300)
+	drawing_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(drawing_area)
+	drawing_board = ForgeDrawingBoard.new()
+	drawing_board.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	drawing_area.add_child(drawing_board)
+	var reveal := Label.new()
+	reveal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	reveal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reveal.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reveal.add_theme_font_size_override("font_size", 160)
+	reveal.add_theme_color_override("font_color", Color("ffe0aa"))
+	reveal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drawing_area.add_child(reveal)
+	drawing_area.resized.connect(func(): reveal.pivot_offset = drawing_area.size * 0.5)
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_child(actions)
+	var clear := _drawing_action(actions, "Clear")
+	var cancel := _drawing_action(actions, "Cancel")
+	var commit := _drawing_action(actions, "Forge Letter")
+	commit.disabled = true
+	clear.pressed.connect(drawing_board.clear_drawing)
+	cancel.pressed.connect(func():
+		if not is_forging:
+			drawing_overlay.queue_free()
+	)
+	drawing_board.changed.connect(func(): commit.disabled = not drawing_board.has_ink())
+	commit.pressed.connect(_commit_drawing.bind(reveal, commit, cancel, clear))
+
+
+func _drawing_action(parent: Node, text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+	button.theme_type_variation = &"WordWovenActionButton"
+	button.custom_minimum_size = Vector2(135, 44)
+	parent.add_child(button)
+	return button
+
+
+func _commit_drawing(reveal: Label, commit: Button, cancel: Button, clear: Button) -> void:
+	if is_forging or not drawing_board.has_ink():
+		return
+	for item: LetterStats in selected_items:
+		if not RunState.letter_inventory.has(item):
+			drawing_overlay.queue_free()
+			_refresh()
+			return
+	var letter := ForgeLetterRecognizer.recognize(drawing_board.pixels())
+	var result: LetterStats = forge_system.forge(selected_items, letter)
 	if result == null:
-		feedback_label.text = "The forge could not resolve that recipe."
+		feedback_label.text = "The forge could not resolve that recipe. No tiles consumed."
 		return
 	is_forging = true
+	drawing_board.locked = true
+	commit.disabled = true
+	cancel.disabled = true
+	clear.disabled = true
 	forge_button.disabled = true
-	feedback_label.text = "The forge takes hold..."
-	await _animate_forge(result, succeeded)
+	# Commit before any awaits: closing during the reveal cannot reroll the letter.
 	for item: LetterStats in selected_items:
 		RunState.letter_inventory.erase(item)
+	RunState.add_letter_item(result)
+	reveal.text = letter.to_upper()
+	reveal.modulate.a = 0.0
+	reveal.scale = Vector2(0.4, 0.4)
+	var morph := create_tween().set_parallel(true)
+	morph.tween_property(drawing_board, "modulate:a", 0.0, 0.55)
+	morph.tween_property(reveal, "modulate:a", 1.0, 0.65)
+	morph.tween_property(reveal, "scale", Vector2.ONE, 0.65).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await morph.finished
+	await get_tree().create_timer(0.55).timeout
+	drawing_overlay.hide()
+	drawing_overlay.queue_free()
+	await _animate_forge(result)
 	selected_items = []
-	RunState.letter_inventory.append(result)
-	word_input.clear()
-	feedback_label.text = "%s! Created %s." % [
-		"The forging succeeds" if succeeded else "The forging falters", result.describe(),
-	]
+	feedback_label.text = "The forge saw %s. Created %s." % [letter.to_upper(), result.describe()]
 	is_forging = false
 	EventBus.emit_deck_changed()
 	_refresh()
 
 
-func _animate_forge(result: LetterStats, succeeded: bool) -> void:
+func _animate_forge(result: LetterStats) -> void:
 	var target: Vector2 = _effects_local(board.get_global_rect().get_center())
 	var replicas: Array[Control] = []
 	for index: int in range(mini(selected_items.size(), board.get_child_count())):
@@ -440,7 +477,7 @@ func _animate_forge(result: LetterStats, succeeded: bool) -> void:
 	for replica: Control in replicas:
 		replica.queue_free()
 	var flash := ColorRect.new()
-	flash.color = Color("fff3a1") if succeeded else Color("a8c5e8")
+	flash.color = Color("fff3a1")
 	flash.size = Vector2(150, 120)
 	flash.position = target - flash.size * 0.5
 	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -490,15 +527,6 @@ func _effect_tile(item: LetterStats) -> PanelContainer:
 	label.add_theme_color_override("font_color", TILE_THEME.letter_color)
 	tile.add_child(label)
 	return tile
-
-
-func _on_word_changed(_text: String) -> void:
-	feedback_label.text = ""
-	_refresh_forge_state()
-
-
-func _on_word_submitted(_text: String) -> void:
-	_forge()
 
 
 func _on_item_gui_input(event: InputEvent, button: Button, item: LetterStats) -> void:
@@ -596,4 +624,6 @@ func _clear(container: Container) -> void:
 
 
 func _return_to_tavern() -> void:
+	if is_forging:
+		return
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)

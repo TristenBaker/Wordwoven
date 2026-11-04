@@ -245,5 +245,6 @@ text = "×"
 
 [node name="TavernMusic" type="AudioStreamPlayer" parent="." unique_id=602779641]
 stream = ExtResource("7_mwr1b")
+bus = &"Music"
 autoplay = true
 parameters/looping = true

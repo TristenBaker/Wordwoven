@@ -11,3 +11,4 @@ export_presets.cfg
 data/telemetry_build.json
 tools/__pycache__/
 .telemetry-test/
+/.tmp/handwriting/

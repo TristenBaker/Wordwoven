@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://3vtham4p6wk0"]
+[gd_scene load_steps=10 format=3 uid="uid://3vtham4p6wk0"]
 
 [ext_resource type="Theme" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
@@ -7,6 +7,7 @@
 [ext_resource type="FontFile" uid="uid://c1n3r6n1s0e1w" path="res://assets/Fonts/BLKCHCRY.TTF" id="3_title"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
 [ext_resource type="PackedScene" path="res://scenes/ui/equipment_overlay.tscn" id="5_equipment"]
+[ext_resource type="AudioStream" uid="uid://bhsnn27a3ao3e" path="res://assets/Audio/Tavern.mp3" id="6_music"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_navigation"]
 bg_color = Color(0.12, 0.055, 0.018, 0.96)
@@ -327,3 +328,9 @@ text = "Press B to open the Tavern Page"
 horizontal_alignment = 1
 
 [node name="EquipmentOverlay" parent="." instance=ExtResource("5_equipment")]
+
+[node name="TavernMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("6_music")
+bus = &"Music"
+autoplay = true
+parameters/looping = true
