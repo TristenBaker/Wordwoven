@@ -1,5 +1,6 @@
 class_name EquipmentOverlay
 extends Control
+signal talents_closed
 ## Reusable ARPG letter inventory. The overlay stays mounted in major gameplay
 ## scenes and only its panel is toggled, so opening it never changes scenes.
 
@@ -9,7 +10,6 @@ const TILE_THEME: LetterTileTheme = preload(
 )
 
 @onready var toggle_button: TextureButton = $EquipButton
-@onready var star_coin_count: Label = $EquipButton/StarCoinCount
 @onready var panel: PanelContainer = $EquipmentPanel
 @onready var title_label: Label = $EquipmentPanel/Content/TitleRow/Title
 @onready var letters_tab: Button = $EquipmentPanel/Content/TitleRow/LettersTab
@@ -40,6 +40,7 @@ var _notification_dot: Panel
 
 
 func _ready() -> void:
+	$TalentButton.talents_closed.connect(func(): talents_closed.emit())
 	toggle_button.pressed.connect(_toggle_panel)
 	close_button.pressed.connect(panel.hide)
 	letters_tab.pressed.connect(_show_letters)
@@ -50,7 +51,6 @@ func _ready() -> void:
 	same_element_toggle.button_pressed = RunState.auto_equip_same_element_only
 	EventBus.deck_changed.connect(_refresh)
 	EventBus.relic_gained.connect(_on_relic_gained)
-	PlayerProfile.star_coins_changed.connect(_on_star_coins_changed)
 	_notification_dot = _build_notification_dot()
 	toggle_button.add_child(_notification_dot)
 	$EquipmentPanel/Content/TitleRow.move_child(letters_tab, 1)
@@ -64,10 +64,6 @@ func _on_relic_gained(_power_id: String) -> void:
 	_refresh()
 
 
-func _on_star_coins_changed(total: int) -> void:
-	star_coin_count.text = str(total)
-
-
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
 	if panel.visible:
@@ -77,7 +73,6 @@ func _toggle_panel() -> void:
 
 
 func _refresh() -> void:
-	star_coin_count.text = str(PlayerProfile.star_coins)
 	if _notification_dot != null:
 		_notification_dot.visible = RunState.has_unseen_inventory_items
 	mode_label.text = "Itemized letters mode" if RunState.use_itemized_letters \

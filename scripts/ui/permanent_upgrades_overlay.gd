@@ -18,17 +18,26 @@ var _dragged := false
 var _held := false
 var _gesture := 0
 var _inspector: PanelContainer
+var pause_game := false
+var _resume_on_close := false
 
 
-static func open_in(parent: Node) -> void:
+static func open_in(parent: Node, pause_gameplay: bool = false) -> void:
 	if parent.get_node_or_null("PermanentUpgradesOverlay") != null:
 		return
 	var overlay := PermanentUpgradesOverlay.new()
 	overlay.name = "PermanentUpgradesOverlay"
+	overlay.pause_game = pause_gameplay
 	parent.add_child(overlay)
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("talent_overlay")
+	z_index = 300
+	if pause_game and not get_tree().paused:
+		_resume_on_close = true
+		get_tree().paused = true
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	var shade := ColorRect.new()
 	shade.color = Color("100d1e")
@@ -199,6 +208,10 @@ func _fit_tree() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		get_viewport().set_input_as_handled()
+		queue_free()
+		return
 	if event is InputEventMouseButton:
 		if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
 			if event.pressed:
@@ -292,3 +305,8 @@ func _open_inspector(id: String) -> void:
 	text.text = _detail_text(id) + "\n\n[b]Refund:[/b] Ctrl + click on the tree refunds this talent and its dependents."
 	content.add_child(text)
 	_action(content, "Close", func(): _inspector.queue_free())
+
+
+func _exit_tree() -> void:
+	if _resume_on_close:
+		get_tree().paused = false

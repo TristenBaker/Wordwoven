@@ -77,9 +77,9 @@ func _run() -> void:
 		check(indicator.label.text.is_empty() and indicator.modulate.a == 0.0, "Empty input clears preview")
 		combat.word_input.text = "zzzzzz"
 		combat._on_submit()
-		check(combat.feedback_label.visible and not combat.prompt_label.visible and not combat.feedback_label.text.is_empty(), "Validation message appears in banner")
-		combat._set_player_feedback("")
-		check(combat.prompt_label.visible and not combat.feedback_label.visible, "Prompt restored without duplicates")
+		check(combat.feedback_label.visible and combat.prompt_label.visible and not combat.feedback_label.text.is_empty(), "Validation message keeps the prompt visible")
+		await get_tree().create_timer(3.15).timeout
+		check(combat.prompt_label.visible and not combat.feedback_label.visible and combat.feedback_label.text.is_empty(), "Validation error expires automatically")
 		var synthetic: Dictionary = {"counter": {"strategy": "counter synonym", "score": 0.9, "tag": "filthy"}, "effectiveness": 0.9, "semantic_multiplier": 1.85}
 		indicator.show_preview(synthetic)
 		check(indicator.label.text == "EFFECTIVE!", "Original effective threshold")
