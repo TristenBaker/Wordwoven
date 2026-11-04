@@ -1,6 +1,13 @@
 extends Node
-## Application preferences, independent of runs and gameplay.
+## Application preferences, audio routing, and scene-scoped tavern music.
 const CONFIG_PATH: String = "user://settings.cfg"
+const TAVERN_TRACK: AudioStreamMP3 = preload("uid://bhsnn27a3ao3e")
+const TAVERN_ACTIVITIES: Dictionary[String, String] = {
+	ScenePaths.FORGE: "forge",
+	ScenePaths.WORD_GAME: "word_game",
+	ScenePaths.HANDWRITING_GAME: "handwriting_game",
+	ScenePaths.ICE_FISHING: "ice_fishing",
+}
 const DEFAULTS: Dictionary = {
 	"display_mode": 2, "resolution": Vector2i(1280, 720),
 	"master_volume": 50.0, "music_volume": 50.0, "sfx_volume": 50.0,
@@ -8,14 +15,43 @@ const DEFAULTS: Dictionary = {
 }
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 var preferences: Dictionary = DEFAULTS.duplicate(true)
+var _tavern_music: AudioStreamPlayer
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_audio_buses()
 	get_tree().node_added.connect(_on_node_added)
+	get_tree().scene_changed.connect(_sync_tavern_music)
 	load_preferences()
 	apply_preferences(preferences)
 	_route_existing_audio.call_deferred()
+	_sync_tavern_music.call_deferred()
+
+
+func _is_tavern_scene(path: String) -> bool:
+	# Shared minigames reached from the route are not a tavern visit.
+	if TAVERN_ACTIVITIES.has(path):
+		return RunState.pending_route_activity != TAVERN_ACTIVITIES[path]
+	return path.begins_with("res://scenes/tavern/")
+
+
+func _sync_tavern_music() -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null or not _is_tavern_scene(scene.scene_file_path):
+		if is_instance_valid(_tavern_music):
+			_tavern_music.stop()
+		return
+	if not is_instance_valid(_tavern_music):
+		# This existing autoload owns one voice across tavern scene changes.
+		_tavern_music = AudioStreamPlayer.new()
+		_tavern_music.name = "TavernMusic"
+		_tavern_music.bus = &"Music"
+		var track: AudioStreamMP3 = TAVERN_TRACK.duplicate() as AudioStreamMP3
+		track.loop = true
+		_tavern_music.stream = track
+		add_child(_tavern_music)
+	if not _tavern_music.playing:
+		_tavern_music.play()
 
 func _route_existing_audio() -> void:
 	for type_name: String in ["AudioStreamPlayer", "AudioStreamPlayer2D", "AudioStreamPlayer3D"]:
@@ -31,6 +67,15 @@ func _ensure_audio_buses() -> void:
 			AudioServer.set_bus_send(index, "Master")
 
 func _on_node_added(node: Node) -> void:
+	# Stop before an incoming non-tavern scene's children autoplay music.
+	# Root-level overlays on an existing scene must not interrupt the track.
+	var tree: SceneTree = get_tree()
+	if node.get_parent() == tree.root \
+			and (tree.current_scene == null or node == tree.current_scene) \
+			and not node.scene_file_path.is_empty() \
+			and not _is_tavern_scene(node.scene_file_path):
+		if is_instance_valid(_tavern_music):
+			_tavern_music.stop()
 	if not (node is AudioStreamPlayer or node is AudioStreamPlayer2D or node is AudioStreamPlayer3D):
 		return
 	# Route after the player has finished initializing its bus/playback state.

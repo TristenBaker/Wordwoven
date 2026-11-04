@@ -14,7 +14,8 @@ live-reload system.
 | `tundra_events.json` | Optional encounter metadata and prompts |
 | `encounter_modifier.gd` | Fate catalog, stat multipliers and effect descriptions |
 | `encounter_modifier_runtime.gd` | Behavioral fate bonuses, limits and retaliation cadence |
-| `fate_classifier.gd` | Fate concepts, confidence and margin thresholds |
+| `adjective_vocabulary.gd` | Explicit adjective lists, one modifier per word |
+| `fate_classifier.gd` | Deterministic adjective lookup and biome restrictions |
 | `chest_locks.gd` | Lock answer pools, guesses, rewards and their explanatory text |
 | `traveler_rescue.gd` | Supply categories, warmth gains, rescue thresholds and healing |
 | `portal_stabilization.gd` | Adverb categories, stability gains, goals and rewards |
@@ -46,4 +47,6 @@ After changes, import with Godot 4.7+ and run `tools/balance_test.tscn` for
 baseline balance integration (update its expected outcomes for intentional balance
 changes). Also run `tundra_minigames_test`, `encounter_modifier_test`,
 `fate_classifier_test`, `frozen_letters_test`, and `quick_cast_test` in `tools/`.
+Preparation vocabulary and its maintenance rules are documented in
+[`docs/adjective_modifiers.md`](../../docs/adjective_modifiers.md).
 Some older scene tests assume superseded UI nodes/APIs and need separate updates.
