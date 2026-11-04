@@ -65,9 +65,10 @@ func _run() -> void:
 		RunState.start_new_run()
 		RunState.selected_biome = "tundra"
 		RunState.ensure_tundra_route_plan()
-		var depth: int = int(RunState.route_activity_stages[id])
-		RunState.route_depth = depth
-		var route_key: String = "activity_" + id
+		var route_key: String = _route_key_for_content(id)
+		var depth: int = int(RunState.route_nodes[route_key].column) + 1
+		RunState.debug_jump_to_route_node(route_key, depth)
+		var fights_before: int = RunState.encounter_index
 		check(RunState.begin_optional_encounter(id, route_key), "Side quest opens: " + id)
 		var event: Control = await _go(ScenePaths.TUNDRA_EVENT)
 		check(event != null and event.encounter_id == id, "Correct side quest scene: " + id)
@@ -76,13 +77,20 @@ func _run() -> void:
 		event.continue_button.pressed.emit()
 		await _wait(ScenePaths.ENCOUNTER_SELECT)
 		check(RunState.route_depth == depth + 1, "Side quest advances one map room: " + id)
-		check(RunState.encounter_index == 1, "Side quest does not consume a fight: " + id)
+		check(RunState.encounter_index == fights_before, "Side quest does not consume a fight: " + id)
 	var music: AudioStreamPlayer = get_tree().root.get_node_or_null("TundraSideQuestMusic")
 	if music != null:
 		music.stop()
 		music.queue_free()
 	print("Tundra optional encounters: %d failures" % failures)
 	get_tree().quit(1 if failures else 0)
+
+
+func _route_key_for_content(id: String) -> String:
+	for key: String in RunState.route_nodes:
+		if String(RunState.route_nodes[key].content_id) == id:
+			return key
+	return ""
 
 
 func _run_legacy() -> void:
@@ -135,7 +143,7 @@ func _run_legacy() -> void:
 				var activity_path: String = "Activity_" + id
 				check(map.route_map.has_node(activity_path), "Rotating route reveals " + id)
 				var card: Button = map.route_map.get_node(activity_path)
-				check(card.has_node("PreviewRow/EnemyText/ActivitySubtitle"), "Side quest explains its route")
+				check(card.has_node("MonsterPreview") and not card.tooltip_text.is_empty(), "Side quest has a centered image and tooltip")
 				card.pressed.emit()
 				var event = await _wait(ScenePaths.TUNDRA_EVENT)
 				var music: AudioStreamPlayer = get_tree().root.get_node("TundraSideQuestMusic")
@@ -245,8 +253,8 @@ func _check_layouts() -> void:
 		check(second_column_nodes >= 2, "The opening combat immediately splits into room choices")
 		for activity_id: String in ["ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest"]:
 			var activity_button: Button = map.route_map.get_node("Activity_" + activity_id)
-			var activity_detail: Label = activity_button.get_node("PreviewRow/EnemyText/ActivitySubtitle")
-			check(activity_detail.text.is_empty(), "Activity cards omit detour/required labels")
+			check(activity_button.has_node("MonsterPreview"), "Activity nodes use image-only markers")
+			check(activity_button.get_node_or_null("PreviewRow") == null, "Activity nodes omit beside-the-icon text")
 			var activity_node: Dictionary = map.route_map._button_nodes[activity_button]
 			var same_column: int = 0
 			for route_node: Dictionary in map.route_map._nodes:

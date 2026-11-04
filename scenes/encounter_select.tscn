@@ -201,7 +201,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.48, 0.48, 1)
 theme_override_fonts/font = ExtResource("5_body")
 theme_override_font_sizes/font_size = 17
-text = "✦  Side quest / minigame"
+text = "◇  Hidden / silhouette"
+
+[node name="Current" type="Label" parent="Legend"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.34, 0.9, 0.61, 1)
+theme_override_fonts/font = ExtResource("5_body")
+theme_override_font_sizes/font_size = 18
+text = "◆  Current position"
 
 [node name="Boss" type="Label" parent="Legend"]
 layout_mode = 2

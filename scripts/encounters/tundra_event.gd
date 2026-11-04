@@ -2,6 +2,7 @@ extends Control
 
 const TundraEventScript = preload("res://scripts/encounters/tundra_events.gd")
 const SideQuestMusic = preload("res://scripts/encounters/tundra_side_quest_music.gd")
+const TutorialFlow = preload("res://scripts/ui/tutorial_presenter.gd")
 ## One reusable presentation for all optional Tundra encounters.
 var encounter_id: String
 var data: Dictionary
@@ -59,6 +60,53 @@ func _ready() -> void:
 	else:
 		_refresh_game()
 		input.grab_focus()
+		call_deferred("_show_minigame_tutorial")
+
+
+func _show_minigame_tutorial() -> void:
+	var steps: Array[Dictionary] = []
+	match encounter_id:
+		"frozen_traveler":
+			steps = [
+				{
+					"target": meter,
+					"title": "Warm the traveler",
+					"body": "You have three turns to build enough warmth for a rescue.",
+				},
+				{
+					"target": input,
+					"title": "Offer useful nouns",
+					"body": "Name warmth, shelter, or nourishment. Stronger ideas add more warmth.",
+				},
+			]
+		"treasure_chest":
+			steps = [
+				{
+					"target": locks_row,
+					"title": "Open three locks",
+					"body": "Each lock gives a clue and allows two guesses.",
+				},
+				{
+					"target": input,
+					"title": "Answer with an adjective",
+					"body": "Use a describing word that fits the active clue. Synonyms can work.",
+				},
+			]
+		"icy_portal":
+			steps = [
+				{
+					"target": choice_row,
+					"title": "Choose an action",
+					"body": "Decide how you approach the portal each round.",
+				},
+				{
+					"target": input,
+					"title": "Describe how",
+					"body": "Add an adverb that supports your action and stabilizes the portal.",
+				},
+			]
+	if not steps.is_empty():
+		TutorialFlow.show(self, encounter_id, steps)
 
 func _process(delta: float) -> void:
 	if _frames.size() <= 1:

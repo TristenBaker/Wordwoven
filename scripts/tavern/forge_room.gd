@@ -59,7 +59,7 @@ func _build_layout() -> void:
 	var close := Button.new()
 	close.theme = preload("res://assets/Themes/WordWoven_Button_Theme.tres")
 	close.theme_type_variation = &"WordWovenActionButton"
-	close.text = "Return to Tavern"
+	close.text = "Return to Route" if RunState.pending_route_activity == "forge" else "Return to Tavern"
 	close.pressed.connect(_return_to_tavern)
 	header.add_child(close)
 
@@ -625,5 +625,9 @@ func _clear(container: Container) -> void:
 
 func _return_to_tavern() -> void:
 	if is_forging:
+		return
+	if RunState.pending_route_activity == "forge":
+		RunState.finish_route_activity()
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
 		return
 	get_tree().change_scene_to_file(ScenePaths.TAVERN)

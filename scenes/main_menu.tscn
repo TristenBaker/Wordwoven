@@ -100,7 +100,7 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Settings"
 
-[node name="LeaderboardButton" type="Button" parent="CenterBox/Menu"]
+[node name="LeaderboardButton" type="Button" parent="CenterBox/Menu" unique_id=1021638235]
 custom_minimum_size = Vector2(320, 44)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -110,7 +110,7 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Leaderboard"
 
-[node name="PermanentUpgradesButton" type="Button" parent="CenterBox/Menu"]
+[node name="PermanentUpgradesButton" type="Button" parent="CenterBox/Menu" unique_id=1035479440]
 custom_minimum_size = Vector2(320, 44)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -120,7 +120,7 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Elemental Talents"
 
-[node name="CosmeticsButton" type="Button" parent="CenterBox/Menu"]
+[node name="CosmeticsButton" type="Button" parent="CenterBox/Menu" unique_id=1726270094]
 custom_minimum_size = Vector2(320, 44)
 layout_mode = 2
 size_flags_horizontal = 4

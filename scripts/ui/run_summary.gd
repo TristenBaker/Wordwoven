@@ -23,7 +23,8 @@ func _ready() -> void:
 	RunState.is_run_active = false
 	menu_button.pressed.connect(_on_menu_pressed)
 	if victory:
-		title_label.text = "The Tale Is Told"
+		title_label.text = "Playtest Complete" \
+				if RunState.playtest_route else "The Tale Is Told"
 	else:
 		title_label.text = "Your Tale Ends Here"
 	_record_run_once()

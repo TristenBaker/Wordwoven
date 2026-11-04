@@ -22,6 +22,9 @@ const LETTER_TILE_SCENE: PackedScene = \
 		preload("res://scenes/combat/letter_tile.tscn")
 const STAR_COIN: Texture2D = preload("res://assets/Art/Items/starcoin.png")
 const STAR_COIN_DING: AudioStream = preload("res://assets/Audio/party/coin.wav")
+const COMBAT_TUTORIAL_SCENE: PackedScene = preload(
+	"res://scenes/ui/combat_tutorial.tscn"
+)
 
 # Pause before and after the enemy's retaliation, in seconds.
 const ENEMY_TURN_DELAY: float = 0.7
@@ -63,6 +66,8 @@ var strike_fx: EnemyStrikeFx
 var _last_allowed_text: String = ""
 var _turn_elapsed_seconds: float = 0.0
 var _preview_refresh_accumulator: float = 0.0
+var _combat_tutorial_active: bool = false
+var _combat_tutorial = null
 var _health_bar_shake := preload("res://scripts/ui/control_shake.gd").new()
 
 # Adding background variable
@@ -143,6 +148,63 @@ func _ready() -> void:
 	effectiveness_indicator.minimum_size_changed.connect(_queue_feedback_layout)
 	_start_encounter()
 	_queue_feedback_layout()
+	_maybe_start_combat_tutorial()
+
+
+func _maybe_start_combat_tutorial() -> void:
+	# Automated/headless simulations should not be blocked by an onboarding UI.
+	if PlayerProfile.combat_tutorial_seen or DisplayServer.get_name() == "headless":
+		return
+	# Let the combat controls complete their first layout pass so every
+	# spotlight has a real rectangle before the overlay is shown.
+	call_deferred("_show_combat_tutorial")
+
+
+func _show_combat_tutorial(force: bool = false) -> void:
+	if _combat_tutorial_active or (_combat_tutorial != null \
+			and is_instance_valid(_combat_tutorial)):
+		return
+	if PlayerProfile.combat_tutorial_seen and not force:
+		return
+	_combat_tutorial = COMBAT_TUTORIAL_SCENE.instantiate()
+	if _combat_tutorial == null:
+		return
+	add_child(_combat_tutorial)
+	_combat_tutorial.finished.connect(_on_combat_tutorial_finished)
+	_combat_tutorial.begin([
+		{
+			"target": $Layout/InputArea,
+			"title": "Build a word",
+			"body": (
+				"Start typing, press Enter or Cast when the word is ready. Use any letters, letters in your hand will do more damage"
+			),
+		},
+		{
+			"target": feedback_banner,
+			"title": "Follow the part of speech",
+			"body": "Match the requested noun, verb, adjective, or adverb.",
+		},
+		{
+			"target": enemy.info_box,
+			"title": "Enemies have weaknesses",
+			"body": (
+				"Opposites to enemy traits hit hardest. "
+				+ "Thematic counters can work too."
+			),
+		},
+	])
+	# Lock combat only after the visible tutorial has been successfully built.
+	_combat_tutorial_active = true
+	word_input.editable = false
+	submit_button.disabled = true
+	word_input.release_focus()
+
+
+func _on_combat_tutorial_finished() -> void:
+	PlayerProfile.mark_combat_tutorial_seen()
+	_combat_tutorial_active = false
+	_combat_tutorial = null
+	_enter_player_input(false)
 
 
 func _move_enemy_info_beneath_endless_route() -> void:
@@ -163,7 +225,7 @@ func _exit_tree() -> void:
 
 
 func _process(delta: float) -> void:
-	if _state != State.PLAYER_INPUT:
+	if _state != State.PLAYER_INPUT or _combat_tutorial_active:
 		return
 	_turn_elapsed_seconds += delta
 	_preview_refresh_accumulator += delta
@@ -270,6 +332,10 @@ func _enter_player_input(reset_timer: bool = true) -> void:
 		_turn_elapsed_seconds = 0.0
 		_preview_refresh_accumulator = 0.0
 	_update_timer_display()
+	if _combat_tutorial_active:
+		word_input.editable = false
+		submit_button.disabled = true
+		return
 	word_input.editable = true
 	submit_button.disabled = false
 	_refresh_cold()
@@ -281,7 +347,7 @@ func _focus_word_input() -> void:
 
 
 func _restore_composer_after_pause() -> void:
-	if _state == State.PLAYER_INPUT:
+	if _state == State.PLAYER_INPUT and not _combat_tutorial_active:
 		call_deferred("_focus_word_input")
 
 
@@ -290,7 +356,8 @@ func _on_text_submitted(_text: String) -> void:
 
 
 func _on_submit() -> void:
-	if _state != State.PLAYER_INPUT or get_tree().paused:
+	if _state != State.PLAYER_INPUT or get_tree().paused \
+			or _combat_tutorial_active:
 		return
 	effectiveness_indicator.clear()
 	var word: String = word_input.text.strip_edges().to_lower()

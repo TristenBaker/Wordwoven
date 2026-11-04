@@ -92,8 +92,9 @@ func _run() -> void:
 		enemy.take_damage(3)
 		check(enemy.health_bar.value == data.health - 3, "damage and health bar")
 		var hp_before: int = RunState.player_health
+		combat._state = combat.State.RESOLVING
 		combat._enemy_turn()
-		await get_tree().create_timer(2.0).timeout
+		await get_tree().create_timer(3.0).timeout
 		check(RunState.player_health == hp_before - enemy.attack, "retaliation damage")
 		RunState.heal_player(50)
 		var gold_before: int = RunState.gold
@@ -107,15 +108,21 @@ func _run() -> void:
 			RunState.advance_encounter()
 			var selection = load(ScenePaths.ENCOUNTER_SELECT).instantiate()
 			add_child(selection)
+			var planned_nodes: int = 0
+			for column: Array in RunState.route_graph_columns:
+				planned_nodes += column.size()
 			check(
-				selection.route_map._buttons.size() == 11,
+				selection.route_map._buttons.size() == planned_nodes,
 				"the complete combat and activity route is pre-drawn"
 			)
+			var generated_content: Array[String] = []
+			for route_key: String in RunState.route_nodes:
+				generated_content.append(String(RunState.route_nodes[route_key].content_id))
 			check(
-				selection.route_map.has_node("Activity_ice_fishing") \
-						and selection.route_map.has_node("Activity_frozen_traveler") \
-						and selection.route_map.has_node("Activity_icy_portal") \
-						and selection.route_map.has_node("Activity_treasure_chest"),
+				generated_content.has("ice_fishing") \
+						and generated_content.has("frozen_traveler") \
+						and generated_content.has("icy_portal") \
+						and generated_content.has("treasure_chest"),
 				"all non-combat branches are visible ahead of time"
 			)
 			selection.queue_free()

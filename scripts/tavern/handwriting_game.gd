@@ -2,6 +2,7 @@ extends Control
 ## Timed letter tracing. A tolerant stencil evaluates coverage, neatness, and pace.
 
 const BODY := preload("res://assets/Fonts/Junicode.ttf")
+const TutorialFlow = preload("res://scripts/ui/tutorial_presenter.gd")
 const WORDS: Array[String] = ["rune", "fire", "ink", "word"]
 
 class TraceBoard extends Control:
@@ -171,6 +172,22 @@ func _ready() -> void:
 	word = WORDS.pick_random().to_upper()
 	_build_ui()
 	_show_first_instruction()
+	call_deferred("_show_tutorial")
+
+
+func _show_tutorial() -> void:
+	TutorialFlow.show(self, "handwriting_game", [
+		{
+			"target": prompt,
+			"title": "Trace the word",
+			"body": "The word appears one letter at a time. Follow each pale guide with the mouse.",
+		},
+		{
+			"target": advance,
+			"title": "Accuracy and pace matter",
+			"body": "Coverage, neatness, and speed shape the score. Finish when your stroke is ready.",
+		},
+	])
 
 func _build_ui() -> void:
 	var background := ColorRect.new()
@@ -204,9 +221,17 @@ func _build_ui() -> void:
 	advance.pressed.connect(_on_advance_pressed)
 	box.add_child(advance)
 	var back := Button.new()
-	back.text = "Return to Tavern"
-	back.pressed.connect(func(): get_tree().change_scene_to_file(ScenePaths.TAVERN))
+	back.text = "Return to Playtest Route" \
+			if RunState.pending_route_activity == "handwriting_game" else "Return to Tavern"
+	back.pressed.connect(_leave_game)
 	box.add_child(back)
+
+
+func _leave_game() -> void:
+	if RunState.finish_playtest_minigame("handwriting_game"):
+		get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
+		return
+	get_tree().change_scene_to_file(ScenePaths.TAVERN)
 
 func _show_first_instruction() -> void:
 	prompt.text = "Trace the letters quickly!"
