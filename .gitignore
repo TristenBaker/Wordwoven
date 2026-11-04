@@ -12,3 +12,4 @@ data/telemetry_build.json
 tools/__pycache__/
 .telemetry-test/
 /.tmp/handwriting/
+/.tmp/tavern/
