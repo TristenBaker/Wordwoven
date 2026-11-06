@@ -8,6 +8,7 @@ const Balance = preload("res://data/balance/tuning.gd")
 
 const ENCOUNTER_MODIFIERS = preload("res://data/balance/encounter_modifier.gd")
 var _encounter_modifier: Dictionary = {}
+var _reward_claim_key: String = ""
 var _modifier_runtime = preload("res://data/balance/encounter_modifier_runtime.gd").new()
 
 enum State {
@@ -263,6 +264,7 @@ func _start_encounter() -> void:
 		$Layout/InputArea.offset_bottom -= 48.0
 	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
+	_reward_claim_key = "route:" + RunState.route_current_key if RunState.route_nodes.has(RunState.route_current_key) else "stage:%d" % RunState.encounter_index
 	# Consume the matching preparation once; the applied fate lives with this scene.
 	var preparation: Dictionary = RunState.take_encounter_modifier(spawn_data["id"])
 	_encounter_modifier = ENCOUNTER_MODIFIERS.definition(preparation.get("modifier_id", ""))
@@ -568,7 +570,10 @@ func _on_enemy_died() -> void:
 	if _state == State.WON:
 		return
 	_state = State.WON
-	var earned: int = enemy.gold_reward + _modifier_runtime.victory_bonus()
+	if not RunState.claim_combat_rewards(_reward_claim_key):
+		return
+	var earned: int = ENCOUNTER_MODIFIERS.victory_gold(enemy.gold_reward, _encounter_modifier)
+	earned += _modifier_runtime.victory_bonus()
 	# Newly selected Quills begin paying on the next victory.
 	earned += int(_relic_system.total_effect("victory_gold"))
 	RunState.add_gold(earned)

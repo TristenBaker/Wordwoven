@@ -9,7 +9,7 @@ const LORE_ICON: Texture2D = preload("res://assets/Art/Items/scroll.png")
 const INK_ICON: Texture2D = preload("res://assets/Art/Items/ink.png")
 const LETTER_ICON: Texture2D = preload("res://assets/Art/LetterArt/Letter_W.png")
 const ROUTE_ACTIVITY_ORDER: Array[String] = [
-	"ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest",
+	"ice_fishing", "frozen_traveler", "treasure_chest",
 ]
 ## Presents the run as a left-to-right expedition map. Completed
 ## encounters remain visible, the current stage branches into enemy

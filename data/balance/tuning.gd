@@ -144,7 +144,6 @@ const ROUTE_ACTIVITY_WEIGHTS: Dictionary[String, int] = {
 	"relic_reward": 13,
 	"recovery": 15,
 	"forge": 10,
-	"random_event": 16,
 }
 
 # DECK_MANAGER
@@ -214,3 +213,19 @@ const FORGE_RECIPES: Array[Dictionary] = [
 			"result": "Drawn letter · random element · +%d level" % FORGE_LEVEL_GAIN,
 		},
 	]
+
+# OPTIONAL TUNDRA SIDE QUESTS
+const TRAVELER_HEAL_FRACTION: float = 0.20
+const TRAVELER_GOLD: int = 20
+const TRAVELER_BONUS_CHANCE: float = 0.10
+const CHEST_GOLD_PER_LOCK: int = 10
+const CHEST_BONUS_CHANCE: float = 0.20
+const SIDE_QUEST_BONUS_LETTER_LEVEL: int = 1
+
+# Combat fate risk applies once to enemy victory gold, before flat bonuses.
+const MODIFIER_REWARD_MULTIPLIERS: Dictionary[String, float] = {
+	"easier": 0.75,
+	"mixed": 1.00,
+	"harder": 1.25,
+	"very_challenging": 1.50,
+}

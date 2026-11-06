@@ -12,7 +12,6 @@ const ACTIVITY_CONTENT: Dictionary[String, String] = {
 	"relic_reward": "hangman",
 	"recovery": "frozen_traveler",
 	"forge": "forge",
-	"random_event": "icy_portal",
 	"lore": "lore_room",
 }
 
@@ -25,7 +24,7 @@ static func generate(seed_value: int, biome: String) -> Dictionary:
 	var nodes: Dictionary = {}
 	var build_types: Array[String] = ["letter_reward", "relic_reward", "forge"]
 	_shuffle_with_rng(build_types, rng)
-	var opening_types: Array[String] = ["recovery", "treasure", "random_event"]
+	var opening_types: Array[String] = ["recovery", "treasure", "letter_reward"]
 	_shuffle_with_rng(opening_types, rng)
 	var enemies: Array[String] = Balance.ENEMY_FACTORY_TUNDRA_REGULARS.duplicate()
 	_shuffle_with_rng(enemies, rng)
@@ -64,7 +63,7 @@ static func generate(seed_value: int, biome: String) -> Dictionary:
 				node_type = opening_types[lane]
 				content_id = ACTIVITY_CONTENT[node_type]
 				reward_tier = 2 if node_type == "treasure" else 1
-				threat_tier = 1 if node_type in ["treasure", "random_event"] else 0
+				threat_tier = 1 if node_type == "treasure" else 0
 			elif column == 3 and lane < 2:
 				# Two routes can carry the same story beat. Choosing either still
 				# advances the run and the third lane remains a gameplay alternative.
@@ -89,7 +88,7 @@ static func generate(seed_value: int, biome: String) -> Dictionary:
 				node_type = _weighted_activity(rng)
 				content_id = ACTIVITY_CONTENT[node_type]
 				reward_tier = 2 if node_type in ["forge", "letter_reward", "relic_reward", "treasure"] else 1
-				threat_tier = 1 if node_type in ["treasure", "random_event"] else 0
+				threat_tier = 1 if node_type == "treasure" else 0
 			var node: Dictionary = {
 				"route_key": key,
 				"column": column,
@@ -126,8 +125,8 @@ static func _weighted_activity(rng: RandomNumberGenerator) -> String:
 		candidates.append(id)
 		total += int(Balance.ROUTE_ACTIVITY_WEIGHTS[id])
 	if candidates.is_empty():
-		# Combat is a safe non-unique fallback and can never dead-end.
-		return "random_event"
+		# An existing activity is a safe fallback and can never dead-end.
+		return "letter_reward"
 	var roll: int = rng.randi_range(1, total)
 	for id: String in candidates:
 		roll -= int(Balance.ROUTE_ACTIVITY_WEIGHTS[id])

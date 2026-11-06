@@ -81,6 +81,8 @@ var relic_rewards: Dictionary[int, String] = {}
 # encounter through the bard, power, and loot screens before the run advances.
 var pending_victory_enemy: String = ""
 var pending_victory_gold: int = 0
+# Reward receipts survive scene reloads and clear only when starting a new run.
+var claimed_combat_rewards: Dictionary[String, bool] = {}
 var pending_relic_choices: Array[String] = []
 var pending_victory_letter: LetterStats = null
 
@@ -163,6 +165,7 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	defeated_enemy_history = []
 	relic_rewards = {}
 	pending_victory_enemy = ""
+	claimed_combat_rewards.clear()
 	pending_victory_gold = 0
 	pending_relic_choices = []
 	pending_victory_letter = null
@@ -211,7 +214,6 @@ func _initialize_playtest_route() -> void:
 		{"node_type": "relic_reward", "content_id": "hangman"},
 		{"node_type": "recovery", "content_id": "frozen_traveler"},
 		{"node_type": "treasure", "content_id": "treasure_chest"},
-		{"node_type": "random_event", "content_id": "icy_portal"},
 		{"node_type": "minigame", "content_id": "word_game"},
 		{"node_type": "minigame", "content_id": "handwriting_game"},
 	]
@@ -326,6 +328,14 @@ func complete_treasure_room() -> void:
 	if not completed_encounters.has(encounter_index):
 		completed_encounters.append(encounter_index)
 	complete_current_route_node()
+
+
+## Reserve before emitting gold/deck signals so duplicate scenes cannot settle twice.
+func claim_combat_rewards(key: String) -> bool:
+	if key.is_empty() or claimed_combat_rewards.has(key):
+		return false
+	claimed_combat_rewards[key] = true
+	return true
 
 
 func begin_victory(enemy_name: String, gold_earned: int) -> void:
@@ -805,6 +815,7 @@ func debug_jump_to_route_node(route_key: String, depth: int) -> bool:
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
 	clear_pending_victory()
+	claimed_combat_rewards.erase("route:" + route_key)
 	route_completed_keys.erase(route_key)
 	route_bypassed_keys.erase(route_key)
 	var type: String = String(route_nodes[route_key].node_type)

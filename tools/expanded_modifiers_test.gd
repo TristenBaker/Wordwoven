@@ -143,14 +143,14 @@ func _run() -> void:
 			var self_deadline: int = Time.get_ticks_msec() + 6000
 			while combat._state != combat.State.WON and Time.get_ticks_msec() < self_deadline:
 				await get_tree().process_frame
-			check(combat._state == combat.State.WON and RunState.gold == before_self_gold + combat.enemy.gold_reward and RunState.player_health == before_self_hp, "self-hit victory rewards once and spares player")
+			check(combat._state == combat.State.WON and RunState.gold == before_self_gold + MODIFIERS.victory_gold(combat.enemy.gold_reward, combat._encounter_modifier) and RunState.player_health == before_self_hp, "self-hit victory rewards once and spares player")
 			combat._on_enemy_died()
-			check(RunState.gold == before_self_gold + combat.enemy.gold_reward, "self-hit duplicate reward prevented")
+			check(RunState.gold == before_self_gold + MODIFIERS.victory_gold(combat.enemy.gold_reward, combat._encounter_modifier), "self-hit duplicate reward prevented")
 			combat.queue_free()
 			await get_tree().process_frame
 			continue
 		var before_gold: int = RunState.gold
-		var reward: int = combat.enemy.gold_reward + (8 if id == "greedy" else 0)
+		var reward: int = MODIFIERS.victory_gold(combat.enemy.gold_reward, combat._encounter_modifier) + (8 if id == "greedy" else 0)
 		combat.enemy.take_damage(999999)
 		check(RunState.gold == before_gold + reward and combat._state == combat.State.WON, id + " victory reward")
 		combat._on_enemy_died()

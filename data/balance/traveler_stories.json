@@ -1,0 +1,167 @@
+[
+  {
+    "id": "tale_01",
+    "title": "The Yeti Job Interview",
+    "text": "The yeti asked whether I could {0}. I replied {1}. It stamped my {2} with \"{3}\" and hired me as a warning.",
+    "blanks": [
+      "v",
+      "r",
+      "n",
+      "a"
+    ]
+  },
+  {
+    "id": "tale_02",
+    "title": "Soup of the Prophets",
+    "text": "The oracle dropped {0} into her soup. \"Tomorrow will be {1},\" she announced. We decided to {2}. The soup applauded {3}.",
+    "blanks": [
+      "n",
+      "a",
+      "v",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_03",
+    "title": "The Glacier Toll",
+    "text": "To cross the glacier, you must {0} while looking {1}. I paid with {2} instead. The glacier refunded me {3}.",
+    "blanks": [
+      "v",
+      "a",
+      "n",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_04",
+    "title": "A Dragon in Customer Service",
+    "text": "The dragon called my {0} \"{1}.\" I asked it to {2}. It did so {3}, then charged me for emotional baggage.",
+    "blanks": [
+      "n",
+      "a",
+      "v",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_05",
+    "title": "The Snowman Election",
+    "text": "The snowman campaigned {0} on a promise to {1}. His slogan was \"{2} for everyone!\" He won by one {3} vote.",
+    "blanks": [
+      "r",
+      "v",
+      "n",
+      "a"
+    ]
+  },
+  {
+    "id": "tale_06",
+    "title": "The Cursed Mittens",
+    "text": "My mittens whispered \"{0}\" whenever I tried to {1}. A witch called this {2}. I returned them {3}; store credit is also a curse.",
+    "blanks": [
+      "n",
+      "v",
+      "a",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_07",
+    "title": "The Royal Sled",
+    "text": "The queen declared her sled {0}. Its engine was powered by {1}. When ordered to {2}, it replied {3}: \"That is outside my contract.\"",
+    "blanks": [
+      "a",
+      "n",
+      "v",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_08",
+    "title": "Riddle of the Ice Sphinx",
+    "text": "\"What can {0}, sounds {1}, and smells of {2}?\" asked the ice sphinx. I answered {3}: \"Your lunch.\" It let me pass out of embarrassment.",
+    "blanks": [
+      "v",
+      "a",
+      "n",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_09",
+    "title": "The Wizard Weather Report",
+    "text": "The forecast was {0}, with scattered {1}. The wizard advised everyone to {2}. We obeyed {3}. His umbrella resigned.",
+    "blanks": [
+      "a",
+      "n",
+      "v",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_10",
+    "title": "The Inn with No Doors",
+    "text": "The innkeeper greeted me {0}. \"Please {1} to check in. Your room is {2}; the minibar contains only {3}.\" I slept outside.",
+    "blanks": [
+      "r",
+      "v",
+      "a",
+      "n"
+    ]
+  },
+  {
+    "id": "tale_11",
+    "title": "The Bear Etiquette Lesson",
+    "text": "The polar bear called my manners {0}. It demonstrated how to {1} beside {2}. I thanked it {3}. Apparently that was the rude part.",
+    "blanks": [
+      "a",
+      "v",
+      "n",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_12",
+    "title": "The Necromancer Picnic",
+    "text": "The necromancer unpacked {0}. \"How {1}!\" cried the skeletons. We tried to {2}, but the blanket crawled away {3}.",
+    "blanks": [
+      "n",
+      "a",
+      "v",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_13",
+    "title": "The Mountain Complaint",
+    "text": "The mountain complained {0} that adventurers always {1} on it. I offered {2}. \"That is {3},\" it said, and reduced my altitude.",
+    "blanks": [
+      "r",
+      "v",
+      "n",
+      "a"
+    ]
+  },
+  {
+    "id": "tale_14",
+    "title": "The Knight of Lost Luggage",
+    "text": "The knight challenged me to {0}. His armor looked {1}; his sword was labeled \"{2}.\" I surrendered {3}. He lost the paperwork.",
+    "blanks": [
+      "v",
+      "a",
+      "n",
+      "r"
+    ]
+  },
+  {
+    "id": "tale_15",
+    "title": "The Enchanted Echo",
+    "text": "I shouted \"{0}!\" into the canyon. The echo sounded {1}. It asked me to {2}, then billed me {3} for the conversation.",
+    "blanks": [
+      "n",
+      "a",
+      "v",
+      "r"
+    ]
+  }
+]
