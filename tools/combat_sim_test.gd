@@ -28,23 +28,23 @@ func _run_test() -> void:
 	)
 	_expect(not enemy.tags.is_empty(), "enemy has tags")
 	print("  enemy: %s %s" % [enemy.enemy_name, enemy.tags])
-	var antonym: Dictionary = WordNet.counter_detailed(
-		"hot", "cold", "a"
-	)
-	var thematic: Dictionary = WordNet.counter_detailed(
-		"fire", "cold", "n"
-	)
 	var calculator: DamageCalculator = DamageCalculator.new()
-	var antonym_multiplier: float = calculator._semantic_multiplier(
-		antonym, 1.0, 0.0
+	# Exercise the public damage path used by combat, holding letters, POS and
+	# cast time constant so only the current enemy-tag counter changes damage.
+	var countered: Dictionary = calculator.calculate(
+		"hot", [], ["h", "o", "t"], ["cold"], "a"
 	)
-	var thematic_multiplier: float = calculator._semantic_multiplier(
-		thematic, 1.0, 0.0
+	var untagged: Dictionary = calculator.calculate(
+		"hot", [], ["h", "o", "t"], [], "a"
 	)
 	_expect(
-		antonym_multiplier > thematic_multiplier,
-		"antonym damage x%.2f > thematic damage x%.2f" % [
-			antonym_multiplier, thematic_multiplier,
+		countered.counter.tag == "cold" and countered.effectiveness > untagged.effectiveness,
+		"damage calculation applies the enemy-tag counter"
+	)
+	_expect(
+		countered.damage > untagged.damage and untagged.damage > 0.0,
+		"countered damage %.2f > untagged damage %.2f" % [
+			countered.damage, untagged.damage,
 		]
 	)
 	_expect(
