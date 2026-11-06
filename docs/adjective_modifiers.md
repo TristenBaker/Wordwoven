@@ -10,9 +10,10 @@ A valid unsupported adjective receives an explanation and leaves confirmation
 disabled. A Tundra-only word outside Tundra explains its restriction; it never
 selects another effect.
 
-The effect preview updates as the player edits. HP and attack modifiers show
-rounded before/after values for the coming enemy. Enter in the text field only
-refreshes the preview. **Confirm Modifier** revalidates and caches the selection;
+The effect preview updates as the player edits. Preparation shows a short
+descriptive effect and its gold adjustment; tooltips use the same wording.
+Numerical HP, attack, damage and behavioral details remain in the existing
+combat display. Enter in the text field only refreshes the preview. **Confirm Modifier** revalidates and caches the selection;
 **Enter Combat** uses the existing scene transition. Reopening preparation
 preserves a confirmed selection. The combat catalogue, runtime calculations,
 active display, and encounter storage are unchanged.
@@ -81,11 +82,93 @@ Example command (replace `Godot` with your executable):
 Godot --headless --path . tools/fate_classifier_test.tscn
 ```
 
-Choosing known beneficial words repeatedly remains possible, as it was before.
-No costs, cross-encounter adjective limits, or new balancing rules were added.
+Choosing known beneficial words repeatedly remains possible. Easier fights now
+trade lower enemy gold for that advantage; there are no selection costs or
+cross-encounter adjective limits.
 Vocabulary expansion is manual; valid synonyms and comparatives not explicitly
 listed remain unsupported. Combat counter scoring still uses WordNet separately
 and is unaffected by this preparation-only change.
+
+## Selection descriptions and risk rewards
+
+`encounter_modifier.gd` stores `selection_effect` and `difficulty` separately from
+its original numerical `effect` and combat fields. The 288 adjective mappings,
+all original combat fields, and `encounter_modifier_runtime.gd` are unchanged.
+
+| Modifier | Selection effect | Difficulty | Enemy gold |
+| --- | --- | --- | ---: |
+| TITANBOUND | Tougher Enemy | Harder | 1.25× |
+| DOOMMARKED | Frail Enemy | Easier | 0.75× |
+| WAR-BLESSED | Stronger Enemy Strikes | Harder | 1.25× |
+| SPIRIT-BROKEN | Weaker Enemy Strikes | Easier | 0.75× |
+| FATE-EXPOSED | Empowered Attacks | Easier | 0.75× |
+| SPELLWARDEN | Weakened Attacks | Harder | 1.25× |
+| DROWSY | Naps, Fierce Awakenings | Easier | 0.75× |
+| CLUMSY | Enemy Strikes Itself | Easier | 0.75× |
+| LONG-WINDED | Word Length Bonuses | Easier | 0.75× |
+| ECHO-BOUND | Linked Word Power | Easier | 0.75× |
+| CHAMELEON | Shifting Enemy Weaknesses | Mixed | 1.00× |
+| GREEDY | Coins And Theft | Mixed | 1.00× |
+| FROSTBITE TAX | Faster Freezing, Extra Heat | Mixed | 1.00× |
+
+Classification follows the implemented mechanics:
+
+- TITANBOUND gives the enemy more health; DOOMMARKED gives it less.
+  WAR-BLESSED increases enemy attack; SPIRIT-BROKEN decreases it.
+  FATE-EXPOSED boosts player direct damage; SPELLWARDEN reduces it.
+- DROWSY sleeps on the first retaliation and every other retaliation thereafter.
+  Awake hits are stronger, but two retaliation opportunities average only 62.5%
+  of ordinary enemy damage. It is easier overall despite the catalogue's older
+  `beneficial=false` presentation flag, which remains unchanged.
+- CLUMSY replaces each third retaliation with a self-hit, sparing the player.
+- LONG-WINDED grants damage for long words or Guard for short words; neither
+  option penalizes the player. ECHO-BOUND adds an optional damage bonus without
+  reducing the damage of unlinked words. Both are easier.
+- CHAMELEON changes semantic counter targets, which can help or hinder a given
+  hand. It does not increase enemy stats: mixed.
+- GREEDY changes coins, not combat strength. Its capped theft is offset by cast
+  coins and the victory bonus, so it retains standard enemy gold.
+- FROSTBITE TAX freezes more frequently but doubles Heat generation, helping
+  the player thaw letters. This compensating tradeoff stays mixed and Tundra-only.
+
+Tier multipliers are configurable in `tuning.gd` under
+`MODIFIER_REWARD_MULTIPLIERS`. A 1.50× very-challenging tier is available but none
+of the current standalone effects warrants that initial classification.
+
+Only **enemy victory gold** is scaled. Elite scaling and endless-wave base gold
+are already included in that amount. Round the product once to the nearest whole
+gold, with positive halves rounding up, then add Greedy's unchanged victory bonus
+and any existing flat relic victory-gold bonus. Example: 10 base gold becomes
+8 on an easier fight or 13 on a harder fight. Cast gold, theft, other combat coin
+procs, letters, relics, powers, side quests, statistics definitions, and history
+are not multiplied. Item rewards are discrete and remain unchanged.
+
+The preview shows `Increased Gold`, `Decreased Gold`, or `Standard Gold`.
+Selection labels and tooltips contain no numerical effects or reward amounts;
+the configured multipliers and actual payouts remain unchanged.
+Invalid or unsupported input clears the effect and reward together. Confirmation
+and reopening use the same catalogue data. The existing layout, accent colors,
+and reserved effect-label height are preserved.
+
+Combat captures a route-node or encounter-stage receipt key when it starts.
+RunState reserves that key before reward signals or item drops. Both repeated
+callbacks and reloaded combat scenes therefore cannot claim the same victory
+again. The base enemy reward is never overwritten, and post-fight screens only
+show the already-settled total. Clearing the victory display does not clear
+receipts; a new run does. The developer's explicit replay jump clears only that
+route node's receipt to preserve its existing intentional replay behavior.
+
+Validation with Godot 4.7.2: all 13 relevant test scenes passed:
+`modifier_rewards_test`, `fate_classifier_test`, `encounter_modifier_test`,
+`expanded_modifiers_test`, `active_modifier_panel_test`, `balance_test`,
+`expedition_route_test`, `route_progression_test`, `tundra_minigames_test`,
+`tundra_events_test`, `frozen_letters_test`, `quick_cast_test`, and
+`tundra_sim_test`. Import completed without parsing or missing-resource errors.
+The new reward suite covers all fates at opening/regular/boss stages, rounding,
+reentrant and duplicate callbacks, scene reloads, receipts, and previews at
+1280×720, 1600×900, and 1920×1080. The adjective suite passed 3,854 checks,
+including all 288 mappings. Some older regression scenes still emit shutdown
+ObjectDB/resource cleanup diagnostics despite passing their assertions.
 
 ## Sprint 5 verification results
 

@@ -1,4 +1,5 @@
 extends RefCounted
+const Balance = preload("res://data/balance/tuning.gd")
 ## Authored answers first, then adjective-only WordNet synonym/meaning links.
 const LOCKS: Array[Dictionary] = [
 	{"name": "Hearth", "clue": "This lock longs for comfort after a night in the snow.", "hint": "Consider how a traveler would feel beside a hearth after escaping a blizzard.", "anchors": ["warm", "hot"], "accepted": ["warm", "hot", "heated", "toasty", "cozy", "cosy"]},
@@ -11,7 +12,7 @@ const LOCKS: Array[Dictionary] = [
 static func initial_state() -> Dictionary:
 	var pool: Array = LOCKS.duplicate(true)
 	pool.shuffle()
-	return {"turn": 0, "value": 0, "lock_index": 0, "guesses": 0, "locks": pool.slice(0, 3), "statuses": ["sealed", "sealed", "sealed"], "words": [], "feedback": "Three opinionated locks. Two valid guesses per lock; each opened lock earns 4 gold.", "awaiting_next": false}
+	return {"turn": 0, "value": 0, "lock_index": 0, "guesses": 0, "locks": pool.slice(0, 3), "statuses": ["sealed", "sealed", "sealed"], "words": [], "feedback": "Three opinionated locks. Two valid guesses per lock; each opened lock earns %d gold." % Balance.CHEST_GOLD_PER_LOCK, "awaiting_next": false}
 
 static func accepts(word: String, lock: Dictionary) -> bool:
 	if lock.accepted.has(word): return true
@@ -27,10 +28,10 @@ static func accepts(word: String, lock: Dictionary) -> bool:
 
 static func presentation(state: Dictionary, _word: String = "") -> Dictionary:
 	var lock: Dictionary = state.locks[mini(int(state.lock_index), 2)]
-	var hints: String = "Use an ADJECTIVE. Synonyms welcome. Each opened lock earns 4 gold; invalid words cost no guesses."
+	var hints: String = "Use an ADJECTIVE. Synonyms welcome. Each opened lock earns %d gold; invalid words cost no guesses." % Balance.CHEST_GOLD_PER_LOCK
 	if int(state.guesses) > 0: hints += " " + String(lock.hint)
 	var remaining: int = 2 - int(state.guesses)
-	return {"heading": "CRACK THE LOCKS • Lock %d / 3" % mini(int(state.lock_index) + 1, 3), "meter": "Opened: %d / 3 • Gold earned: %d" % [state.value, int(state.value) * 4], "maximum": 3, "instruction": "%s lock: %s" % [lock.name, lock.clue], "preview": "%d %s remaining. %s" % [remaining, "guess" if remaining == 1 else "guesses", hints], "choices": [], "submit": "Unlock"}
+	return {"heading": "CRACK THE LOCKS • Lock %d / 3" % mini(int(state.lock_index) + 1, 3), "meter": "Opened: %d / 3 • Gold earned: %d" % [state.value, int(state.value) * Balance.CHEST_GOLD_PER_LOCK], "maximum": 3, "instruction": "%s lock: %s" % [lock.name, lock.clue], "preview": "%d %s remaining. %s" % [remaining, "guess" if remaining == 1 else "guesses", hints], "choices": [], "submit": "Unlock"}
 
 static func play(state: Dictionary, word: String, _choice: int) -> void:
 	var index: int = int(state.lock_index)
@@ -40,7 +41,7 @@ static func play(state: Dictionary, word: String, _choice: int) -> void:
 	if accepts(word, lock):
 		state.value += 1
 		state.statuses[index] = "open"
-		state.feedback = "'%s' fits! The %s lock clicks open. 'Finally, someone who reads the instructions.' +4 gold at the end." % [word, lock.name]
+		state.feedback = "'%s' fits! The %s lock clicks open. 'Finally, someone who reads the instructions.' +%d gold at the end." % [word, lock.name, Balance.CHEST_GOLD_PER_LOCK]
 		state.lock_index += 1
 		state.guesses = 0
 	else:
@@ -57,4 +58,4 @@ static func is_finished(state: Dictionary) -> bool:
 	return int(state.lock_index) >= 3
 
 static func outcome(state: Dictionary) -> Dictionary:
-	return {"type": "gold", "amount": int(state.value) * 4, "dialogue": "Opened %d of 3 locks. %s" % [state.value, "The chest tips you for the excellent vocabulary." if int(state.value) == 3 else "The chest releases the accessible coins. 'My other compartments are on lunch break.'"]}
+	return {"type": "gold", "amount": int(state.value) * Balance.CHEST_GOLD_PER_LOCK, "bonus_chance": Balance.CHEST_BONUS_CHANCE if int(state.value) == 3 else 0.0, "dialogue": "Opened %d of 3 locks. %s" % [state.value, "The chest tips you for the excellent vocabulary." if int(state.value) == 3 else "The chest releases the accessible coins. 'My other compartments are on lunch break.'"]}

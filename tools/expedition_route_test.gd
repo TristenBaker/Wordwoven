@@ -44,6 +44,11 @@ func _signature(graph: Dictionary) -> String:
 func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 	var nodes: Dictionary = graph.nodes
 	var incoming: Dictionary = {}
+	var opening_content: Array[String] = []
+	for key: String in graph.columns[1]:
+		opening_content.append(String(nodes[key].content_id))
+	for id: String in ["frozen_traveler", "treasure_chest", "ice_fishing"]:
+		check(opening_content.has(id), "Opening preserves activity: " + id)
 	check(graph.columns.size() >= 3, "Route has enough layers to branch")
 	check(graph.columns[1].size() == 3, "The first room immediately splits three ways")
 	for key: String in nodes:
@@ -60,6 +65,9 @@ func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 				check(int(nodes[next_key].column) > int(node.column), "Edges only move forward")
 				incoming[next_key] = int(incoming[next_key]) + 1
 		var type: String = String(node.node_type)
+		if type not in ["normal_combat", "elite_combat", "boss"]:
+			check(Generator.ACTIVITY_CONTENT.has(type), "Activity type is supported")
+			check(String(node.content_id) == String(Generator.ACTIVITY_CONTENT.get(type, "")), "Activity content matches its type")
 		# Activities may intentionally repeat when they belong to different
 		# branches; the route choice, not global uniqueness, supplies variety.
 		for next_key: String in node.next_keys:

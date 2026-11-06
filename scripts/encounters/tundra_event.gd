@@ -45,7 +45,7 @@ func _ready() -> void:
 	feedback.item_rect_changed.connect(_sync_feedback_banner)
 	next_button.pressed.connect(_next_round)
 	input.text_changed.connect(func(_text: String): _refresh_preview())
-	input.placeholder_text = "Enter a %s..." % WordNet.pos_name(data.pos)
+	input.placeholder_text = "Enter a %s..." % WordNet.pos_name(TundraEventScript.requested_pos(encounter_id))
 	var frame_count: int = int(data.frames) if data.get("animate", true) else 1
 	for frame: int in frame_count:
 		_frames.append(TundraEventScript.frame_texture(data, frame))
@@ -70,13 +70,13 @@ func _show_minigame_tutorial() -> void:
 			steps = [
 				{
 					"target": meter,
-					"title": "Warm the traveler",
-					"body": "You have three turns to build enough warmth for a rescue.",
+					"title": "Finish a frozen tale",
+					"body": "Fill every blank to earn healing and gold. Every valid idea counts.",
 				},
 				{
 					"target": input,
-					"title": "Offer useful nouns",
-					"body": "Name warmth, shelter, or nourishment. Stronger ideas add more warmth.",
+					"title": "Invent the missing words",
+					"body": "Follow the requested word type. Verbs use their base form. Silly answers are welcome!",
 				},
 			]
 		"treasure_chest":
@@ -90,19 +90,6 @@ func _show_minigame_tutorial() -> void:
 					"target": input,
 					"title": "Answer with an adjective",
 					"body": "Use a describing word that fits the active clue. Synonyms can work.",
-				},
-			]
-		"icy_portal":
-			steps = [
-				{
-					"target": choice_row,
-					"title": "Choose an action",
-					"body": "Decide how you approach the portal each round.",
-				},
-				{
-					"target": input,
-					"title": "Describe how",
-					"body": "Add an adverb that supports your action and stabilizes the portal.",
 				},
 			]
 	if not steps.is_empty():
@@ -119,7 +106,7 @@ func _submit() -> void:
 		return
 	var verdict: Dictionary = TundraEventScript.submit_word(encounter_id, input.text, _choice)
 	if not verdict.valid:
-		feedback.text = "%s. Enter a valid %s." % [verdict.reason, WordNet.pos_name(String(data.pos))]
+		feedback.text = "%s. Enter a valid %s." % [verdict.reason, WordNet.pos_name(TundraEventScript.requested_pos(encounter_id))]
 		feedback.modulate = Color.WHITE
 		_sync_feedback_banner()
 		input.grab_focus()
@@ -134,6 +121,7 @@ func _submit() -> void:
 func _refresh_game() -> void:
 	var state: Dictionary = TundraEventScript.progress(encounter_id)
 	var view: Dictionary = TundraEventScript.rules(encounter_id).presentation(state, input.text.strip_edges().to_lower())
+	input.placeholder_text = "Enter a %s..." % WordNet.pos_name(TundraEventScript.requested_pos(encounter_id))
 	heading.text = view.heading
 	meter_label.text = view.meter
 	meter.max_value = view.maximum
@@ -150,7 +138,7 @@ func _refresh_game() -> void:
 	input.editable = not state.awaiting_next
 	submit.disabled = state.awaiting_next
 	next_button.visible = state.awaiting_next
-	next_button.text = "Next Turn" if encounter_id == "frozen_traveler" else ("Try Again" if encounter_id == "treasure_chest" and int(state.guesses) > 0 else ("Next Lock" if encounter_id == "treasure_chest" else "Next Round"))
+	next_button.text = "Next Blank" if encounter_id == "frozen_traveler" else ("Try Again" if encounter_id == "treasure_chest" and int(state.guesses) > 0 else ("Next Lock" if encounter_id == "treasure_chest" else "Next Round"))
 	_refresh_locks(state)
 	choice_row.visible = not view.choices.is_empty()
 	for child: Node in choice_row.get_children():
@@ -177,7 +165,7 @@ func _style_meter() -> void:
 	background.set_corner_radius_all(3)
 	meter.add_theme_stylebox_override("background", background)
 	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("e8ae61") if encounter_id == "frozen_traveler" else (Color("78c9ec") if encounter_id == "icy_portal" else Color("d9bc73"))
+	fill.bg_color = Color("e8ae61") if encounter_id == "frozen_traveler" else Color("d9bc73")
 	fill.set_corner_radius_all(3)
 	meter.add_theme_stylebox_override("fill", fill)
 

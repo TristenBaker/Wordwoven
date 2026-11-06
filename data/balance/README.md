@@ -17,8 +17,8 @@ live-reload system.
 | `adjective_vocabulary.gd` | Explicit adjective lists, one modifier per word |
 | `fate_classifier.gd` | Deterministic adjective lookup and biome restrictions |
 | `chest_locks.gd` | Lock answer pools, guesses, rewards and their explanatory text |
-| `traveler_rescue.gd` | Supply categories, warmth gains, rescue thresholds and healing |
-| `portal_stabilization.gd` | Adverb categories, stability gains, goals and rewards |
+| `traveler_stories.json` | Fifteen authored Tundra Mad Libs templates and required word types |
+| `traveler_rescue.gd` | Mad Libs selection, blank progression and story rendering |
 | `counter_scorer.gd`, `semantic_scorer.gd` | WordNet scoring rules and thresholds |
 
 The small encounter/scoring rule modules live here intentionally: their formulas
@@ -50,3 +50,6 @@ changes). Also run `tundra_minigames_test`, `encounter_modifier_test`,
 Preparation vocabulary and its maintenance rules are documented in
 [`docs/adjective_modifiers.md`](../../docs/adjective_modifiers.md).
 Some older scene tests assume superseded UI nodes/APIs and need separate updates.
+
+Side-quest gameplay, rewards, template format, and validation are documented in
+[`docs/tundra_side_quests.md`](../../docs/tundra_side_quests.md).

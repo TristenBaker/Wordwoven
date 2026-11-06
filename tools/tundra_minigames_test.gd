@@ -31,43 +31,7 @@ func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
 	_check_non_spoiler_text()
-	setup("frozen_traveler")
-	check(EVENTS.complete("frozen_traveler").is_empty(), "Cannot settle before three turns")
-	for word: String in ["", "zzzzzzz", "quickly", "ice cream"]:
-		check(not EVENTS.submit_word("frozen_traveler", word).valid, "Invalid noun rejected")
-	check(EVENTS.progress("frozen_traveler").turn == 0, "Invalid words do not spend turns")
-	var accepted: Dictionary = EVENTS.submit_word("frozen_traveler", " TORCH ")
-	check(accepted.valid and EVENTS.progress("frozen_traveler").value == 3, "Fuel and normalization")
-	check(not EVENTS.submit_word("frozen_traveler", "soup").valid, "Cannot submit during round feedback")
-	EVENTS.next_round("frozen_traveler")
-	var result: Dictionary = play("frozen_traveler", ["blanket", "soup"])
-	check(RunState.player_health == 29 and result.score == 7, "Full rescue heals six")
-	check(EVENTS.complete("frozen_traveler").is_empty(), "Cannot claim twice")
-	check(not EVENTS.submit_word("frozen_traveler", "torch").valid, "Completed game rejects input")
-	setup("frozen_traveler")
-	result = play("frozen_traveler", ["telescope", "spoon", "map"])
-	check(RunState.player_health == 26 and result.score == 3, "Fair fallback earns partial rescue")
-	setup("frozen_traveler")
-	RunState.player_health = 49
-	play("frozen_traveler", ["torch", "torch", "torch"])
-	check(RunState.player_health == 50, "Healing capped and repeated supplies legal")
-	setup("icy_portal")
-	check(not EVENTS.submit_word("icy_portal", "carefully").valid, "Portal requires a choice")
-	check(not EVENTS.submit_word("icy_portal", "carefully", 2).valid, "Portal rejects out of range choice")
-	check(not EVENTS.submit_word("icy_portal", "blanket", 0).valid, "Portal rejects noun")
-	check(EVENTS.progress("icy_portal").turn == 0, "Invalid portal input spends nothing")
-	result = play("icy_portal", ["carefully", "gently", "slowly"], 0)
-	check(RunState.player_health == 28 and RunState.gold == 0, "Calm steady portal heals five")
-	setup("icy_portal")
-	result = play("icy_portal", ["quickly", "boldly", "swiftly"], 1)
-	check(RunState.gold == 8 and RunState.player_health == 23, "Energetic charge portal awards gold")
-	check(EVENTS.complete("icy_portal").is_empty(), "Portal cannot award twice")
-	setup("icy_portal")
-	play("icy_portal", ["quickly", "quickly", "quickly"], 0)
-	check(RunState.gold == 0 and RunState.player_health == 23, "Poor portal choices award nothing without damage")
-	setup("icy_portal")
-	play("icy_portal", ["oddly", "oddly", "oddly"], 0)
-	check(RunState.player_health == 28, "Unrecognized adverbs can stabilize via steady actions")
+	await _check_stories()
 	var chest: GDScript = EVENTS.rules("treasure_chest")
 	check(chest.accepts("valiant", chest.LOCKS[1]), "WordNet accepts valiant as brave synonym")
 	check(not chest.accepts("wooden", chest.LOCKS[1]), "Unrelated adjective does not fit")
@@ -84,25 +48,31 @@ func _run() -> void:
 				play("treasure_chest", ["wooden"])
 				check(state.guesses == 1 and state.feedback.contains(state.locks[index].hint), "Incorrect answer gives a clear hint")
 				play("treasure_chest", ["wooden"])
-		check(RunState.gold == opened * 4, "Chest payout for %d locks" % opened)
+		check(RunState.gold == opened * 10, "Chest payout for %d locks" % opened)
 		check(EVENTS.complete("treasure_chest").is_empty(), "Chest payout cannot repeat")
 	setup("treasure_chest")
 	EVENTS.submit_word("treasure_chest", EVENTS.progress("treasure_chest").locks[0].anchors[0])
 	var skipped: Dictionary = EVENTS.complete("treasure_chest", true)
 	check(skipped.skipped and RunState.gold == 0, "Skipping unfinished chest forfeits reward")
 	check(not RunState.begin_optional_encounter("treasure_chest"), "Skipped encounter cannot replay")
-	setup("icy_portal")
+	setup("treasure_chest")
 	RunState.pending_optional_encounter = "frozen_traveler"
-	check(not EVENTS.submit_word("icy_portal", "carefully", 0).valid, "Mismatched pending ID cannot play")
-	setup("icy_portal")
+	check(not EVENTS.submit_word("treasure_chest", "wooden").valid, "Mismatched pending ID cannot play")
+	setup("treasure_chest")
 	EventBus.gold_changed.connect(_try_duplicate_reward, CONNECT_ONE_SHOT)
-	play("icy_portal", ["quickly", "boldly", "swiftly"], 1)
-	check(RunState.gold == 8, "Gold signal cannot re-enter reward settlement")
+	var locks: Array = EVENTS.progress("treasure_chest").locks
+	play("treasure_chest", [locks[0].anchors[0], locks[1].anchors[0], locks[2].anchors[0]])
+	check(RunState.gold == 30, "Gold signal cannot re-enter reward settlement")
+	var music: AudioStreamPlayer = get_tree().root.get_node_or_null("TundraSideQuestMusic")
+	if music != null:
+		music.stop()
+		music.queue_free()
+	await get_tree().process_frame
 	print("Tundra mini-game rules: %d failures" % failures)
 	get_tree().quit(1 if failures else 0)
 
 func _try_duplicate_reward(_amount: int) -> void:
-	check(EVENTS.complete("icy_portal").is_empty(), "Claim recorded before emitting gold signal")
+	check(EVENTS.complete(RunState.pending_optional_encounter).is_empty(), "Claim recorded before emitting gold signal")
 
 ## Check every authored answer against the actual text returned to the UI.
 func _assert_no_answers(text: String, answers: Array, context: String) -> void:
@@ -112,29 +82,6 @@ func _assert_no_answers(text: String, answers: Array, context: String) -> void:
 		check(not answers.has(token.get_string()), "No answer examples in " + context + ": " + token.get_string())
 
 func _check_non_spoiler_text() -> void:
-	var traveler: GDScript = EVENTS.rules("frozen_traveler")
-	var supplies: Array = []
-	for category: Dictionary in traveler.CATEGORIES:
-		supplies.append_array(category.words)
-	var rescue: Dictionary = traveler.initial_state()
-	var baseline: Dictionary = traveler.presentation(rescue)
-	_assert_no_answers(JSON.stringify(baseline), supplies, "traveler instructions")
-	_assert_no_answers(rescue.feedback, supplies, "traveler initial feedback")
-	_assert_no_answers(EVENTS.definition("frozen_traveler").description, supplies, "traveler description")
-	for word: String in supplies + ["telescope"]:
-		check(traveler.presentation(rescue, word) == baseline, "Typing does not reveal supply classification")
-	var portal: GDScript = EVENTS.rules("icy_portal")
-	var adverbs: Array = portal.CALM + portal.ENERGETIC
-	var gate: Dictionary = portal.initial_state()
-	_assert_no_answers(gate.feedback, adverbs, "portal initial feedback")
-	_assert_no_answers(EVENTS.definition("icy_portal").description, adverbs, "portal description")
-	for round_index: int in 3:
-		gate.turn = round_index
-		baseline = portal.presentation(gate)
-		_assert_no_answers(JSON.stringify(baseline), adverbs, "portal round %d" % round_index)
-		check(baseline.choices.size() == 2 and baseline.choices[0].contains("+2 stability") and baseline.choices[1].contains("+1 treasure charge"), "Portal base action effects remain visible")
-		for word: String in adverbs + ["oddly"]:
-			check(portal.presentation(gate, word) == baseline, "Typing does not reveal adverb effects")
 	var chest: GDScript = EVENTS.rules("treasure_chest")
 	var adjectives: Array = []
 	for lock: Dictionary in chest.LOCKS:
@@ -147,8 +94,150 @@ func _check_non_spoiler_text() -> void:
 		puzzle.locks = [lock, lock, lock]
 		for guesses: int in 2:
 			puzzle.guesses = guesses
-			baseline = chest.presentation(puzzle)
+			var baseline: Dictionary = chest.presentation(puzzle)
 			_assert_no_answers(JSON.stringify(baseline), adjectives, "chest gameplay hints")
-			check(baseline.preview.contains("ADJECTIVE") and baseline.preview.contains("4 gold"), "Chest POS and reward remain visible")
+			check(baseline.preview.contains("ADJECTIVE") and baseline.preview.contains("10 gold"), "Chest POS and reward remain visible")
 		chest.play(puzzle, "wooden", -1)
 		_assert_no_answers(puzzle.feedback, adjectives, "incorrect answer feedback")
+
+func _check_stories() -> void:
+	var traveler: GDScript = EVENTS.rules("frozen_traveler")
+	var tales: Array = traveler.stories()
+	check(tales.size() == 15, "Fifteen authored stories load")
+	var ids: Array[String] = []
+	var titles: Array[String] = []
+	var previous: String = ""
+	for _index: int in 100:
+		var selected: Dictionary = traveler.initial_state()
+		check(selected.story.id != previous, "No immediate story repeat across encounters")
+		previous = selected.story.id
+	for tale: Dictionary in tales:
+		check(not ids.has(tale.id) and not titles.has(tale.title), "Unique story ID and title")
+		ids.append(tale.id)
+		titles.append(tale.title)
+		check(tale.blanks.size() >= 3 and tale.blanks.size() <= 5, "Short story blank count")
+		for pos: String in ["n", "v", "a", "r"]:
+			check(tale.blanks.has(pos), "Each story mixes all four word types")
+		setup("frozen_traveler")
+		var state: Dictionary = EVENTS.progress("frozen_traveler")
+		state.story = tale.duplicate(true)
+		await _check_entry_ui()
+		check(EVENTS.complete("frozen_traveler").is_empty(), "Unfinished story cannot pay")
+		var result: Dictionary = {}
+		for index: int in tale.blanks.size():
+			var pos: String = tale.blanks[index]
+			check(EVENTS.requested_pos("frozen_traveler") == pos, "Correct blank part of speech")
+			check(String(tale.text).contains("{%d}" % index), "Every blank has a placeholder")
+			var saved: Dictionary = state.duplicate(true)
+			for invalid: String in ["", "   ", "zzzzzzz", "ice cream", "123", "quickly" if pos != "r" else "telescope"]:
+				check(not EVENTS.submit_word("frozen_traveler", invalid).valid, "Invalid input rejected for " + pos)
+				check(state == saved, "Invalid input never advances story")
+			var word: String = {"n": "telescope", "v": "dance", "a": "purple", "r": "quickly"}[pos]
+			var verdict: Dictionary = EVENTS.submit_word("frozen_traveler", "  " + word.to_upper() + "  ")
+			check(verdict.valid and state.words[index] == word, "Creative input accepted and normalized")
+			result = verdict.get("result", {})
+			if index < tale.blanks.size() - 1:
+				check(not EVENTS.submit_word("frozen_traveler", word).valid, "Feedback waits for Next Blank")
+				check(RunState.gold == 0 and RunState.player_health == 23, "No early payout")
+				EVENTS.next_round("frozen_traveler")
+		check(not result.is_empty(), "Last blank completes story")
+		check(not result.story.contains("{") and not result.story.contains("["), "No unfilled placeholders")
+		for word: String in state.words:
+			check(result.story.contains("‹%s›" % word.to_upper()), "Every inserted word is distinguished")
+		check(result.dialogue.contains(tale.title), "Result includes story title")
+		check(RunState.player_health == 33 and RunState.gold == 20, "Guaranteed 20 percent healing and 20 gold")
+		check(EVENTS.complete("frozen_traveler").is_empty(), "Traveler reward cannot repeat")
+		check(not EVENTS.submit_word("frozen_traveler", "telescope").valid, "Completed story rejects new input")
+		await _check_story_ui(result)
+	setup("frozen_traveler")
+	RunState.player_max_health = 53
+	RunState.player_health = 52
+	var state: Dictionary = EVENTS.progress("frozen_traveler")
+	state.turn = state.story.blanks.size()
+	state.value = state.turn
+	EVENTS.complete("frozen_traveler")
+	check(RunState.player_health == 53, "Healing is capped at maximum")
+	setup("frozen_traveler")
+	RunState.player_max_health = 53
+	RunState.player_health = 0
+	state = EVENTS.progress("frozen_traveler")
+	state.turn = state.story.blanks.size()
+	state.value = state.turn
+	EventBus.gold_changed.connect(_try_duplicate_reward, CONNECT_ONE_SHOT)
+	EVENTS.complete("frozen_traveler")
+	check(RunState.player_health == 11 and RunState.gold == 20, "Healing rounds up and reward is reentrant-safe")
+	setup("frozen_traveler")
+	var skipped: Dictionary = EVENTS.complete("frozen_traveler", true)
+	check(skipped.skipped and RunState.gold == 0 and RunState.player_health == 23, "Skipping traveler grants nothing")
+	_check_bonus_rewards()
+
+func _check_story_ui(result: Dictionary) -> void:
+	for resolution: Vector2i in [Vector2i(1280, 720), Vector2i(1920, 1080)]:
+		var viewport := SubViewport.new()
+		viewport.size = resolution
+		add_child(viewport)
+		var event: Control = load(ScenePaths.TUNDRA_EVENT).instantiate()
+		viewport.add_child(event)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		check(event._finished and event.result_panel.visible and event.continue_button.visible, "Result awaits explicit Continue")
+		check(event.dialogue.text == result.dialogue, "Completed story displayed unchanged")
+		check(Rect2(Vector2.ZERO, Vector2(resolution)).encloses(event.result_panel.get_global_rect()), "Story fits preserved UI")
+		check(Rect2(Vector2.ZERO, Vector2(resolution)).encloses(event.continue_button.get_global_rect()), "Continue fits preserved UI")
+		await get_tree().process_frame
+		check(event.dialogue.text == result.dialogue and event.result_panel.visible, "Story persists across frames")
+		viewport.queue_free()
+		await get_tree().process_frame
+
+func _check_bonus_rewards() -> void:
+	# Seed only the settlement roll, after all randomized story/lock selection.
+	for itemized: bool in [true, false]:
+		for id: String in EVENTS.IDS:
+			for win_bonus: bool in [true, false]:
+				setup(id)
+				RunState.use_itemized_letters = itemized
+				var state: Dictionary = EVENTS.progress(id)
+				if id == "frozen_traveler":
+					state.turn = state.story.blanks.size()
+				else:
+					state.lock_index = 3
+					state.value = 3
+				var chance: float = EVENTS.rules(id).outcome(state).bonus_chance
+				check(is_equal_approx(chance, 0.10 if id == "frozen_traveler" else 0.20), "Configured bonus probability")
+				var chosen_seed: int = 0
+				for candidate: int in 1000:
+					seed(candidate)
+					if (randf() < chance) == win_bonus:
+						chosen_seed = candidate
+						break
+				var before: int = RunState.letter_inventory.size() if itemized else RunState.deck.size()
+				seed(chosen_seed)
+				EVENTS.complete(id)
+				var after: int = RunState.letter_inventory.size() if itemized else RunState.deck.size()
+				check(after == before + (1 if win_bonus else 0), "Bonus roll uses existing inventory mode")
+				check(EVENTS.complete(id).is_empty(), "Bonus reward also cannot repeat")
+				if win_bonus:
+					var item: LetterStats = RunState.letter_inventory[-1] if itemized else RunState.deck[-1]
+					check(item.level == 1, "Bonus letter is level one")
+	setup("treasure_chest")
+	var failed: Dictionary = EVENTS.progress("treasure_chest")
+	failed.lock_index = 3
+	check(EVENTS.rules("treasure_chest").outcome(failed).bonus_chance == 0.0, "Failed chest cannot award bonus")
+
+func _check_entry_ui() -> void:
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 720)
+	add_child(viewport)
+	var event: Control = load(ScenePaths.TUNDRA_EVENT).instantiate()
+	viewport.add_child(event)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var pos: String = WordNet.pos_name(EVENTS.requested_pos("frozen_traveler"))
+	check(event.input.placeholder_text.contains(pos) and event.preview.text.contains(pos), "Entry UI names requested POS")
+	event.input.text = "123"
+	event._submit()
+	check(event.feedback.text.contains(pos) and event.feedback_banner.visible, "Invalid feedback names requested POS")
+	check(Rect2(0, 0, 1280, 720).encloses(event.game_panel.get_global_rect()), "Story prompt fits existing panel")
+	check(Rect2(0, 0, 1280, 720).encloses(event.input.get_global_rect()), "Story input fits existing layout")
+	viewport.queue_free()
+	await get_tree().process_frame
