@@ -145,7 +145,7 @@ func _build_screen() -> void:
 		example.custom_minimum_size.y = 30
 		example.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		example.add_theme_font_size_override("font_size", 18)
-		example.tooltip_text = "%s: %s" % [modifier.name, modifier.effect]
+		example.tooltip_text = "%s: %s\nReward: %s" % [modifier.name, modifier.selection_effect, MODIFIERS.reward_description(modifier)]
 		example.pressed.connect(_choose_example.bind(word))
 		examples.add_child(example)
 		_examples.append(example)
@@ -239,41 +239,12 @@ func _show_effect(modifier: Dictionary) -> void:
 	var accent: Color = GOLD if modifier.beneficial else HARMFUL
 	_title.add_theme_color_override("font_color", accent)
 	_flavor.text = modifier.flavor
-	_effect.text = _effect_description(modifier) + "\nThis encounter only."
+	_effect.text = "Effect: %s\nReward: %s\nThis encounter only." % [_effect_description(modifier), MODIFIERS.reward_description(modifier)]
 	_effect.add_theme_color_override("font_color", accent)
 
 
 func _effect_description(modifier: Dictionary) -> String:
-	var applied: Dictionary = MODIFIERS.apply_spawn(_base_spawn, modifier)
-	if modifier.stat in ["health", "attack"]:
-		var stat: String = modifier.stat
-		return "%s\n%s: %d → %d" % [
-			modifier.effect, "Enemy HP" if stat == "health" else "Enemy attack",
-			_base_spawn[stat], applied[stat],
-		]
-	if modifier.stat == "player_damage":
-		return modifier.effect + "\nApplies to direct hit damage."
-	match modifier.id:
-		"drowsy":
-			return "Sleeps first; alternates sleep and attacks at +25% damage."
-		"clumsy":
-			return "Every 3rd retaliation hits itself for half its base attack."
-		"long_winded":
-			return "7+ letters: +20% direct damage. Shorter words: +2 Guard."
-		"echo_bound":
-			return (
-				"Start with the last word's final letter: +25% direct damage."
-			)
-		"chameleon":
-			return "Enemy counter tags change every 2 retaliations."
-		"greedy":
-			return (
-				"Casts: +1g (max 5). Win: +8g.\n"
-				+ "Theft: 2g every 2 retaliations (max 4)."
-			)
-		"frostbite_tax":
-			return "Freeze every 2 casts; gain 2 Heat per cast (normally 1)."
-	return modifier.effect
+	return String(modifier.selection_effect)
 
 
 func _on_confirm() -> void:

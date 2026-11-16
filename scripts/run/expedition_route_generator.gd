@@ -10,7 +10,7 @@ extends RefCounted
 ## - Intermediate columns contain one to three rooms.
 ## - Total route length varies from nine to eleven columns.
 ## - At least one lore room appears, but its position is randomized.
-## - Forge rooms are never generated.
+## - Forge rooms and all supported activities can appear on the route.
 
 const Balance = preload("res://data/balance/tuning.gd")
 
@@ -27,18 +27,17 @@ const ACTIVITY_CONTENT: Dictionary[String, String] = {
 	"letter_reward": "ice_fishing",
 	"relic_reward": "hangman",
 	"recovery": "frozen_traveler",
-	"random_event": "icy_portal",
+	"forge": "forge",
 	"lore": "lore_room",
 }
 
 # These are used when tuning.gd does not provide a weight for an activity.
-# Forge is intentionally absent, even if ROUTE_ACTIVITY_WEIGHTS contains it.
 const DEFAULT_ACTIVITY_WEIGHTS: Dictionary[String, int] = {
 	"treasure": 3,
 	"letter_reward": 3,
 	"relic_reward": 3,
 	"recovery": 3,
-	"random_event": 3,
+	"forge": 3,
 	"lore": 2,
 }
 
@@ -63,6 +62,10 @@ static func generate(seed_value: int, biome: String) -> Dictionary:
 
 	var columns: Array = []
 	var nodes: Dictionary = {}
+	var opening_types: Array[String] = [
+		"recovery", "treasure", "letter_reward",
+	]
+	_shuffle_with_rng(opening_types, rng)
 	var enemy_cursor: int = 0
 
 	for column: int in range(total_columns):
@@ -86,6 +89,11 @@ static func generate(seed_value: int, biome: String) -> Dictionary:
 				content_id = Balance.TUNDRA_STARTER_ENEMY
 				reward_tier = 2
 				threat_tier = 2
+			elif column == 1:
+				node_type = opening_types[lane]
+				content_id = ACTIVITY_CONTENT[node_type]
+				reward_tier = _activity_reward_tier(node_type)
+				threat_tier = _activity_threat_tier(node_type)
 			elif combat_slots.has("%d:%d" % [column, lane]):
 				var elite: bool = lane == width - 1 and rng.randf() < 0.32
 				node_type = "elite_combat" if elite else "normal_combat"
@@ -142,8 +150,8 @@ static func _column_width(
 	if column == 0 or column == last_column:
 		return 1
 	if column == 1:
-		# Preserve an immediate choice, but do not force exactly three options.
-		return rng.randi_range(2, MAX_COLUMN_WIDTH)
+		# The opening always presents recovery, treasure, and ice fishing.
+		return MAX_COLUMN_WIDTH
 	return rng.randi_range(MIN_COLUMN_WIDTH, MAX_COLUMN_WIDTH)
 
 
@@ -197,7 +205,7 @@ static func _combat_slot_capacity(
 	widths: Array[int], last_column: int
 ) -> int:
 	var capacity := 0
-	for column: int in range(1, last_column):
+	for column: int in range(2, last_column):
 		var width: int = widths[column]
 		# Preserve one non-combat choice whenever a column has multiple nodes.
 		capacity += width - 1 if width > 1 else 1
@@ -212,7 +220,7 @@ static func _choose_combat_slots(
 	var candidates_by_column: Dictionary = {}
 	var column_order: Array[int] = []
 
-	for column: int in range(1, last_column):
+	for column: int in range(2, last_column):
 		var lanes: Array[int] = []
 		for lane: int in widths[column]:
 			lanes.append(lane)
@@ -270,7 +278,7 @@ static func _weighted_activity(
 
 	if candidates.is_empty():
 		return _weighted_activity(rng, []) if not avoid.is_empty() \
-			else "random_event"
+			else "letter_reward"
 
 	var roll := rng.randi_range(1, total_weight)
 	for id: String in candidates:
@@ -291,12 +299,12 @@ static func _activity_weight(id: String) -> int:
 
 static func _activity_reward_tier(node_type: String) -> int:
 	return 2 if node_type in [
-		"treasure", "letter_reward", "relic_reward"
+		"treasure", "letter_reward", "relic_reward", "forge"
 	] else 1
 
 
 static func _activity_threat_tier(node_type: String) -> int:
-	return 1 if node_type in ["treasure", "random_event"] else 0
+	return 1 if node_type == "treasure" else 0
 
 
 static func _ensure_lore_room(
@@ -309,7 +317,10 @@ static func _ensure_lore_room(
 
 	var possible_keys: Array[String] = []
 	for key: String in nodes:
-		var type: String = String(nodes[key].get("node_type", ""))
+		var node: Dictionary = nodes[key]
+		var type: String = String(node.get("node_type", ""))
+		if int(node.get("column", 0)) <= 1:
+			continue
 		if type not in ["normal_combat", "elite_combat", "boss"]:
 			possible_keys.append(key)
 	if possible_keys.is_empty():

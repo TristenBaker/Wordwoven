@@ -12,6 +12,7 @@ func _run() -> void:
 		await _test_windows(original)
 	var path: String = "/tmp/wordwoven-settings-test-%d.cfg" % OS.get_process_id()
 	var desired: Dictionary = {"display_mode": 1, "resolution": Vector2i(1920, 1080), "master_volume": 80.0, "music_volume": 70.0, "sfx_volume": 0.0}
+	desired = AppSettings.DEFAULTS.merged(desired, true)
 	check(AppSettings.save_and_apply(desired, path) == OK, "save settings")
 	check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))), 0.8), "master gain")
 	check(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music"))), 0.7), "music gain")
@@ -47,6 +48,7 @@ func _run() -> void:
 	screen.mode_option.select(2)
 	screen._refresh_display_hint()
 	check(not screen.resolution_option.disabled, "windowed resolution enabled")
+	await _test_scaling()
 	screen.queue_free()
 	DirAccess.remove_absolute(path)
 	AppSettings.apply_preferences(original)
@@ -81,5 +83,46 @@ func _test_windows(original: Dictionary) -> void:
 		check(DisplayServer.window_get_size() == Vector2i(mini(resolution.x, usable.x), mini(resolution.y, usable.y)), "window resolution " + str(resolution))
 		check(get_tree().root.content_scale_size == Vector2i(1280, 720), "canvas unchanged")
 		print("Resolution ", resolution, " actual ", DisplayServer.window_get_size())
+	# Native window changes must survive saving unchanged display preferences.
+	var values: Dictionary = original.duplicate(true)
+	values.display_mode = 2
+	values.resolution = Vector2i(1280, 720)
+	AppSettings.apply_preferences(values)
+	var window: Window = get_window()
+	for mode: Window.Mode in [Window.MODE_WINDOWED, Window.MODE_MAXIMIZED, Window.MODE_FULLSCREEN]:
+		window.mode = mode
+		if mode == Window.MODE_WINDOWED:
+			window.size = Vector2i(1440, 810)
+		await get_tree().create_timer(0.5).timeout
+		var actual_mode: Window.Mode = window.mode
+		var actual_size: Vector2i = window.size
+		check(actual_mode == mode, "native mode entered " + str(mode))
+		values.master_volume = 31.0
+		values.auto_equip_enabled = not values.auto_equip_enabled
+		var path: String = "/tmp/wordwoven-window-test-%d.cfg" % OS.get_process_id()
+		check(AppSettings.save_and_apply(values, path) == OK, "save unrelated preferences")
+		await get_tree().create_timer(0.5).timeout
+		check(window.mode == actual_mode and window.size == actual_size, "native window preserved " + str(mode))
+		DirAccess.remove_absolute(path)
+	# A changed display preference must still deliberately exit native fullscreen.
+	values.resolution = Vector2i(1600, 900)
+	AppSettings.apply_preferences(values)
+	await get_tree().create_timer(0.5).timeout
+	check(window.mode == Window.MODE_WINDOWED, "changed display preference applied")
 	AppSettings.apply_preferences(original)
 	screen.queue_free()
+
+
+func _test_scaling() -> void:
+	var window: Window = get_window()
+	var original_size: Vector2i = window.size
+	for resolution: Vector2i in [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(1600, 1000), Vector2i(2560, 1080)]:
+		window.size = resolution
+		await get_tree().process_frame
+		check(window.content_scale_size == Vector2i(1280, 720), "design canvas preserved")
+		check(window.content_scale_mode == Window.CONTENT_SCALE_MODE_CANVAS_ITEMS, "canvas item scaling")
+		check(window.content_scale_aspect == Window.CONTENT_SCALE_ASPECT_KEEP, "aspect ratio preserved")
+		var scale: Vector2 = window.get_final_transform().get_scale()
+		var expected: float = minf(float(window.size.x) / 1280.0, float(window.size.y) / 720.0)
+		check(is_equal_approx(scale.x, expected) and is_equal_approx(scale.y, expected), "uniform scaling " + str(resolution))
+	window.size = original_size

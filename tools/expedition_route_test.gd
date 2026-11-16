@@ -48,7 +48,13 @@ func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 	check(graph.columns.size() >= 9 and graph.columns.size() <= 11,
 			"Route length stays inside its balanced range")
 	check(nodes.size() >= 20, "Route contains at least twenty nodes")
-	check(graph.columns[1].size() >= 2, "The first room immediately splits")
+	check(graph.columns[1].size() == 3,
+			"The first room immediately splits three ways")
+	var opening_content: Array[String] = []
+	for key: String in graph.columns[1]:
+		opening_content.append(String(nodes[key].content_id))
+	for id: String in ["frozen_traveler", "treasure_chest", "ice_fishing"]:
+		check(opening_content.has(id), "Opening preserves activity: " + id)
 	var combat_nodes := 0
 	var lore_nodes := 0
 	for key: String in nodes:
@@ -60,8 +66,17 @@ func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 			combat_nodes += 1
 		if String(node.content_id) == "lore_room":
 			lore_nodes += 1
-		check(type != "forge" and String(node.content_id) != "forge",
-				"Forge is never generated")
+		if type not in ["normal_combat", "elite_combat", "boss"]:
+			check(
+				Generator.ACTIVITY_CONTENT.has(type),
+				"Activity type is supported"
+			)
+			check(
+				String(node.content_id) == String(
+					Generator.ACTIVITY_CONTENT.get(type, "")
+				),
+				"Activity content matches its type"
+			)
 		if key != graph.boss_key:
 			check(not node.next_keys.is_empty(), "Nonterminal node has an exit")
 		for next_key: String in node.next_keys:

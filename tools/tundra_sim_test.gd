@@ -121,7 +121,6 @@ func _run() -> void:
 			check(
 				generated_content.has("ice_fishing") \
 						and generated_content.has("frozen_traveler") \
-						and generated_content.has("icy_portal") \
 						and generated_content.has("treasure_chest"),
 				"all non-combat branches are visible ahead of time"
 			)

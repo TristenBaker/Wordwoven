@@ -16,6 +16,7 @@ const DEFAULTS: Dictionary = {
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]
 var preferences: Dictionary = DEFAULTS.duplicate(true)
 var _tavern_music: AudioStreamPlayer
+var _applied_display: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -153,6 +154,15 @@ func apply_preferences(values: Dictionary) -> void:
 		AudioServer.set_bus_volume_db(index, linear_to_db(maxf(linear, 0.0001)))
 
 func _apply_display() -> void:
+	var display: Dictionary = {
+		"display_mode": preferences.display_mode,
+		"resolution": preferences.resolution,
+	}
+	# Apply on startup or a display preference change, not on audio/auto-equip
+	# saves. The OS owns subsequent resizing, maximizing and fullscreen changes.
+	if display == _applied_display:
+		return
+	_applied_display = display
 	if DisplayServer.get_name() == "headless":
 		return
 	# Keep the project's 1280x720 canvas and aspect ratio; only resize the window.

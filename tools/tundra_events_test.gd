@@ -8,7 +8,7 @@ func _valid_word(id: String) -> String:
 	if id == "treasure_chest":
 		var state: Dictionary = TundraEventScript.progress(id)
 		return state.locks[int(state.lock_index)].anchors[0]
-	return "torch" if id == "frozen_traveler" else "carefully"
+	return {"n": "telescope", "v": "dance", "a": "purple", "r": "quickly"}[TundraEventScript.requested_pos(id)]
 
 func _finish_event(event: Control) -> void:
 	for turn: int in 6:
@@ -16,8 +16,6 @@ func _finish_event(event: Control) -> void:
 			break
 		if event.next_button.visible:
 			event._next_round()
-		if event.encounter_id == "icy_portal":
-			event._choose(0)
 		event.input.text = "  " + _valid_word(event.encounter_id).to_upper() + "  "
 		event.input.text_submitted.emit(event.input.text)
 	check(event._finished, "Mini-game completes: " + event.encounter_id)
@@ -170,10 +168,8 @@ func _run_legacy() -> void:
 					await _frames()
 					check(not event._finished and not RunState.optional_encounters.has(id), "Invalid word does not consume encounter")
 					check(RunState.player_health == initial_hp and RunState.gold == initial_gold, "Invalid word awards nothing")
-					check(event.feedback.text.contains(WordNet.pos_name(String(event.data.pos))), "Error explains expected word type")
+					check(event.feedback.text.contains(WordNet.pos_name(TundraEventScript.requested_pos(id))), "Error explains expected word type")
 					check(event.input.get_global_rect() == input_rect, "Validation does not shift input")
-				if id == "icy_portal":
-					event._choose(0)
 				event.input.text = _valid_word(id)
 				event._submit()
 				check(not event._finished and event.next_button.visible, "First word shows feedback without ending game")
@@ -182,7 +178,7 @@ func _run_legacy() -> void:
 				event = await _go(ScenePaths.TUNDRA_EVENT)
 				check(TundraEventScript.progress(id) == saved and event.next_button.visible, "Reopening resumes progress and feedback")
 				_finish_event(event)
-				check(event.dialogue.text.contains(RunState.optional_encounters[id].word) and event.continue_button.visible, "Last word appears in result: " + id)
+				check(event.dialogue.text.to_lower().contains(RunState.optional_encounters[id].word) and event.continue_button.visible, "Last word appears in result: " + id)
 				var hp: int = RunState.player_health
 				var gold: int = RunState.gold
 				event._submit()
@@ -220,7 +216,7 @@ func _run_legacy() -> void:
 		loot.continue_button.pressed.emit()
 		await _wait(ScenePaths.RUN_WON if stage == 6 else ScenePaths.TAVERN)
 	check(fought.size() == 6 and RunState.defeated_enemy_ids.size() == 6 and RunState.completed_encounters.size() == 6, "All six distinct fights and boss completed")
-	check(not RunState.optional_encounter_available("icy_portal"), "No optional encounters after boss")
+	check(not RunState.optional_encounter_available("frozen_traveler"), "No optional encounters after boss")
 	_setup_between_fights()
 	RunState.selected_biome = "forest"
 	check(not RunState.optional_encounter_available("treasure_chest"), "Other biomes unchanged")
@@ -251,7 +247,7 @@ func _check_layouts() -> void:
 			if int(route_node.column) == 2:
 				second_column_nodes += 1
 		check(second_column_nodes >= 2, "The opening combat immediately splits into room choices")
-		for activity_id: String in ["ice_fishing", "frozen_traveler", "icy_portal", "treasure_chest"]:
+		for activity_id: String in ["ice_fishing", "frozen_traveler", "treasure_chest"]:
 			var activity_button: Button = map.route_map.get_node("Activity_" + activity_id)
 			check(activity_button.has_node("MonsterPreview"), "Activity nodes use image-only markers")
 			check(activity_button.get_node_or_null("PreviewRow") == null, "Activity nodes omit beside-the-icon text")
@@ -304,7 +300,9 @@ func _check_layouts() -> void:
 			viewport.add_child(event)
 			await _frames()
 			check(bounds.encloses(event.get_node("Margin/Content/InputRow").get_global_rect()), "Input fits " + id + str(dimensions))
-			for round_index: int in 3:
+			for round_index: int in 6:
+				if event._finished:
+					break
 				if event.next_button.visible:
 					event._next_round()
 				var hint_before_typing: String = event.preview.text
@@ -314,7 +312,6 @@ func _check_layouts() -> void:
 				for control: Control in [event.game_panel, event.input, event.feedback_banner, event.feedback, event.choice_row]:
 					if control.is_visible_in_tree():
 						check(bounds.encloses(control.get_global_rect()), "Gameplay fits " + id + str(dimensions))
-				if id == "icy_portal": event._choose(0)
 				event._submit()
 				await _frames()
 				if event.next_button.visible:

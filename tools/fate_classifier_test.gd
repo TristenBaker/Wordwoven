@@ -114,7 +114,13 @@ func _test_preparation() -> void:
 		check(screen._preview.get("id", "") == id, "Live preview: " + id)
 		check(screen._title.text == MODIFIERS.definition(id).name,
 			"Preview modifier name: " + id)
-		check(not screen._effect.text.is_empty(), "Effect description: " + id)
+		var entry: Dictionary = MODIFIERS.definition(id)
+		check(screen._effect_description(entry) == entry.selection_effect, "Effect description: " + id)
+		check(screen._effect.text.contains("Reward: " + MODIFIERS.reward_description(entry)), "Live reward preview: " + id)
+		var numbers := RegEx.new()
+		numbers.compile("[0-9%+−→]")
+		check(numbers.search(screen._effect_description(entry)) == null, "Selection effect has no statistics: " + id)
+		check(not screen._effect.text.contains(entry.effect), "Numerical combat text is not exposed in preparation: " + id)
 		check(not screen._confirm.disabled, "Can confirm: " + id)
 		check(RunState.pending_encounter_modifier.is_empty(),
 			"Preview does not commit: " + id)
@@ -126,7 +132,8 @@ func _test_preparation() -> void:
 		check(screen._effect.get_line_count() <= 3,
 			"Effect text fits reserved space: " + id)
 	_type(screen, "weak")
-	check(screen._effect.text.contains("→"), "Preview shows actual HP change")
+	check(screen._effect_description(screen._preview) == "Frail Enemy", "Preview uses descriptive enemy weakness")
+	check(screen._effect.text.contains("Decreased Gold"), "Easier preview shows reduced reward")
 	_type(screen, "strong")
 	check(screen._preview.id == "titanbound", "Edit replaces previous preview")
 	for word: String in ["purple", "quickly", "weak!", ""]:
@@ -134,7 +141,7 @@ func _test_preparation() -> void:
 		screen._on_confirm()
 		check(screen._preview.is_empty() and screen._confirm.disabled,
 			"Edit clears stale preview: " + word)
-		check(screen._effect.text.is_empty(), "Clears stale effect: " + word)
+		check(screen._effect.text.is_empty(), "Clears stale effect and reward: " + word)
 		check(RunState.pending_encounter_modifier.is_empty(),
 			"Invalid/unsupported cannot commit: " + word)
 	_type(screen, "beautiful")
