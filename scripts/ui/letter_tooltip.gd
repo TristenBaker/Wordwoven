@@ -48,6 +48,8 @@ func _content_for(stats: LetterStats) -> String:
 			color_code, stats.level,
 		],
 		"",
+		stats.history_text(),
+		"Click i or right-click to inspect character",
 		stats.element_detail_text(),
 		"[b]Current contribution:[/b] [color=#%s][b]%.1f %s damage[/b][/color] per use." % [
 			color_code, current_damage, stats.element_name_text(),

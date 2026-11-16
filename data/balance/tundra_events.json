@@ -1,28 +1,28 @@
 {
   "frozen_traveler": {
-    "name": "Frozen Traveler",
-    "pos": "n",
-    "texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Frozen Traveler.png",
-    "frame_width": 543,
-    "frames": 4,
-    "fps": 2.5,
-    "description": "Help a stranded storyteller fill four blanks. Any word of the requested type works. Finish the tale for healing, gold, and a chance of a bonus letter.",
-    "mini_game": "Tales from the Tundra"
+	"name": "Frozen Traveler",
+	"pos": "n",
+	"texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Frozen Traveler.png",
+	"frame_width": 543,
+	"frames": 4,
+	"fps": 2.5,
+	"description": "Help a stranded storyteller fill four blanks. Any word of the requested type works. Finish the tale for healing, gold, and a chance of a bonus letter.",
+	"mini_game": "Tales from the Tundra"
   },
   "treasure_chest": {
-    "name": "Mysterious Treasure Chest",
-    "pos": "a",
-    "texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Treasure Chest.png",
-    "frame_width": 539,
-    "frames": 4,
-    "fps": 2.5,
-    "animate": false,
-    "description": "Three magical locks await. Read each riddle and answer with an ADJECTIVE. Two valid guesses per lock; synonyms welcome. Earn 10 gold per opened lock. Open all three for a chance of a bonus letter.",
-    "mini_game": "Crack the Locks"
+	"name": "Mysterious Treasure Chest",
+	"pos": "a",
+	"texture": "res://assets/Art/Enemies/Tundra Non-Combat Encounters/Treasure Chest.png",
+	"frame_width": 539,
+	"frames": 4,
+	"fps": 2.5,
+	"animate": false,
+	"description": "Three magical locks await. Read each riddle and answer with an ADJECTIVE. Two valid guesses per lock; synonyms welcome. Earn 10 gold per opened lock. Open all three for a chance of a bonus letter.",
+	"mini_game": "Crack the Locks"
   },
   "hangman": {
-    "name": "The Missing Word",
-    "description": "Fill the missing letters in order before time runs out. Your hand has every letter you need, along with decoys. Wrong guesses clear the slots, but the clock keeps running. Win several letter items.",
-    "mini_game": "Timed Word Puzzle"
+	"name": "The Missing Word",
+	"description": "Fill the missing letters in order before time runs out. Your hand has every letter you need, along with decoys. Wrong guesses clear the slots, but the clock keeps running. Win several letter items.",
+	"mini_game": "Timed Word Puzzle"
   }
 }

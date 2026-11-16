@@ -37,11 +37,17 @@ func _ready() -> void:
 	_badge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_badge.offset_top = -21
 	_badge.offset_bottom = -5
+	var inspect_button := LetterInspector.add_inspect_button(_frost)
+	inspect_button.pressed.connect(func() -> void: LetterInspector.open_for(stats))
 
 func _gui_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var mouse_event: InputEventMouseButton = event
+	if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+		LetterInspector.open_for(stats)
+		accept_event()
+		return
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
 		return
 	if mouse_event.pressed:
@@ -126,6 +132,16 @@ func setup(new_stats: LetterStats) -> void:
 	letter_label.add_theme_color_override("font_color", tile_theme.letter_color)
 	add_theme_stylebox_override("panel", _tile_style())
 	tooltip_text = stats.information_tooltip()
+	var appearance := get_node_or_null("Appearance")
+	if appearance == null:
+		appearance = preload("res://scripts/ui/letter_appearance.gd").new()
+		appearance.name = "Appearance"
+		appearance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(appearance)
+		appearance.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	appearance.set("stats", stats)
+	appearance.set("tile_mode", true)
+	appearance.queue_redraw()
 
 
 func _make_custom_tooltip(_for_text: String) -> Object:

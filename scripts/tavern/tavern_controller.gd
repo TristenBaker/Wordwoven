@@ -113,7 +113,7 @@ func _rebuild_recruit_buttons() -> void:
 		var offer: Dictionary = offers[index]
 		var stats: LetterStats = LetterStats.create(offer["letter"])
 		var price: int = economy.recruit_price(stats.letter)
-		var button: Button = Button.new()
+		var button := LetterInfoButton.new()
 		button.size_flags_horizontal = SIZE_EXPAND_FILL
 		button.custom_minimum_size = Vector2(0, 52)
 		button.text = "%s — %s\n%s" % [
@@ -122,7 +122,7 @@ func _rebuild_recruit_buttons() -> void:
 			"Recruited" if offer["purchased"] else "%dg" % price,
 		]
 		button.disabled = offer["purchased"] or RunState.gold < price
-		button.tooltip_text = stats.information_tooltip()
+		button.set_letter_stats(stats)
 		button.pressed.connect(_on_recruit_pressed.bind(index))
 		recruit_grid.add_child(button)
 
@@ -132,10 +132,11 @@ func _rebuild_deck_grids() -> void:
 	_clear_grid(common_grid)
 	_clear_grid(uncommon_grid)
 	for stats: LetterStats in RunState.deck:
-		var button: Button = Button.new()
+		var button := LetterInfoButton.new()
 		button.toggle_mode = true
 		button.button_group = _letter_group
 		button.button_pressed = stats == _selected
+		button.set_letter_stats(stats)
 		button.custom_minimum_size = Vector2(52, 44)
 		button.text = "%s\nLv%d" % [stats.letter.to_upper(), stats.level]
 		button.tooltip_text = stats.information_tooltip() \

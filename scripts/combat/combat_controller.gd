@@ -440,6 +440,8 @@ func _resolve_word(word: String) -> void:
 	_log(_describe_result(result))
 	# The typed letters act before the hand changes under them.
 	var performing: bool = party_stage.perform_word(enemy.strike_point())
+	for stats: LetterStats in drawn:
+		stats.record_word_use(word, float(result["damage"]))
 	# Current-word numbers are frozen before the used letters grow.
 	if not RunState.use_itemized_letters:
 		for stats: LetterStats in drawn:

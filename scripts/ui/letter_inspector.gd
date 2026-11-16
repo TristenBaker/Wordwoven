@@ -17,6 +17,8 @@ var _letter_label: Label
 var _element_label: Label
 var _level_label: Label
 var _portrait: TextureRect
+var _history_label: Label
+var _appearance: Control
 var _description_label: Label
 var _throughput_label: Label
 var _powers_list: VBoxContainer
@@ -53,6 +55,10 @@ func inspect(stats: LetterStats) -> void:
 	_portrait.texture = PlayerProfile.cosmetic_texture(
 		stats.letter, _portrait_for(stats.element)
 	)
+	_portrait.self_modulate = stats.appearance_color()
+	_appearance.set("stats", stats)
+	_appearance.queue_redraw()
+	_history_label.text = stats.history_text()
 	_description_label.text = stats.element_detail_text()
 	_throughput_label.text = stats.throughput_text()
 	_rebuild_powers(stats, color)
@@ -61,15 +67,23 @@ func inspect(stats: LetterStats) -> void:
 func _build() -> void:
 	var root: Control = Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer = 20
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(root)
 
+	var shade := ColorRect.new()
+	shade.color = Color(0.02, 0.01, 0.04, 0.75)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			queue_free())
+	root.add_child(shade)
 	var panel: PanelContainer = PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	panel.offset_left = -440.0
-	panel.offset_top = 24.0
-	panel.offset_right = -24.0
-	panel.offset_bottom = -24.0
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -320.0
+	panel.offset_top = -330.0
+	panel.offset_right = 320.0
+	panel.offset_bottom = 330.0
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	root.add_child(panel)
@@ -81,7 +95,7 @@ func _build() -> void:
 	var heading: HBoxContainer = HBoxContainer.new()
 	content.add_child(heading)
 	var title: Label = Label.new()
-	title.text = "LETTER DETAILS"
+	title.text = "CHARACTER PROFILE"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color("f6d797"))
@@ -99,10 +113,14 @@ func _build() -> void:
 	hero.custom_minimum_size = Vector2(0.0, 132.0)
 	content.add_child(hero)
 	_portrait = TextureRect.new()
-	_portrait.custom_minimum_size = Vector2(124.0, 124.0)
+	_portrait.custom_minimum_size = Vector2(180.0, 180.0)
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	hero.add_child(_portrait)
+	_appearance = preload("res://scripts/ui/letter_appearance.gd").new()
+	_appearance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_portrait.add_child(_appearance)
+	_appearance.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var identity: VBoxContainer = VBoxContainer.new()
 	identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	identity.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -122,6 +140,11 @@ func _build() -> void:
 	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	identity.add_child(_level_label)
 
+	_history_label = Label.new()
+	_history_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_history_label.add_theme_font_size_override("font_size", 17)
+	_history_label.add_theme_color_override("font_color", Color("f6d797"))
+	content.add_child(_history_label)
 	_description_label = Label.new()
 	_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description_label.add_theme_font_size_override("font_size", 18)
@@ -141,7 +164,7 @@ func _build() -> void:
 	powers_title.add_theme_color_override("font_color", Color("f6d797"))
 	content.add_child(powers_title)
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 180.0)
+	scroll.custom_minimum_size = Vector2(0.0, 70.0)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
@@ -231,3 +254,32 @@ func _power_style(color: Color) -> StyleBoxFlat:
 	style.content_margin_right = 10.0
 	style.content_margin_bottom = 8.0
 	return style
+
+
+func _input(event: InputEvent) -> void:
+	# Keep keyboard word entry from leaking through the profile.
+	if event is InputEventKey:
+		if event.is_action_pressed("ui_cancel"):
+			queue_free()
+		get_viewport().set_input_as_handled()
+
+
+## An explicit action keeps inspection discoverable alongside equip/buy/select.
+static func add_inspect_button(host: Control) -> Button:
+	var overlay := Control.new()
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var button := Button.new()
+	button.name = "InspectProfile"
+	button.text = "i"
+	button.tooltip_text = "Inspect character profile"
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.add_theme_font_size_override("font_size", 14)
+	overlay.add_child(button)
+	button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	button.offset_left = -24.0
+	button.offset_right = -2.0
+	button.offset_top = 2.0
+	button.offset_bottom = 24.0
+	return button

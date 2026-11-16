@@ -9,6 +9,8 @@ extends PanelContainer
 @export var healer_tiers: Array[Texture2D] = []
 @export var rogue_tiers: Array[Texture2D] = []
 
+var _stats: LetterStats
+var _inspect_button: Button
 var _pop_tween: Tween = null
 var _idle_tween: Tween = null
 
@@ -21,12 +23,16 @@ var _idle_tween: Tween = null
 func _ready() -> void:
 	portrait.resized.connect(_center_pivot)
 	_start_idle_bob()
+	_inspect_button = LetterInspector.add_inspect_button($Margin/Stage)
+	_inspect_button.pressed.connect(func() -> void: LetterInspector.open_for(_stats))
 	show_member(null)
 
 
 ## Displays a party member, or an empty prompt when stats is null.
 func show_member(stats: LetterStats) -> void:
+	_stats = stats
 	var has_member: bool = stats != null
+	_inspect_button.visible = has_member
 	portrait.visible = has_member
 	level_label.visible = has_member
 	name_label.visible = has_member

@@ -78,7 +78,7 @@ func _rebuild_offers() -> void:
 			continue
 		var stats: LetterStats = LetterStats.create(offer["letter"])
 		var price: int = economy.recruit_price(stats.letter)
-		var button := Button.new()
+		var button := LetterInfoButton.new()
 		button.custom_minimum_size = Vector2(142, 70)
 		button.add_theme_color_override("font_color", Color(0.2, 0.09, 0.03, 1))
 		button.add_theme_color_override("font_hover_color", Color(0.2, 0.09, 0.03, 1))
@@ -97,7 +97,7 @@ func _rebuild_offers() -> void:
 		button.disabled = offer["purchased"] or RunState.gold < price
 		if offer["purchased"]:
 			button.text = "%s\nSold" % stats.letter.to_upper()
-		button.tooltip_text = stats.information_tooltip()
+		button.set_letter_stats(stats)
 		button.gui_input.connect(_on_offer_gui_input.bind(button, stats))
 		button.pressed.connect(_on_offer_pressed.bind(index, button))
 		offers_grid.add_child(button)

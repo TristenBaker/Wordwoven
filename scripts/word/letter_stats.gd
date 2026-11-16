@@ -39,6 +39,50 @@ const LEVEL_POWER_STEP: float = preload("res://data/balance/tuning.gd").LETTER_S
 @export var level: int = 1
 @export var element: Element = Element.FIRE
 @export var modifier: Modifier = Modifier.NONE
+# Stored on the individual resource, including duplicate letters.
+@export var appearance_seed: int = randi_range(0, 2147483647)
+@export var accepted_uses: int = 0
+@export var best_word: String = ""
+@export var best_word_damage: float = 0.0
+
+
+func record_word_use(word: String, damage: float) -> void:
+	accepted_uses += 1
+	if best_word.is_empty() or damage > best_word_damage:
+		best_word = word.to_upper()
+		best_word_damage = maxf(0.0, damage)
+
+
+func scar_count() -> int:
+	return mini(3, int(accepted_uses / 5))
+
+
+func gear_tier() -> int:
+	if level >= 20:
+		return 3
+	if level >= 10:
+		return 2
+	if level >= 5:
+		return 1
+	return 0
+
+
+func gear_name() -> String:
+	return ["Traveler", "Tempered", "Veteran", "Champion"][gear_tier()]
+
+
+func appearance_color() -> Color:
+	return [Color("ffffff"), Color("ffe2bd"), Color("d1e8ff"),
+		Color("e0ffd4"), Color("f3d4ff"), Color("ffd6d6")][appearance_seed % 6]
+
+
+func history_text() -> String:
+	var record := "Best word: No words cast yet"
+	if not best_word.is_empty():
+		record = "Best word: %s · %.1f damage" % [best_word, best_word_damage]
+	return "%s\n%d uses · Battle scars: %d\n%s gear · upgrades at levels 5, 10, 20" % [
+		record, accepted_uses, scar_count(), gear_name()]
+
 
 
 static func create(new_letter: String) -> LetterStats:

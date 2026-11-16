@@ -51,6 +51,7 @@ func setup(new_stats: LetterStats) -> void:
 	stats = new_stats
 	cosmetic = PlayerProfile.combat_cosmetic_for(stats)
 	sprite.sprite_frames = cosmetic.sprite_frames
+	sprite.self_modulate = stats.appearance_color()
 	sprite.scale = Vector2.ONE * cosmetic.render_scale
 	_play_action(&"idle")
 	sprite.frame = randi() % 2
