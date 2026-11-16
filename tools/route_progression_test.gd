@@ -18,14 +18,11 @@ func _ready() -> void:
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
 	RunState.initialize_tundra_route(7319)
-	check(RunState.route_graph_columns.size() == 9, "Route has a start, seven intermediate columns, and a boss")
+	check(RunState.route_graph_columns.size() >= 9 and RunState.route_graph_columns.size() <= 11,
+			"Route column count stays inside the randomized range")
+	check(RunState.route_nodes.size() >= 20, "Generated route contains at least twenty nodes")
 	check(RunState.route_graph_columns[1].size() >= 2, "Opening combat immediately leads to a split")
-	check(RunState.route_graph_columns[3].size() == 3, "Early route keeps three distinct branches")
-	var early_lore_count: int = 0
-	for key: String in RunState.route_graph_columns[3]:
-		if String(RunState.route_nodes[key].content_id) == "lore_room":
-			early_lore_count += 1
-	check(early_lore_count == 2, "Lore appears early on two different branches")
+	check(_content_count("lore_room") == 1, "One lore room appears at a randomized position")
 
 	if not WordNet.is_ready:
 		var loaded: bool = await WordNet.loading_finished
@@ -98,9 +95,10 @@ func _ready() -> void:
 	# Exercise the fishing presentation using its generated route node.
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
-	RunState.initialize_tundra_route(7319)
+	_initialize_route_with_content("ice_fishing")
 	var fishing_key: String = _key_for_content("ice_fishing")
-	check(RunState.debug_jump_to_route_node(fishing_key, 0), "Fishing node exists in generated build column")
+	check(not fishing_key.is_empty(), "A generated route can contain an ice fishing room")
+	check(RunState.debug_jump_to_route_node(fishing_key, 0), "Fishing route node accepts a debug jump")
 	RunState.pending_route_activity = "ice_fishing"
 	RunState.pending_route_key = fishing_key
 	var fishing: Control = load(ScenePaths.ICE_FISHING).instantiate()
@@ -136,3 +134,18 @@ func _key_for_content(content_id: String) -> String:
 		if String(RunState.route_nodes[key].content_id) == content_id:
 			return key
 	return ""
+
+
+func _content_count(content_id: String) -> int:
+	var count := 0
+	for key: String in RunState.route_nodes:
+		if String(RunState.route_nodes[key].content_id) == content_id:
+			count += 1
+	return count
+
+
+func _initialize_route_with_content(content_id: String) -> void:
+	for seed_value: int in range(1, 101):
+		RunState.initialize_tundra_route(seed_value)
+		if not _key_for_content(content_id).is_empty():
+			return

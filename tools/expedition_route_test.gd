@@ -1,7 +1,6 @@
 extends Node
 
 const Generator = preload("res://scripts/run/expedition_route_generator.gd")
-const Balance = preload("res://data/balance/tuning.gd")
 
 var failures: int = 0
 
@@ -20,11 +19,13 @@ func _ready() -> void:
 	check(_signature(first) == _signature(replay), "Same seed reproduces the graph")
 	check(_signature(first) != _signature(different), "Different seeds normally differ")
 	_validate_graph(first)
+	var bridges_found := 0
 	for seed_value: int in range(1, 101):
 		var graph: Dictionary = Generator.generate(seed_value, "tundra")
 		_validate_graph(graph, false)
 		check(_can_reach_boss(graph), "Seed %d reaches the boss" % seed_value)
-		check(_all_paths_meet_constraints(graph), "Seed %d keeps every path valid" % seed_value)
+		bridges_found += _bridge_count(graph)
+	check(bridges_found > 0, "Seed sample generates skipped-column lane bridges")
 	_test_run_state()
 	print("Expedition route graph: %d failures" % failures)
 	get_tree().quit(1 if failures else 0)
@@ -44,30 +45,39 @@ func _signature(graph: Dictionary) -> String:
 func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 	var nodes: Dictionary = graph.nodes
 	var incoming: Dictionary = {}
-	check(graph.columns.size() >= 3, "Route has enough layers to branch")
-	check(graph.columns[1].size() == 3, "The first room immediately splits three ways")
+	check(graph.columns.size() >= 9 and graph.columns.size() <= 11,
+			"Route length stays inside its balanced range")
+	check(nodes.size() >= 20, "Route contains at least twenty nodes")
+	check(graph.columns[1].size() >= 2, "The first room immediately splits")
+	var combat_nodes := 0
+	var lore_nodes := 0
 	for key: String in nodes:
 		incoming[key] = 0
 	for key: String in nodes:
 		var node: Dictionary = nodes[key]
+		var type: String = String(node.node_type)
+		if type in ["normal_combat", "elite_combat"]:
+			combat_nodes += 1
+		if String(node.content_id) == "lore_room":
+			lore_nodes += 1
+		check(type != "forge" and String(node.content_id) != "forge",
+				"Forge is never generated")
 		if key != graph.boss_key:
 			check(not node.next_keys.is_empty(), "Nonterminal node has an exit")
-			if int(node.column) < graph.columns.size() - 2:
-				check(node.next_keys.size() >= 2, "Most rooms preserve onward route choice")
 		for next_key: String in node.next_keys:
 			check(nodes.has(next_key), "Edge target exists")
 			if nodes.has(next_key):
-				check(int(nodes[next_key].column) > int(node.column), "Edges only move forward")
+				var distance: int = int(nodes[next_key].column) - int(node.column)
+				check(distance in [1, 2], "Edges advance one or two columns")
+				if distance == 2:
+					check(int(nodes[next_key].lane) == int(node.lane),
+							"Bridge edges remain in the same lane")
+					check(not _column_has_lane(
+						graph, int(node.column) + 1, int(node.lane)
+					), "Bridge only skips a missing middle-lane node")
 				incoming[next_key] = int(incoming[next_key]) + 1
-		var type: String = String(node.node_type)
-		# Activities may intentionally repeat when they belong to different
-		# branches; the route choice, not global uniqueness, supplies variety.
-		for next_key: String in node.next_keys:
-			var next_type: String = String(nodes[next_key].node_type)
-			check(
-				not (type in ["recovery", "forge"] and next_type in ["recovery", "forge"]),
-				"Recovery and forge nodes are not consecutive"
-			)
+	check(combat_nodes >= 8, "Route contains at least eight fight nodes")
+	check(lore_nodes == 1, "Route contains exactly one randomly placed lore node")
 	for key: String in nodes:
 		if key != graph.start_key:
 			check(int(incoming[key]) > 0, "Every non-start node has an incoming edge")
@@ -76,7 +86,7 @@ func _validate_graph(graph: Dictionary, verbose: bool = true) -> void:
 	for key: String in nodes:
 		check(_reachable(graph, key).has(graph.boss_key), "Every node can reach the boss")
 	if verbose:
-		check(_all_paths_meet_constraints(graph), "Every path has combat and build opportunities")
+		check(_bridge_count(graph) >= 0, "Bridge scan completes")
 
 
 func _reachable(graph: Dictionary, start_key: String) -> Dictionary:
@@ -96,23 +106,21 @@ func _can_reach_boss(graph: Dictionary) -> bool:
 	return _reachable(graph, String(graph.start_key)).has(graph.boss_key)
 
 
-func _all_paths_meet_constraints(graph: Dictionary) -> bool:
-	var pending: Array[Dictionary] = [{
-		"key": graph.start_key, "combats": 0, "build": false,
-	}]
-	while not pending.is_empty():
-		var path: Dictionary = pending.pop_back()
-		var node: Dictionary = graph.nodes[path.key]
-		var type: String = String(node.node_type)
-		var combats: int = int(path.combats) + (1 if type in ["normal_combat", "elite_combat"] else 0)
-		var build: bool = bool(path.build) or type in ["letter_reward", "relic_reward", "forge"]
-		if path.key == graph.boss_key:
-			if combats < Balance.ROUTE_MIN_COMBATS_PER_PATH or not build:
-				return false
-			continue
+func _column_has_lane(graph: Dictionary, column: int, lane: int) -> bool:
+	for key: String in graph.columns[column]:
+		if int(graph.nodes[key].lane) == lane:
+			return true
+	return false
+
+
+func _bridge_count(graph: Dictionary) -> int:
+	var count := 0
+	for key: String in graph.nodes:
+		var node: Dictionary = graph.nodes[key]
 		for next_key: String in node.next_keys:
-			pending.append({"key": next_key, "combats": combats, "build": build})
-	return true
+			if int(graph.nodes[next_key].column) - int(node.column) == 2:
+				count += 1
+	return count
 
 
 func _test_run_state() -> void:

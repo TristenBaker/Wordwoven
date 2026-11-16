@@ -73,18 +73,33 @@ func _draw() -> void:
 
 
 func _draw_connections() -> void:
-	for column: int in range(1, _column_count):
-		for from_node: Dictionary in _nodes_at_column(column):
+	var nodes_by_key: Dictionary = {}
+	for node: Dictionary in _nodes:
+		var route_key: String = String(node.get("route_key", ""))
+		if not route_key.is_empty():
+			nodes_by_key[route_key] = node
+
+	for from_node: Dictionary in _nodes:
+		var next_keys: Array = from_node.get("next_keys", [])
+		if next_keys.is_empty():
+			# Compatibility for older/non-Tundra callers without explicit edges.
+			var column: int = int(from_node.get(
+				"column", from_node.get("stage", 0)
+			))
 			for to_node: Dictionary in _nodes_at_column(column + 1):
-				var next_keys: Array = from_node.get("next_keys", [])
-				if not next_keys.is_empty() and not next_keys.has(
-						String(to_node.get("route_key", ""))
-				):
-					continue
 				_draw_route_line(
-						_node_point(from_node), _node_point(to_node),
-						_connection_color(from_node, to_node), 3.0
+					_node_point(from_node), _node_point(to_node),
+					_connection_color(from_node, to_node), 3.0
 				)
+			continue
+		for next_key: String in next_keys:
+			if not nodes_by_key.has(next_key):
+				continue
+			var to_node: Dictionary = nodes_by_key[next_key]
+			_draw_route_line(
+				_node_point(from_node), _node_point(to_node),
+				_connection_color(from_node, to_node), 3.0
+			)
 
 func _draw_stage_labels() -> void:
 	for column: int in range(1, _column_count + 1):

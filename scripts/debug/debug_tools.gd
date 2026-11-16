@@ -30,7 +30,7 @@ var free_map_select: bool = false
 		$Panel/Box/CheatRow/TavernButton
 @onready var auto_kill_button: Button = $Panel/Box/EncounterRow/AutoKillButton
 @onready var free_map_button: Button = $Panel/Box/EncounterRow/FreeMapButton
-@onready var playtest_run_button: Button = $Panel/Box/PlaytestRunButton
+@onready var reroll_tundra_button: Button = $Panel/Box/RerollTundraButton
 @onready var hangman_tier_select: OptionButton = $Panel/Box/HangmanRow/TierSelect
 @onready var hangman_reset_button: Button = $Panel/Box/HangmanRow/ResetButton
 @onready var tags_input: LineEdit = $Panel/Box/ForceRow/TagsInput
@@ -46,7 +46,7 @@ func _ready() -> void:
 	tavern_button.pressed.connect(_on_tavern_pressed)
 	auto_kill_button.pressed.connect(_on_auto_kill_pressed)
 	free_map_button.pressed.connect(_on_free_map_pressed)
-	playtest_run_button.pressed.connect(_on_playtest_run_pressed)
+	reroll_tundra_button.pressed.connect(_on_reroll_tundra_pressed)
 	hangman_reset_button.pressed.connect(_on_hangman_reset_pressed)
 	RunState.run_started.connect(func(): free_map_select = false)
 	tags_input.text_changed.connect(_on_tags_changed)
@@ -169,9 +169,11 @@ func _on_free_map_pressed() -> void:
 	get_tree().change_scene_to_file(ScenePaths.ENCOUNTER_SELECT)
 
 
-func _on_playtest_run_pressed() -> void:
+func _on_reroll_tundra_pressed() -> void:
+	if not RunState.is_run_active:
+		RunState.start_new_run()
 	free_map_select = false
-	RunState.start_playtest_run()
+	RunState.debug_reroll_tundra_route()
 	PlayerStats.mark_debug_assisted()
 	panel.hide()
 	EventBus.emit_debug_toggled(false)
