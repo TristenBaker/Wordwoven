@@ -50,47 +50,17 @@ func _refresh() -> void:
 			continue
 		var relic_id := RunState.pending_relic_choices[index]
 		var info := relic_system.relic_info(relic_id)
-		button.text = "%s  •  %s\n%s\nOwned: %d" % [
-			relic_system.quality_name(relic_id),
-			info.get("name", relic_id), info.get("description", ""),
-			RunState.relics.count(relic_id),
-		]
-		var color: Color = relic_system.quality_color(relic_id)
-		for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color", "font_disabled_color"]:
-			button.add_theme_color_override(state, color)
-		var normal: StyleBoxFlat = _quality_style(color)
-		var highlighted: StyleBoxFlat = normal.duplicate()
-		highlighted.bg_color = Color(0.18, 0.105, 0.26, 0.98)
-		highlighted.border_color = color.lightened(0.08)
-		for state: String in ["normal", "disabled"]:
-			button.add_theme_stylebox_override(state, normal)
-		for state: String in ["hover", "pressed", "hover_pressed"]:
-			button.add_theme_stylebox_override(state, highlighted)
-		var focus: StyleBoxFlat = highlighted.duplicate()
-		focus.draw_center = false
-		focus.border_color = Color(0.78, 0.66, 0.9, 1.0)
-		focus.set_border_width_all(2)
-		focus.set_expand_margin_all(2.0)
-		button.add_theme_stylebox_override("focus", focus)
-		button.disabled = not claimed.is_empty()
+		button.show()
+		button.present(info, relic_system.quality_name(relic_id),
+			relic_system.quality_color(relic_id), RunState.relics.count(relic_id),
+			not claimed.is_empty(), claimed == relic_id)
 	if claimed.is_empty():
-		status_label.text = "Choose one power. Quality affects its rarity; copies stack."
+		status_label.text = "Choose one power. Copies stack."
 		continue_button.disabled = true
 	else:
 		status_label.text = "Power gained: %s" % relic_system.relic_info(claimed).get("name", claimed)
 		continue_button.disabled = false
+
+
 func _open_loot() -> void:
 	get_tree().change_scene_to_file(ScenePaths.LOOT_DROP)
-
-
-func _quality_style(color: Color) -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.07, 0.18, 0.98)
-	style.border_color = color
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 12.0
-	style.content_margin_top = 10.0
-	style.content_margin_right = 12.0
-	style.content_margin_bottom = 10.0
-	return style

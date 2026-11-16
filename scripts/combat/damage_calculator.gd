@@ -111,18 +111,7 @@ func calculate(
 	var damage: float = neutral_damage
 	for amount: float in elemental_damage.values():
 		damage += amount
-	var water_heal: int = int(round(
-		elemental_damage["water"] * relic_system.total_effect(
-			"water_heal_ratio"
-		)
-	))
-	var ice_slow: int = int(relic_system.total_effect(
-		"ice_retaliation_reduction"
-	)) if elemental_damage["ice"] > 0.0 else 0
-	var earth_guard: int = int(relic_system.total_effect("earth_guard")) \
-		if elemental_damage["earth"] > 0.0 else 0
-	var nature_poison: float = elemental_damage["nature"] \
-		* relic_system.total_effect("nature_poison_ratio")
+	var secondary: Dictionary = elemental_secondary_effects(elemental_damage, relic_system)
 	# The historical bonus multiplies final direct damage once. Elemental proc,
 	# healing, guard, poison and gold rules retain their current calculations.
 	var speed_bonus_multiplier: float = speed_multiplier(elapsed_seconds)
@@ -149,10 +138,44 @@ func calculate(
 		"neutral_damage": neutral_damage,
 		"lightning_procs": lightning_procs,
 		"lightning_bonus": lightning_bonus,
-		"water_heal": water_heal,
-		"ice_slow": ice_slow,
-		"earth_guard": earth_guard,
-		"nature_poison": nature_poison,
+		"fire_burn": secondary["fire_burn"],
+		"water_heal": secondary["water_heal"],
+		"ice_slow": secondary["ice_slow"],
+		"earth_guard": secondary["earth_guard"],
+		"nature_poison": secondary["nature_poison"],
+	}
+
+
+## Shared by real casts and tile information. Only elements present in the
+## cast trigger; a positive elemental hit always produces at least one point.
+## Word bonuses/affinities are already included in combat's damage input.
+static func elemental_secondary_effects(
+	elemental_damage: Dictionary, relic_system: RelicSystem = null
+) -> Dictionary:
+	var effects := relic_system if relic_system != null else RelicSystem.new()
+	var result: Dictionary = {}
+	var specs := {
+		"fire": ["fire_burn", "fire_burn_ratio", ""],
+		"water": ["water_heal", "water_heal_ratio", ""],
+		"ice": ["ice_slow", "ice_retaliation_ratio", "ice_retaliation_reduction"],
+		"nature": ["nature_poison", "nature_poison_ratio", ""],
+		"earth": ["earth_guard", "earth_guard_ratio", "earth_guard"],
+	}
+	for element_name: String in specs:
+		var spec: Array = specs[element_name]
+		var damage: float = float(elemental_damage.get(element_name, 0.0))
+		var amount: float = damage * effects.total_effect(spec[1])
+		if not String(spec[2]).is_empty():
+			amount += effects.total_effect(spec[2])
+		result[spec[0]] = maxi(1, int(round(amount))) if damage > 0.0 else 0
+	return result
+
+
+static func lightning_echo_parameters(relic_system: RelicSystem = null) -> Dictionary:
+	var effects := relic_system if relic_system != null else RelicSystem.new()
+	return {
+		"chance": clampf(effects.total_effect("lightning_echo_chance"), 0.0, 1.0),
+		"damage_ratio": maxf(0.0, effects.total_effect("lightning_echo_damage")),
 	}
 
 
@@ -202,11 +225,9 @@ func _apply_affinities(
 
 
 func _lightning_echo_damage(lightning_damage: float) -> Dictionary:
-	var relic_system: RelicSystem = RelicSystem.new()
-	var chance: float = relic_system.total_effect("lightning_echo_chance")
-	var damage_ratio: float = relic_system.total_effect(
-		"lightning_echo_damage"
-	)
+	var parameters := lightning_echo_parameters()
+	var chance: float = parameters["chance"]
+	var damage_ratio: float = parameters["damage_ratio"]
 	var procs: int = 0
 	var bonus: float = 0.0
 	while lightning_damage > 0.0 and chance > 0.0 \

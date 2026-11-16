@@ -28,7 +28,7 @@ const NODES: Dictionary = {
   "fire_2": {
     "element": "fire",
     "name": "Kindling",
-    "description": "Fire damage applies burn equal to 8% of its damage.",
+    "description": "Add 8% of Fire damage as burn.",
     "effects": {
       "fire_burn_ratio": 0.08
     },
@@ -132,7 +132,7 @@ const NODES: Dictionary = {
   "lightning_2": {
     "element": "lightning",
     "name": "First Spark",
-    "description": "Lightning gains an 8% chance to echo; echoes can repeat. Base echo damage is 30%.",
+    "description": "Add 8 percentage points to echo chance and 30% of the original hit to echo damage.",
     "effects": {
       "lightning_echo_chance": 0.08,
       "lightning_echo_damage": 0.3
@@ -237,7 +237,7 @@ const NODES: Dictionary = {
   "water_2": {
     "element": "water",
     "name": "Restoring Tide",
-    "description": "Heal for 4% of Water damage.",
+    "description": "Add 4% of Water damage as healing.",
     "effects": {
       "water_heal_ratio": 0.04
     },
@@ -341,7 +341,7 @@ const NODES: Dictionary = {
   "ice_2": {
     "element": "ice",
     "name": "Chilling Touch",
-    "description": "Using Ice reduces the enemy retaliation by 1.",
+    "description": "Reduce the next retaliation by an additional 1 when using Ice.",
     "effects": {
       "ice_retaliation_reduction": 1
     },
@@ -445,7 +445,7 @@ const NODES: Dictionary = {
   "nature_2": {
     "element": "nature",
     "name": "Venom Seed",
-    "description": "Nature applies poison equal to 6% of its damage.",
+    "description": "Add 6% of Nature damage as poison.",
     "effects": {
       "nature_poison_ratio": 0.06
     },

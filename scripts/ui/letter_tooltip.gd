@@ -21,6 +21,11 @@ static func transparent_shell_theme() -> Theme:
 static func create_for(stats: LetterStats) -> LetterTooltip:
 	var tooltip := LetterTooltip.new()
 	tooltip.add_theme_stylebox_override("panel", tooltip._panel_style())
+	var layout := VBoxContainer.new()
+	tooltip.add_child(layout)
+	var emblem := ElementArt.image(stats.element_name_text().to_lower())
+	emblem.custom_minimum_size = Vector2(42, 42)
+	layout.add_child(emblem)
 	var text := RichTextLabel.new()
 	text.bbcode_enabled = true
 	text.fit_content = true
@@ -28,7 +33,7 @@ static func create_for(stats: LetterStats) -> LetterTooltip:
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text.custom_minimum_size = Vector2(330, 0)
 	text.text = tooltip._content_for(stats)
-	tooltip.add_child(text)
+	layout.add_child(text)
 	return tooltip
 
 

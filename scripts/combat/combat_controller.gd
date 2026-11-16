@@ -1016,11 +1016,9 @@ func _describe_result(result: Dictionary) -> String:
 
 
 func _apply_elemental_effects(result: Dictionary) -> void:
-	var relic_system: RelicSystem = RelicSystem.new()
-	var fire_damage: float = result["elemental_damage"]["fire"]
-	var burn_ratio: float = relic_system.total_effect("fire_burn_ratio")
-	if fire_damage > 0.0 and burn_ratio > 0.0:
-		enemy.add_burn(fire_damage * burn_ratio)
+	var fire_burn: float = result["fire_burn"]
+	if fire_burn > 0.0:
+		enemy.add_burn(fire_burn)
 	var nature_poison: float = result["nature_poison"]
 	if nature_poison > 0.0:
 		enemy.add_poison(nature_poison)

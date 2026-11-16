@@ -94,6 +94,20 @@ func _run() -> void:
 	_playback_id = _player.get_stream_playback().get_instance_id()
 	var before: float = _player.get_playback_position()
 	_check(before >= 7.9, "Playback advanced away from start")
+	# A stale scene player or reload must never create a second tavern voice.
+	var duplicate_voice := AudioStreamPlayer.new()
+	duplicate_voice.stream = AppSettings.TAVERN_TRACK.duplicate()
+	duplicate_voice.bus = &"Music"
+	duplicate_voice.autoplay = true
+	get_tree().root.add_child(duplicate_voice)
+	await get_tree().process_frame
+	_check(not duplicate_voice.playing and not duplicate_voice.autoplay,
+		"Legacy duplicate tavern track suppressed")
+	_check(_music_count() == 1, "Only the persistent tavern track plays")
+	duplicate_voice.queue_free()
+	AppSettings._tavern_music = null
+	AppSettings._sync_tavern_music()
+	_continuous("Reload reuses existing player", before)
 
 	var hub: Control = get_tree().current_scene
 	hub._open_minigames()
@@ -111,14 +125,13 @@ func _run() -> void:
 	_continuous("Root overlay", before)
 	overlay.queue_free()
 
-	await _follow(hub._open_right_room)
-	_continuous("Dealer room", before)
-	var dealer: Control = get_tree().current_scene
-	dealer.dealer_button.pressed.emit()
+	hub._open_right_room()
+	var dealer: Control = hub.get_node("TavernShopOverlay").get_child(1)
+	_check(dealer.embedded and dealer.menu_panel.visible, "Dealer opens inside tavern")
+	_continuous("Dealer overlay", before)
 	dealer.close_button.pressed.emit()
+	await get_tree().process_frame
 	_continuous("Dealer open/close", before)
-	await _follow(dealer._return_to_hub)
-	_continuous("Dealer return to hub", before)
 
 	hub = get_tree().current_scene
 	await _follow(hub._open_forge)
@@ -127,12 +140,12 @@ func _run() -> void:
 	_continuous("Forge return to hub", before)
 
 	hub = get_tree().current_scene
-	await _follow(hub._open_left_room)
-	var barkeeper: Control = get_tree().current_scene
-	barkeeper.barkeeper_button.pressed.emit()
+	hub._open_left_room()
+	var barkeeper: Control = hub.get_node("TavernShopOverlay").get_child(1)
+	_check(barkeeper.embedded and barkeeper.menu_panel.visible, "Bartender opens inside tavern")
 	barkeeper.close_button.pressed.emit()
+	await get_tree().process_frame
 	_continuous("Barkeeper and meal menu", before)
-	await _follow(barkeeper._return_to_hub)
 
 	hub = get_tree().current_scene
 	await _follow(hub._open_tavern_page)
@@ -183,7 +196,7 @@ func _run() -> void:
 	for path: String in [
 		ScenePaths.TAVERN_RIGHT, ScenePaths.TAVERN_LEFT, ScenePaths.FORGE,
 		TAVERN_PAGE, ScenePaths.WORD_GAME, ScenePaths.HANDWRITING_GAME,
-		ScenePaths.ICE_FISHING,
+		ScenePaths.HANDWRITING_LAB, ScenePaths.ICE_FISHING,
 	]:
 		await _go(path)
 		_check(_player.playing and _music_count() == 1,

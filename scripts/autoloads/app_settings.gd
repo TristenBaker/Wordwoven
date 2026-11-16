@@ -42,6 +42,9 @@ func _sync_tavern_music() -> void:
 			_tavern_music.stop()
 		return
 	if not is_instance_valid(_tavern_music):
+		# Script reloads can clear the field while its existing player survives.
+		_tavern_music = get_node_or_null("TavernMusic") as AudioStreamPlayer
+	if not is_instance_valid(_tavern_music):
 		# This existing autoload owns one voice across tavern scene changes.
 		_tavern_music = AudioStreamPlayer.new()
 		_tavern_music.name = "TavernMusic"
@@ -50,8 +53,24 @@ func _sync_tavern_music() -> void:
 		track.loop = true
 		_tavern_music.stream = track
 		add_child(_tavern_music)
+	_stop_duplicate_tavern_players()
 	if not _tavern_music.playing:
 		_tavern_music.play()
+
+
+func _is_tavern_track(stream: AudioStream) -> bool:
+	if not stream is AudioStreamMP3:
+		return false
+	return stream == TAVERN_TRACK \
+		or stream.resource_path == TAVERN_TRACK.resource_path \
+		or stream.data == TAVERN_TRACK.data
+
+
+func _stop_duplicate_tavern_players() -> void:
+	for audio: Node in get_tree().root.find_children("*", "AudioStreamPlayer", true, false):
+		if audio != _tavern_music and _is_tavern_track(audio.stream):
+			audio.autoplay = false
+			audio.stop()
 
 func _route_existing_audio() -> void:
 	for type_name: String in ["AudioStreamPlayer", "AudioStreamPlayer2D", "AudioStreamPlayer3D"]:
@@ -83,6 +102,11 @@ func _on_node_added(node: Node) -> void:
 
 func _route_audio(node: Node) -> void:
 	if not is_instance_valid(node):
+		return
+	if node is AudioStreamPlayer and node != _tavern_music and _is_tavern_track(node.stream):
+		# Suppress legacy scene/autoload voices regardless of their bus assignment.
+		node.autoplay = false
+		node.stop()
 		return
 	# Respect explicitly routed players. Current music uses these existing assets;
 	# stream-less pooled party voices are effects and receive SFX before playback.

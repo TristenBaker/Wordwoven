@@ -112,15 +112,7 @@ func _run() -> void:
 	await get_tree().process_frame
 	assert(not hub._room_menu_open())
 	assert(room.mouse_default_cursor_shape == Control.CURSOR_ARROW)
-	# A single stream/player continues at its current position across activities.
-	TavernMusic.sync_scene(ScenePaths.TAVERN)
-	TavernMusic.player.seek(5.0)
-	for path: String in [ScenePaths.TAVERN_LEFT, ScenePaths.TAVERN_RIGHT, ScenePaths.FORGE, ScenePaths.WORD_GAME, ScenePaths.HANDWRITING_GAME, ScenePaths.HANDWRITING_LAB]:
-		TavernMusic.sync_scene(path)
-		assert(TavernMusic.player.playing)
-		assert(TavernMusic.player.get_playback_position() >= 4.9)
-	TavernMusic.sync_scene(ScenePaths.COMBAT)
-	assert(not TavernMusic.player.playing)
+	# Persistent music across actual scene changes is covered by tavern_music_test.
 	# Optional render artifact for reviewing composition in a real renderer.
 	if "--capture-tavern" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw

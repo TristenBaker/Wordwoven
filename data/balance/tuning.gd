@@ -36,6 +36,18 @@ const DAMAGE_CALCULATOR_SEMANTIC_MULTIPLIER_MAX: float = 2.0
 const DAMAGE_CALCULATOR_TOME_MULTIPLIER_BONUS: float = 0.12
 const DAMAGE_CALCULATOR_LANTERN_MULTIPLIER_BONUS: float = 0.08
 
+# Every element starts with its signature effect. Powers and talents add to
+# these values; damage-based effects also inherit tile level and potency.
+const ELEMENT_BASE_EFFECTS: Dictionary[String, float] = {
+	"fire_burn_ratio": 0.15,
+	"lightning_echo_chance": 0.10,
+	"lightning_echo_damage": 0.50,
+	"water_heal_ratio": 0.10,
+	"ice_retaliation_ratio": 0.10,
+	"nature_poison_ratio": 0.15,
+	"earth_guard_ratio": 0.15,
+}
+
 # ENEMY_FACTORY
 const ENEMY_FACTORY_BOSS_TIER: int = 4
 const ENEMY_FACTORY_TUNDRA_REGULARS: Array[String] = [

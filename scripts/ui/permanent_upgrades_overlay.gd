@@ -115,6 +115,10 @@ func _overview() -> void:
 		var angle := -PI / 2.0 + index * TAU / 6.0
 		var point := Vector2(cos(angle), sin(angle)) * 685.0
 		_text("%s • %d/8" % [element.capitalize(), _learned(element)], point - Vector2(95, 18), Vector2(190, 36))
+		var emblem := ElementArt.image(element)
+		emblem.position = point - Vector2(27, 76)
+		emblem.size = Vector2(54, 54)
+		_tree.add_child(emblem)
 		_line(Vector2.ZERO, _position_for(CATALOG.NODES[element + "_0"]), COLORS[index])
 	_branch()
 

@@ -120,37 +120,41 @@ func throughput_text() -> String:
 
 func element_detail_text() -> String:
 	var powers := RelicSystem.new()
+	var contribution := power() * DamageCalculator.elemental_potency_multiplier(
+		element_name_text().to_lower(), powers
+	)
+	var effects := DamageCalculator.elemental_secondary_effects(
+		{element_name_text().to_lower(): contribution}, powers
+	)
 	match element:
 		Element.FIRE:
-			var burn := powers.total_effect("fire_burn_ratio")
-			return "Fire hits deal direct damage%s." % (
-				" and Burn for %.0f%% of that hit" % (burn * 100.0) if burn > 0.0 else ""
-			)
+			return "Burn: %d damage on the next enemy turn (%.0f%% of Fire damage; minimum 1)." % [
+				effects.fire_burn, powers.total_effect("fire_burn_ratio") * 100.0,
+			]
 		Element.LIGHTNING:
-			var echo := powers.total_effect("lightning_echo_chance")
-			return "Lightning hits deal direct damage%s." % (
-				" with %.0f%% echo chance; echoes can echo again" % (echo * 100.0) if echo > 0.0 else ""
-			)
+			var echo := DamageCalculator.lightning_echo_parameters(powers)
+			return "Echo: %.0f%% chance for an extra hit at %.0f%% damage (%.1f here). Each echo can echo again, up to %d times." % [
+				echo.chance * 100.0, echo.damage_ratio * 100.0,
+				contribution * echo.damage_ratio, Balance.LIGHTNING_MAX_PROCS,
+			]
 		Element.WATER:
-			var heal := powers.total_effect("water_heal_ratio")
-			return "Water hits deal direct damage%s." % (
-				" and heal %.0f%% of damage" % (heal * 100.0) if heal > 0.0 else ""
-			)
+			return "Mend: restore %d health (%.0f%% of Water damage; minimum 1)." % [
+				effects.water_heal, powers.total_effect("water_heal_ratio") * 100.0,
+			]
 		Element.ICE:
-			var reduction := powers.total_effect("ice_retaliation_reduction")
-			return "Ice hits deal direct damage%s." % (
-				" and reduce next retaliation by %d" % int(reduction) if reduction > 0.0 else ""
-			)
+			return "Chill: reduce next retaliation by %d (%.0f%% of Ice damage + %d from upgrades; minimum 1)." % [
+				effects.ice_slow, powers.total_effect("ice_retaliation_ratio") * 100.0,
+				int(powers.total_effect("ice_retaliation_reduction")),
+			]
 		Element.NATURE:
-			var poison := powers.total_effect("nature_poison_ratio")
-			return "Nature hits deal direct damage%s." % (
-				" and Poison for %.0f%% of that hit" % (poison * 100.0) if poison > 0.0 else ""
-			)
+			return "Poison: %d damage on the next enemy turn (%.0f%% of Nature damage; minimum 1)." % [
+				effects.nature_poison, powers.total_effect("nature_poison_ratio") * 100.0,
+			]
 		Element.EARTH:
-			var guard := powers.total_effect("earth_guard")
-			return "Earth hits deal direct damage%s." % (
-				" and grant %d Guard" % int(guard) if guard > 0.0 else ""
-			)
+			return "Guard: absorb %d damage from next retaliation (%.0f%% of Earth damage + %d from upgrades; minimum 1)." % [
+				effects.earth_guard, powers.total_effect("earth_guard_ratio") * 100.0,
+				int(powers.total_effect("earth_guard")),
+			]
 	return "Elemental damage shaped by your selected powers."
 
 

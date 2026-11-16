@@ -14,6 +14,15 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = 25
 	_color = {"burn": Color("ff9650"), "poison": Color("83e579"), "lightning": Color("ffe16a"), "recoil": Color("eeb8ff")}.get(kind, Color.WHITE)
+	var element: String = {"burn": "fire", "poison": "nature", "lightning": "lightning"}.get(kind, "")
+	var spell: TextureRect
+	if not element.is_empty():
+		spell = ElementArt.image(element, "spell")
+		spell.position = Vector2(-80, -80)
+		spell.size = Vector2(160, 160)
+		spell.pivot_offset = Vector2(80, 80)
+		spell.scale = Vector2.ONE * 0.4
+		add_child(spell)
 	var number := Label.new()
 	number.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title: String = {"burn": "BURN", "poison": "POISON", "lightning": "ECHO", "recoil": "RECOIL"}.get(kind, "HIT")
@@ -28,6 +37,9 @@ func _ready() -> void:
 	number.add_theme_constant_override("outline_size", 5)
 	add_child(number)
 	var tween := create_tween().set_parallel(true)
+	if spell != null:
+		tween.tween_property(spell, "scale", Vector2.ONE * 1.15, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(spell, "modulate:a", 0.0, 0.35).set_delay(0.3)
 	tween.tween_property(self, "_progress", 1.0, 0.7)
 	tween.tween_property(number, "position:y", -170.0, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(number, "modulate:a", 0.0, 0.35).set_delay(0.35)

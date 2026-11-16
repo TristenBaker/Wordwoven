@@ -112,7 +112,8 @@ func _roll_quality(allows_common: bool = true) -> String:
 
 
 func total_effect(effect: String) -> float:
-	var total: float = PlayerProfile.talent_effect(effect)
+	var total: float = preload("res://data/balance/tuning.gd").ELEMENT_BASE_EFFECTS.get(effect, 0.0) \
+		+ PlayerProfile.talent_effect(effect)
 	for relic_id: String in RunState.relics:
 		var info: Dictionary = relic_info(relic_id)
 		if info.get("effect", "") == effect:
@@ -128,17 +129,17 @@ func calculated_effect_text(relic_id: String) -> String:
 		"fire_damage_multiplier", "lightning_damage_multiplier", "water_damage_multiplier", "ice_damage_multiplier", "nature_damage_multiplier", "earth_damage_multiplier", "all_element_damage_multiplier":
 			return "+%.0f%% damage total" % (total * 100.0)
 		"fire_burn_ratio":
-			return "Burn for %.0f%% of the Fire hit" % (total * 100.0)
+			return "Adds %.0f%% of Fire damage as Burn" % (total * 100.0)
 		"lightning_echo_chance":
-			return "%.0f%% echo chance per Lightning hit" % (total * 100.0)
+			return "+%.0f percentage points to Lightning echo chance" % (total * 100.0)
 		"lightning_echo_damage":
-			return "Echoes deal %.0f%% of the original hit" % (total * 100.0)
+			return "Adds %.0f%% of the original hit to echo damage" % (total * 100.0)
 		"water_heal_ratio":
-			return "Heal for %.0f%% of Water damage" % (total * 100.0)
+			return "Adds %.0f%% of Water damage as healing" % (total * 100.0)
 		"ice_retaliation_reduction":
 			return "Reduce next retaliation by %d" % int(total)
 		"nature_poison_ratio":
-			return "Poison for %.0f%% of the Nature hit" % (total * 100.0)
+			return "Adds %.0f%% of Nature damage as Poison" % (total * 100.0)
 		"earth_guard":
 			return "Gain %d Guard" % int(total)
 		"hand_size":
