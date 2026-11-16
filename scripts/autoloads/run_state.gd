@@ -611,6 +611,58 @@ func initialize_tundra_route(seed_override: int = 0) -> void:
 	_refresh_route_states()
 
 
+## Developer route reset. Preserve the player's build and resources, but clear
+## expedition progress so the newly seeded map can be played from its start.
+func debug_reroll_tundra_route() -> int:
+	var previous_seed: int = route_seed
+	playtest_route = false
+	selected_biome = "tundra"
+	route_seed = 0
+	route_nodes.clear()
+	route_start_key = ""
+	route_boss_key = ""
+	route_current_key = ""
+	route_pending_destination = ""
+	route_completed_keys.clear()
+	route_bypassed_keys.clear()
+	route_graph_columns.clear()
+	route_edges.clear()
+	route_chosen_nodes.clear()
+	route_enemy_order.clear()
+	route_combat_slots.clear()
+	route_activity_stages.clear()
+	route_required_activity = ""
+	route_node_order.clear()
+	route_bypassed_activities.clear()
+	route_depth = 1
+	encounter_index = 1
+	next_enemy_id = ""
+	pending_route_activity = ""
+	pending_route_key = ""
+	pending_optional_encounter = ""
+	pending_encounter_modifier.clear()
+	optional_encounters.clear()
+	optional_encounter_progress.clear()
+	completed_encounters.clear()
+	defeated_enemy_ids.clear()
+	defeated_enemy_history.clear()
+	relic_rewards.clear()
+	lore_room_completed = false
+	fishing_tutorial_seen = false
+	fishing_hole_chosen = -1
+	clear_pending_victory()
+
+	var fresh_seed := int(
+		Time.get_unix_time_from_system() * 1000.0
+	) ^ Time.get_ticks_msec()
+	if fresh_seed == 0 or fresh_seed == previous_seed:
+		fresh_seed = previous_seed + 1
+		if fresh_seed == 0:
+			fresh_seed = 1
+	initialize_tundra_route(fresh_seed)
+	return route_seed
+
+
 func record_route_choice(depth: int, route_key: String) -> void:
 	if select_route_node(route_key):
 		activate_pending_route_node()
