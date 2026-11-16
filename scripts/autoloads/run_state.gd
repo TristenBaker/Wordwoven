@@ -88,6 +88,10 @@ var pending_victory_letter: LetterStats = null
 var recruitment_encounter: int = -1
 var recruitment_stock: Array[Dictionary] = []
 
+# A visual guest snapshot, stable across tavern activities in this shop phase.
+var tavern_guest_phase: int = -1
+var tavern_guest_letter: LetterStats = null
+
 # 1-based index of the next encounter; the last one is the boss.
 var encounter_index: int = 1
 
@@ -168,6 +172,8 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	pending_victory_letter = null
 	recruitment_encounter = -1
 	recruitment_stock = []
+	tavern_guest_phase = -1
+	tavern_guest_letter = null
 	encounter_index = 1
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
@@ -347,6 +353,25 @@ func clear_pending_victory() -> void:
 	pending_victory_gold = 0
 	pending_relic_choices = []
 	pending_victory_letter = null
+
+
+## The guest is presentation only: never consumes or changes an owned tile.
+func tavern_guest_for_shop() -> LetterStats:
+	var phase := 0
+	for completed: int in completed_encounters:
+		phase = maxi(phase, completed)
+	if tavern_guest_letter != null and tavern_guest_phase == phase:
+		return tavern_guest_letter
+	var candidates: Array[LetterStats] = combat_letters().duplicate()
+	candidates.append_array(letter_inventory)
+	if candidates.is_empty():
+		tavern_guest_letter = LetterStats.create_item(
+			String.chr(97 + randi_range(0, 25)), randi_range(0, LetterStats.Element.size() - 1)
+		)
+	else:
+		tavern_guest_letter = candidates.pick_random().duplicate(true) as LetterStats
+	tavern_guest_phase = phase
+	return tavern_guest_letter
 
 
 func combat_letters() -> Array[LetterStats]:

@@ -10,6 +10,11 @@ func _run() -> void:
 	await get_tree().process_frame
 	var room: TavernPanorama = hub.panorama
 	assert(room._points.size() == 6)
+	for id: String in ["bartender", "dealer", "forge"]:
+		assert(room._points[id].badge.has_meta("poi_icon"))
+		assert(room._indicators[id].has_meta("poi_icon"))
+		assert(room._indicators[id].text.is_empty())
+		assert(not room._points[id].button.tooltip_text.is_empty())
 	assert(room._clamp_camera(Vector2(-100, -100)) == Vector2.ZERO)
 	assert(room._clamp_camera(Vector2(99999, 99999)) == (room.ROOM_SIZE - room.size).max(Vector2.ZERO))
 	var initial := room.camera
@@ -42,6 +47,15 @@ func _run() -> void:
 		var center: Vector2 = room._points[id].center - room.camera
 		assert(Rect2(Vector2.ZERO, room.size).has_point(center))
 		assert(not room._indicators[id].visible)
+		if id in ["bartender", "dealer", "forge"]:
+			assert(room._hotspot_at(room._points[id].badge.get_global_rect().get_center()) == room._points[id].button)
+		var visible_markers: Array[Button] = []
+		for marker: Button in room._indicators.values():
+			if marker.visible:
+				assert(Rect2(Vector2.ZERO, room.size).encloses(marker.get_rect()))
+				for other: Button in visible_markers:
+					assert(not marker.get_rect().intersects(other.get_rect()))
+				visible_markers.append(marker)
 	# A drag that begins over an interactive table must not open its menu.
 	room.focus_poi("minigames")
 	room.camera = room._target
@@ -118,7 +132,7 @@ func _run() -> void:
 		await RenderingServer.frame_post_draw
 		DirAccess.make_dir_recursive_absolute("res://.tmp/tavern")
 		get_viewport().get_texture().get_image().save_png("res://.tmp/tavern/overview.png")
-		for id: String in ["dealer", "minigames"]:
+		for id: String in ["bartender", "dealer", "forge", "minigames"]:
 			room.focus_poi(id)
 			room.camera = room._target
 			room._turning = false

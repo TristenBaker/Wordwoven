@@ -4,6 +4,7 @@ extends Control
 const ROOM_SIZE := Vector2(2560, 1440)
 const DRAG_THRESHOLD := 8.0
 const BUTTON_THEME := preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+const ICON_MARKER := preload("res://scripts/tavern/tavern_poi_marker.gd")
 static var saved_center := Vector2(1280, 540)
 
 var world: Control
@@ -12,6 +13,7 @@ var _target := Vector2.ZERO
 var _turning := false
 var _points: Dictionary = {}
 var _indicators: Dictionary = {}
+var _actor_hotspots: Array[Button] = []
 var blocked: Callable
 var _pointer_down := false
 var _dragged := false
@@ -97,7 +99,7 @@ func prop(title: String, rect: Rect2, color: Color, text_size: int = 24) -> Pane
 	return panel
 
 
-func add_poi(id: String, title: String, rect: Rect2, button: Button) -> void:
+func add_poi(id: String, title: String, rect: Rect2, button: Button, icon_path: String = "") -> void:
 	button.reparent(world, false)
 	button.set_anchors_and_offsets_preset(PRESET_TOP_LEFT)
 	button.text = ""
@@ -113,15 +115,33 @@ func add_poi(id: String, title: String, rect: Rect2, button: Button) -> void:
 		style.set_border_width_all(2)
 		style.set_corner_radius_all(12)
 		button.add_theme_stylebox_override(state, style)
-	var badge := Label.new()
-	badge.text = "◆ " + title
-	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge.position = Vector2(0, button.size.y - 30)
-	badge.size = Vector2(button.size.x, 30)
-	badge.add_theme_font_size_override("font_size", 20)
-	badge.add_theme_color_override("font_color", Color("ffe0a2"))
-	badge.add_theme_color_override("font_outline_color", Color("100b08"))
-	badge.add_theme_constant_override("outline_size", 7)
+	var icon: Texture2D
+	if not icon_path.is_empty():
+		var source := load(icon_path) as Texture2D
+		var atlas := AtlasTexture.new()
+		atlas.atlas = source
+		atlas.region = source.get_image().get_used_rect()
+		icon = atlas
+	var badge: Control
+	if icon != null:
+		var marker := ICON_MARKER.new()
+		marker.setup(icon)
+		marker.position = Vector2(button.size.x * 0.5 - 46, button.size.y - 100)
+		marker.size = Vector2(92, 92)
+		button.mouse_entered.connect(func(): marker.highlighted = true)
+		button.mouse_exited.connect(func(): marker.highlighted = false)
+		badge = marker
+	else:
+		var label := Label.new()
+		label.text = "◆ " + title
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.position = Vector2(0, button.size.y - 30)
+		label.size = Vector2(button.size.x, 30)
+		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_color_override("font_color", Color("ffe0a2"))
+		label.add_theme_color_override("font_outline_color", Color("100b08"))
+		label.add_theme_constant_override("outline_size", 7)
+		badge = label
 	badge.mouse_filter = MOUSE_FILTER_IGNORE
 	button.add_child(badge)
 	_points[id] = {"center": button.position + button.size * 0.5, "title": title, "badge": badge, "button": button}
@@ -130,9 +150,29 @@ func add_poi(id: String, title: String, rect: Rect2, button: Button) -> void:
 	indicator.theme_type_variation = &"WordWovenActionButton"
 	indicator.size = Vector2(175, 42)
 	indicator.tooltip_text = "Look toward " + title
+	indicator.mouse_default_cursor_shape = CURSOR_POINTING_HAND
+	if icon != null:
+		indicator.theme_type_variation = &""
+		indicator.set_meta("poi_icon", true)
+		indicator.size = Vector2(80, 80)
+		for state: String in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+			indicator.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+		var marker := ICON_MARKER.new()
+		marker.name = "Direction"
+		marker.setup(icon)
+		indicator.add_child(marker)
+		marker.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		indicator.mouse_entered.connect(func(): marker.highlighted = true)
+		indicator.mouse_exited.connect(func(): marker.highlighted = false)
+		indicator.focus_entered.connect(func(): marker.highlighted = true)
+		indicator.focus_exited.connect(func(): marker.highlighted = false)
 	indicator.pressed.connect(focus_poi.bind(id))
 	add_child(indicator)
 	_indicators[id] = indicator
+
+
+func register_actor_hotspot(button: Button) -> void:
+	_actor_hotspots.append(button)
 
 
 func focus_poi(id: String) -> void:
@@ -199,6 +239,16 @@ func _input(event: InputEvent) -> void:
 
 
 func _hotspot_at(point: Vector2) -> Button:
+	# Nearby NPC regions can overlap an icon (notably the forge beside the
+	# dealer). An explicit icon click always wins over the larger regions.
+	for poi: Dictionary in _points.values():
+		var badge: Control = poi.badge
+		if badge.has_meta("poi_icon") and badge.visible and badge.get_global_rect().has_point(point):
+			return poi.button
+	for button: Button in _actor_hotspots:
+		if is_instance_valid(button) and button.is_visible_in_tree() and not button.disabled \
+				and button.get_global_rect().has_point(point):
+			return button
 	for poi: Dictionary in _points.values():
 		var button: Button = poi.button
 		if button.get_global_rect().has_point(point):
@@ -222,7 +272,7 @@ func _clamp_camera(value: Vector2) -> Vector2:
 func _apply_camera() -> void:
 	world.position = -camera
 	saved_center = camera + size * 0.5
-	var slots := {"left": 0, "right": 0, "top": 0, "bottom": 0}
+	var slots := {"left": 170.0, "right": 170.0, "top": 230.0, "bottom": 230.0}
 	for id: String in _points:
 		var point: Vector2 = Vector2(_points[id].center) - camera
 		var indicator: Button = _indicators[id]
@@ -239,12 +289,16 @@ func _apply_camera() -> void:
 		_points[id].badge.visible = side.is_empty()
 		if side.is_empty():
 			continue
-		var slot: int = slots[side]
-		slots[side] += 1
+		var slot: float = slots[side]
+		slots[side] += indicator.size.y + 10 if side in ["left", "right"] else indicator.size.x + 10
 		match side:
-			"left": indicator.position = Vector2(14, 170 + slot * 50)
-			"right": indicator.position = Vector2(size.x - 189, 170 + slot * 50)
-			"top": indicator.position = Vector2(230 + slot * 185, 110)
-			"bottom": indicator.position = Vector2(230 + slot * 185, size.y - 100)
+			"left": indicator.position = Vector2(14, slot)
+			"right": indicator.position = Vector2(size.x - 14 - indicator.size.x, slot)
+			"top": indicator.position = Vector2(slot, 110)
+			"bottom": indicator.position = Vector2(slot, size.y - 20 - indicator.size.y)
 		var arrow: String = {"left": "←", "right": "→", "top": "↑", "bottom": "↓"}[side]
-		indicator.text = "%s %s" % [arrow, _points[id].title]
+		if indicator.has_meta("poi_icon"):
+			indicator.text = ""
+			indicator.get_node("Direction").direction = {"left": Vector2.LEFT, "right": Vector2.RIGHT, "top": Vector2.UP, "bottom": Vector2.DOWN}[side]
+		else:
+			indicator.text = "%s %s" % [arrow, _points[id].title]
