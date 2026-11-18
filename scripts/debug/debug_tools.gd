@@ -13,33 +13,51 @@ var forced_tags: Array[String] = []
 # Set from the overlay; DeckManager deals these at the next refill.
 var forced_letters: String = ""
 var free_map_select: bool = false
+var _profile_letters: Array[LetterStats] = []
+var _character_matrix: Window
+var _matrix_toggle: CheckButton
+
+@onready var profile_select: OptionButton = $Panel/Scroll/Box/ProfileRow/LetterSelect
+@onready var profile_one_button: Button = $Panel/Scroll/Box/ProfileRow/OneUse
+@onready var profile_five_button: Button = $Panel/Scroll/Box/ProfileRow/FiveUses
 
 @onready var panel: PanelContainer = $Panel
 @onready var breakdown_label: RichTextLabel = \
-		$Panel/Box/BreakdownLabel
+		$Panel/Scroll/Box/BreakdownLabel
 @onready var sim_word_input: LineEdit = \
-		$Panel/Box/SimRow/SimWordInput
+		$Panel/Scroll/Box/SimRow/SimWordInput
 @onready var sim_tag_input: LineEdit = \
-		$Panel/Box/SimRow/SimTagInput
+		$Panel/Scroll/Box/SimRow/SimTagInput
 @onready var sim_result_label: Label = \
-		$Panel/Box/SimResultLabel
-@onready var score_button: Button = $Panel/Box/SimRow/ScoreButton
-@onready var gold_button: Button = $Panel/Box/CheatRow/GoldButton
-@onready var heal_button: Button = $Panel/Box/CheatRow/HealButton
+		$Panel/Scroll/Box/SimResultLabel
+@onready var score_button: Button = $Panel/Scroll/Box/SimRow/ScoreButton
+@onready var gold_button: Button = $Panel/Scroll/Box/CheatRow/GoldButton
+@onready var heal_button: Button = $Panel/Scroll/Box/CheatRow/HealButton
 @onready var tavern_button: Button = \
-		$Panel/Box/CheatRow/TavernButton
-@onready var auto_kill_button: Button = $Panel/Box/EncounterRow/AutoKillButton
-@onready var free_map_button: Button = $Panel/Box/EncounterRow/FreeMapButton
-@onready var playtest_run_button: Button = $Panel/Box/PlaytestRunButton
-@onready var hangman_tier_select: OptionButton = $Panel/Box/HangmanRow/TierSelect
-@onready var hangman_reset_button: Button = $Panel/Box/HangmanRow/ResetButton
-@onready var tags_input: LineEdit = $Panel/Box/ForceRow/TagsInput
+		$Panel/Scroll/Box/CheatRow/TavernButton
+@onready var auto_kill_button: Button = $Panel/Scroll/Box/EncounterRow/AutoKillButton
+@onready var free_map_button: Button = $Panel/Scroll/Box/EncounterRow/FreeMapButton
+@onready var playtest_run_button: Button = $Panel/Scroll/Box/PlaytestRunButton
+@onready var hangman_tier_select: OptionButton = $Panel/Scroll/Box/HangmanRow/TierSelect
+@onready var hangman_reset_button: Button = $Panel/Scroll/Box/HangmanRow/ResetButton
+@onready var tags_input: LineEdit = $Panel/Scroll/Box/ForceRow/TagsInput
 @onready var letters_input: LineEdit = \
-		$Panel/Box/ForceRow/LettersInput
+		$Panel/Scroll/Box/ForceRow/LettersInput
 
 
 func _ready() -> void:
 	panel.hide()
+	_matrix_toggle = CheckButton.new()
+	_matrix_toggle.text = "Character matrix"
+	$Panel/Scroll/Box.add_child(_matrix_toggle)
+	$Panel/Scroll/Box.move_child(_matrix_toggle, $Panel/Scroll/Box/FeatureRow.get_index() + 1)
+	_matrix_toggle.toggled.connect(_toggle_character_matrix)
+	get_viewport().size_changed.connect(_fit_panel_to_viewport)
+	_fit_panel_to_viewport()
+	profile_one_button.pressed.connect(_simulate_profile_uses.bind(1))
+	profile_five_button.pressed.connect(_simulate_profile_uses.bind(5))
+	$Panel/Scroll/Box/FeatureRow/BodyButton.pressed.connect(_cycle_profile_feature.bind(true))
+	$Panel/Scroll/Box/FeatureRow/FaceButton.pressed.connect(_cycle_profile_feature.bind(false))
 	score_button.pressed.connect(_on_score_pressed)
 	gold_button.pressed.connect(_on_gold_pressed)
 	heal_button.pressed.connect(_on_heal_pressed)
@@ -52,6 +70,28 @@ func _ready() -> void:
 	tags_input.text_changed.connect(_on_tags_changed)
 	letters_input.text_changed.connect(_on_letters_changed)
 	EventBus.word_resolved.connect(_on_word_resolved)
+
+
+func _toggle_character_matrix(open: bool) -> void:
+	if not is_instance_valid(_character_matrix):
+		if not open:
+			return
+		_character_matrix = preload("res://scripts/debug/character_matrix.gd").new()
+		add_child(_character_matrix)
+		_character_matrix.close_requested.connect(func():
+			_character_matrix.hide()
+			_matrix_toggle.set_pressed_no_signal(false))
+	if open:
+		_character_matrix.popup_centered(Vector2i(1000, 620).min(Vector2i(get_viewport().get_visible_rect().size) - Vector2i(40, 60)))
+	else:
+		_character_matrix.hide()
+
+
+func _fit_panel_to_viewport() -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	panel.size = Vector2(minf(412.0, maxf(0.0, viewport_size.x - 16.0)),
+		minf(672.0, maxf(0.0, viewport_size.y - 16.0)))
+	panel.position = Vector2(viewport_size.x - panel.size.x - 8.0, 8.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -142,6 +182,7 @@ func _on_tavern_pressed() -> void:
 
 
 func _refresh_encounter_buttons() -> void:
+	_refresh_profile_letters()
 	auto_kill_button.disabled = get_tree().current_scene == null or \
 		get_tree().current_scene.scene_file_path != ScenePaths.COMBAT
 	var in_hangman: bool = get_tree().current_scene != null and \
@@ -198,3 +239,65 @@ func _on_tags_changed(new_text: String) -> void:
 func _on_letters_changed(new_text: String) -> void:
 	PlayerStats.mark_debug_assisted()
 	forced_letters = new_text.strip_edges().to_lower()
+
+
+func _refresh_profile_letters() -> void:
+	var previous: LetterStats = null
+	if profile_select.selected >= 0 and profile_select.selected < _profile_letters.size():
+		previous = _profile_letters[profile_select.selected]
+	_profile_letters = RunState.combat_letters().duplicate()
+	for stats: LetterStats in RunState.letter_inventory:
+		if not _profile_letters.has(stats):
+			_profile_letters.append(stats)
+	profile_select.clear()
+	for index in _profile_letters.size():
+		var stats: LetterStats = _profile_letters[index]
+		profile_select.add_item("%d: %s %s · %d uses · %d scars" % [
+			index + 1, stats.letter.to_upper(), stats.element_name_text(),
+			stats.accepted_uses, stats.scar_count()])
+		if stats == previous:
+			profile_select.select(index)
+	var empty := _profile_letters.is_empty()
+	if empty:
+		profile_select.add_item("Start a run to test letters")
+	profile_select.disabled = empty
+	profile_one_button.disabled = empty
+	profile_five_button.disabled = empty
+	$Panel/Scroll/Box/FeatureRow/BodyButton.disabled = empty
+	$Panel/Scroll/Box/FeatureRow/FaceButton.disabled = empty
+
+
+func _cycle_profile_feature(body: bool) -> void:
+	_refresh_profile_letters()
+	if _profile_letters.is_empty():
+		return
+	var stats := _profile_letters[profile_select.selected]
+	if not PlayerProfile.cosmetic_for_letter(stats.letter).is_empty():
+		sim_result_label.text = "Choose Default in Cosmetics to preview these features."
+		return
+	PlayerStats.mark_debug_assisted()
+	var selected := CharacterFeatures.choices(stats)
+	if body:
+		stats.body_feature = (selected.x + 1) % 3
+	else:
+		stats.face_feature = (selected.y + 1) % 3
+	EventBus.emit_deck_changed()
+	panel.hide()
+	EventBus.emit_debug_toggled(false)
+	LetterInspector.open_for(stats)
+
+
+func _simulate_profile_uses(count: int) -> void:
+	# Refresh first so a replaced/sold item cannot be modified by a stale selection.
+	_refresh_profile_letters()
+	if _profile_letters.is_empty():
+		return
+	var stats: LetterStats = _profile_letters[profile_select.selected]
+	PlayerStats.mark_debug_assisted()
+	for unused in count:
+		stats.record_word_use("DEBUG", 0.0)
+	EventBus.emit_deck_changed()
+	_refresh_profile_letters()
+	panel.hide()
+	EventBus.emit_debug_toggled(false)
+	LetterInspector.open_for(stats)

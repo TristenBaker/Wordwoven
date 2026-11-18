@@ -41,6 +41,25 @@ func _run() -> void:
 	tile.setup(stats)
 	await get_tree().process_frame
 	check(tile.get_node_or_null("Appearance") != null, "Tiles show personal appearance")
+	RunState.use_itemized_letters = false
+	RunState.deck.assign([stats, other])
+	RunState.letter_inventory.clear()
+	DebugTools._refresh_profile_letters()
+	DebugTools.profile_select.select(1)
+	DebugTools._simulate_profile_uses(5)
+	check(other.accepted_uses == 5 and other.scar_count() == 1, "Debug simulation advances selected duplicate only")
+	check(stats.accepted_uses == 5, "Debug simulation leaves other letters unchanged")
+	DebugTools.profile_select.select(0)
+	DebugTools._simulate_profile_uses(5)
+	check(stats.accepted_uses == 10 and stats.scar_count() == 2, "Debug simulation reaches second scar tier")
+	DebugTools._simulate_profile_uses(5)
+	DebugTools._simulate_profile_uses(1)
+	check(stats.accepted_uses == 16 and stats.scar_count() == 3, "Debug simulation caps scars at three")
+	check(stats.best_word == "ARC" and stats.best_word_damage == 45.0 and stats.level == 20, "Debug simulation preserves best word and level")
+	check(inspector._history_label.text.contains("16 uses"), "Debug simulation refreshes open profile")
+	RunState.deck.clear()
+	DebugTools._simulate_profile_uses(5)
+	check(DebugTools.profile_five_button.disabled, "Debug simulation handles empty roster")
 	if "--preview" in OS.get_cmdline_user_args():
 		LetterInspector.open_for(stats)
 		await get_tree().process_frame

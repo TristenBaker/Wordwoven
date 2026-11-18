@@ -41,6 +41,9 @@ const LEVEL_POWER_STEP: float = preload("res://data/balance/tuning.gd").LETTER_S
 @export var modifier: Modifier = Modifier.NONE
 # Stored on the individual resource, including duplicate letters.
 @export var appearance_seed: int = randi_range(0, 2147483647)
+## -1 picks a stable feature from appearance_seed; explicit indices allow authoring.
+@export_range(-1, 2) var body_feature: int = -1
+@export_range(-1, 2) var face_feature: int = -1
 @export var accepted_uses: int = 0
 @export var best_word: String = ""
 @export var best_word_damage: float = 0.0

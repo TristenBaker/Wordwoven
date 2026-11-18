@@ -21,27 +21,29 @@ layer = 100
 script = ExtResource("1_debug")
 
 [node name="Panel" type="PanelContainer" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -420.0
+offset_left = 860.0
 offset_top = 8.0
-offset_right = -8.0
+offset_right = 1272.0
 offset_bottom = 680.0
 theme_override_styles/panel = SubResource("1_panel_style")
 
-[node name="Box" type="VBoxContainer" parent="Panel"]
+[node name="Scroll" type="ScrollContainer" parent="Panel"]
+layout_mode = 2
+follow_focus = true
+
+[node name="Box" type="VBoxContainer" parent="Panel/Scroll"]
+size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="Panel/Box"]
+[node name="TitleLabel" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "DEBUG (F12)"
 horizontal_alignment = 1
 
-[node name="BreakdownLabel" type="RichTextLabel" parent="Panel/Box"]
-custom_minimum_size = Vector2(0, 240)
+[node name="BreakdownLabel" type="RichTextLabel" parent="Panel/Scroll/Box"]
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 14
@@ -49,58 +51,58 @@ theme_override_font_sizes/bold_font_size = 16
 bbcode_enabled = true
 text = "play a word to see its breakdown"
 
-[node name="SimRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="SimRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="SimWordInput" type="LineEdit" parent="Panel/Box/SimRow"]
+[node name="SimWordInput" type="LineEdit" parent="Panel/Scroll/Box/SimRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "word"
 
-[node name="SimTagInput" type="LineEdit" parent="Panel/Box/SimRow"]
+[node name="SimTagInput" type="LineEdit" parent="Panel/Scroll/Box/SimRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "tag"
 
-[node name="ScoreButton" type="Button" parent="Panel/Box/SimRow"]
+[node name="ScoreButton" type="Button" parent="Panel/Scroll/Box/SimRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 text = "Score"
 
-[node name="SimResultLabel" type="Label" parent="Panel/Box"]
+[node name="SimResultLabel" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "-"
 
-[node name="CheatRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="CheatRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="GoldButton" type="Button" parent="Panel/Box/CheatRow"]
+[node name="GoldButton" type="Button" parent="Panel/Scroll/Box/CheatRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 text = "+100 Gold"
 
-[node name="HealButton" type="Button" parent="Panel/Box/CheatRow"]
+[node name="HealButton" type="Button" parent="Panel/Scroll/Box/CheatRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 text = "Full Heal"
 
-[node name="TavernButton" type="Button" parent="Panel/Box/CheatRow"]
+[node name="TavernButton" type="Button" parent="Panel/Scroll/Box/CheatRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 text = "To Tavern"
 
-[node name="EncounterRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="EncounterRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="AutoKillButton" type="Button" parent="Panel/Box/EncounterRow"]
+[node name="AutoKillButton" type="Button" parent="Panel/Scroll/Box/EncounterRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
@@ -108,7 +110,7 @@ size_flags_horizontal = 3
 tooltip_text = "Immediately defeat the current enemy."
 text = "DEV: Auto Kill"
 
-[node name="FreeMapButton" type="Button" parent="Panel/Box/EncounterRow"]
+[node name="FreeMapButton" type="Button" parent="Panel/Scroll/Box/EncounterRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
@@ -116,18 +118,18 @@ size_flags_horizontal = 3
 tooltip_text = "Open the Tundra map and pick any encounter, regardless of route progress."
 text = "Pick Any Encounter"
 
-[node name="PlaytestRunButton" type="Button" parent="Panel/Box"]
+[node name="PlaytestRunButton" type="Button" parent="Panel/Scroll/Box"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
 tooltip_text = "Start one combat followed by every minigame on a linear route."
 text = "DEV: Start Playtest Run"
 
-[node name="HangmanRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="HangmanRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="TierSelect" type="OptionButton" parent="Panel/Box/HangmanRow"]
+[node name="TierSelect" type="OptionButton" parent="Panel/Scroll/Box/HangmanRow"]
 theme = ExtResource("ww_buttons")
 layout_mode = 2
 size_flags_horizontal = 3
@@ -143,7 +145,7 @@ popup/item_2/id = 2
 popup/item_3/text = "Tier 3 · 10+ letters"
 popup/item_3/id = 3
 
-[node name="ResetButton" type="Button" parent="Panel/Box/HangmanRow"]
+[node name="ResetButton" type="Button" parent="Panel/Scroll/Box/HangmanRow"]
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 layout_mode = 2
@@ -151,16 +153,60 @@ size_flags_horizontal = 3
 tooltip_text = "Restart Hangman with a new word and full timer. Testing resets award nothing."
 text = "Reset Hangman"
 
-[node name="ForceRow" type="HBoxContainer" parent="Panel/Box"]
+[node name="ForceRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="TagsInput" type="LineEdit" parent="Panel/Box/ForceRow"]
+[node name="TagsInput" type="LineEdit" parent="Panel/Scroll/Box/ForceRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "force tags (a,b)"
 
-[node name="LettersInput" type="LineEdit" parent="Panel/Box/ForceRow"]
+[node name="LettersInput" type="LineEdit" parent="Panel/Scroll/Box/ForceRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "force letters"
+
+[node name="ProfileRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LetterSelect" type="OptionButton" parent="Panel/Scroll/Box/ProfileRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+tooltip_text = "Simulate accepted combat uses for an equipped or inventory letter. Scars unlock at 5, 10, and 15 uses."
+
+[node name="OneUse" type="Button" parent="Panel/Scroll/Box/ProfileRow"]
+layout_mode = 2
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "+1 use"
+tooltip_text = "Record one DEBUG word at zero damage and open the profile."
+
+[node name="FiveUses" type="Button" parent="Panel/Scroll/Box/ProfileRow"]
+layout_mode = 2
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "+5 uses"
+tooltip_text = "Record five DEBUG words at zero damage and open the profile."
+
+[node name="FeatureRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BodyButton" type="Button" parent="Panel/Scroll/Box/FeatureRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "Next body"
+tooltip_text = "Cycle the selected letter's default portrait body and open its profile."
+
+[node name="FaceButton" type="Button" parent="Panel/Scroll/Box/FeatureRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+text = "Next face"
+tooltip_text = "Cycle the selected letter's default portrait face and open its profile."

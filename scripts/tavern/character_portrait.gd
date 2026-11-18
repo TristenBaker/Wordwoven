@@ -1,9 +1,7 @@
 class_name CharacterPortrait
 extends PanelContainer
-## Shows the selected party member's full character sprite with its
-## level. Each class lists one texture per level tier in the inspector;
-## levels past the end of a list reuse its last texture, so new tiers
-## can be added without code changes.
+## Shows the selected party member's modular portrait or custom cosmetic.
+## Tier textures remain exported for compatibility with existing scenes.
 
 @export var warrior_tiers: Array[Texture2D] = []
 @export var healer_tiers: Array[Texture2D] = []
@@ -13,6 +11,7 @@ var _stats: LetterStats
 var _inspect_button: Button
 var _pop_tween: Tween = null
 var _idle_tween: Tween = null
+var _appearance: Control
 
 @onready var portrait: TextureRect = %Portrait
 @onready var level_label: Label = %LevelLabel
@@ -21,6 +20,11 @@ var _idle_tween: Tween = null
 
 
 func _ready() -> void:
+	_appearance = preload("res://scripts/ui/letter_appearance.gd").new()
+	_appearance.set("history_only", true)
+	_appearance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait.add_child(_appearance)
+	_appearance.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	portrait.resized.connect(_center_pivot)
 	_start_idle_bob()
 	_inspect_button = LetterInspector.add_inspect_button($Margin/Stage)
@@ -31,6 +35,8 @@ func _ready() -> void:
 ## Displays a party member, or an empty prompt when stats is null.
 func show_member(stats: LetterStats) -> void:
 	_stats = stats
+	_appearance.set("stats", stats)
+	_appearance.queue_redraw()
 	var has_member: bool = stats != null
 	_inspect_button.visible = has_member
 	portrait.visible = has_member
@@ -40,6 +46,7 @@ func show_member(stats: LetterStats) -> void:
 	if not has_member:
 		return
 	portrait.texture = texture_for(stats)
+	portrait.self_modulate = stats.appearance_color()
 	# Placeholder level readout until per-level art exists.
 	level_label.text = str(stats.level)
 	name_label.text = "%s · %s" % [
@@ -48,13 +55,9 @@ func show_member(stats: LetterStats) -> void:
 	_play_pop()
 
 
-## The texture for a member's class at its current level tier.
+## Stable body/face pairing; a selected cosmetic takes priority.
 func texture_for(stats: LetterStats) -> Texture2D:
-	var tiers: Array[Texture2D] = _tiers_for(stats.element)
-	if tiers.is_empty():
-		return null
-	var default_texture: Texture2D = tiers[clampi(stats.level - 1, 0, tiers.size() - 1)]
-	return PlayerProfile.cosmetic_texture(stats.letter, default_texture)
+	return PlayerProfile.cosmetic_texture(stats.letter, CharacterFeatures.portrait(stats))
 
 
 func _tiers_for(element: int) -> Array[Texture2D]:

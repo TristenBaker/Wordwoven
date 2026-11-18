@@ -13,8 +13,8 @@ func check(condition: bool, message: String) -> void:
 
 
 func _ready() -> void:
-	check(DebugTools.has_node("Panel/Box/EncounterRow/FreeMapButton"), "F12 exposes free map selection")
-	check(DebugTools.has_node("Panel/Box/HangmanRow/TierSelect"), "F12 exposes Hangman tier selection")
+	check(DebugTools.has_node("Panel/Scroll/Box/EncounterRow/FreeMapButton"), "F12 exposes free map selection")
+	check(DebugTools.has_node("Panel/Scroll/Box/HangmanRow/TierSelect"), "F12 exposes Hangman tier selection")
 	RunState.start_new_run()
 	RunState.selected_biome = "tundra"
 	RunState.initialize_tundra_route(7319)

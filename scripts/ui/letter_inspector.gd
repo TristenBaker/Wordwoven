@@ -53,12 +53,15 @@ func inspect(stats: LetterStats) -> void:
 	_level_label.text = "Level %d" % stats.level
 	_level_label.add_theme_color_override("font_color", color)
 	_portrait.texture = PlayerProfile.cosmetic_texture(
-		stats.letter, _portrait_for(stats.element)
+		stats.letter, CharacterFeatures.portrait(stats)
 	)
 	_portrait.self_modulate = stats.appearance_color()
+	_portrait.tooltip_text = CharacterFeatures.description(stats) \
+		if PlayerProfile.cosmetic_for_letter(stats.letter).is_empty() else "Custom cosmetic"
 	_appearance.set("stats", stats)
 	_appearance.queue_redraw()
 	_history_label.text = stats.history_text()
+	_history_label.tooltip_text = CharacterScars.description(stats)
 	_description_label.text = stats.element_detail_text()
 	_throughput_label.text = stats.throughput_text()
 	_rebuild_powers(stats, color)
