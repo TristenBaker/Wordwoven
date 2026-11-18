@@ -40,6 +40,7 @@ func _record_run_once() -> void:
 		RunState.run_score_recorded = true
 	else:
 		_leaderboard_entries = leaderboard.entries()
+	RunArchive.new().record_current(_run)
 
 
 func _build_tally() -> String:

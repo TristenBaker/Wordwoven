@@ -3,10 +3,12 @@ extends Control
 ## Reusable local run history shown from the title screen and tavern.
 
 const BUTTON_THEME := preload("res://assets/Themes/WordWoven_Button_Theme.tres")
+const FRAME := preload("res://assets/Themes/encounters/information_panel.tres")
+const FONT := preload("res://assets/Fonts/Junicode.ttf")
 
 var _leaderboard: RunLeaderboard
 var _mode_key: String = "story"
-var _list: RichTextLabel
+var _list: VBoxContainer
 var _story_button: Button
 var _endless_button: Button
 
@@ -42,9 +44,9 @@ func _build() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(620, 520)
+	panel.custom_minimum_size = Vector2(1000, 610)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.add_theme_stylebox_override("panel", _panel_style())
+	panel.add_theme_stylebox_override("panel", FRAME)
 	center.add_child(panel)
 
 	var content := VBoxContainer.new()
@@ -58,7 +60,15 @@ func _build() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_color_override("font_color", Color("ffd487"))
 	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_font_override("font", preload("res://assets/Fonts/BLKCHCRY.TTF"))
 	title_row.add_child(title)
+	var loadouts := Button.new()
+	loadouts.theme = BUTTON_THEME
+	loadouts.theme_type_variation = &"WordWovenActionButton"
+	loadouts.text = "Past Loadouts"
+	loadouts.custom_minimum_size = Vector2(140, 38)
+	loadouts.pressed.connect(func(): RunArchiveOverlay.open_in(self))
+	title_row.add_child(loadouts)
 	var close := Button.new()
 	close.theme = BUTTON_THEME
 	close.theme_type_variation = &"WordWovenActionButton"
@@ -72,6 +82,7 @@ func _build() -> void:
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.add_theme_color_override("font_color", Color("ead8b3"))
 	subtitle.add_theme_font_size_override("font_size", 17)
+	subtitle.add_theme_font_override("font", FONT)
 	content.add_child(subtitle)
 
 	var tabs := HBoxContainer.new()
@@ -88,15 +99,15 @@ func _build() -> void:
 	_story_button.pressed.connect(_select_mode.bind("story"))
 	_endless_button.pressed.connect(_select_mode.bind("endless"))
 
-	_list = RichTextLabel.new()
-	_list.bbcode_enabled = true
-	_list.fit_content = false
-	_list.scroll_active = true
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.custom_minimum_size = Vector2(560, 290)
-	_list.add_theme_font_size_override("normal_font_size", 19)
-	_list.add_theme_color_override("default_color", Color("f4e9d0"))
-	content.add_child(_list)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll.custom_minimum_size.y = 360
+	content.add_child(scroll)
+	_list = VBoxContainer.new()
+	_list.size_flags_horizontal = SIZE_EXPAND_FILL
+	_list.add_theme_constant_override("separation", 10)
+	scroll.add_child(_list)
 	_refresh_list()
 
 
@@ -118,43 +129,87 @@ func _select_mode(key: String) -> void:
 
 
 func _refresh_list() -> void:
-	_list.text = _entry_text(_leaderboard.entries(_mode_key), _mode_key)
-
-
-func _entry_text(entries: Array[Dictionary], mode_key: String) -> String:
+	for child: Node in _list.get_children():
+		_list.remove_child(child)
+		child.queue_free()
+	(_list.get_parent() as ScrollContainer).scroll_vertical = 0
+	var entries := _leaderboard.entries(_mode_key)
 	if entries.is_empty():
-		return "[center]No completed %s runs yet.\n\nFinish a run to add its score here.[/center]" % mode_key.capitalize()
-	var lines: Array[String] = []
+		_list.add_child(_label("No completed %s runs yet.\nFinish a run to add its score here." % _mode_key.capitalize(), 21))
+		return
+	var archives := RunArchive.new().entries()
 	for index: int in entries.size():
-		var entry: Dictionary = entries[index]
-		var result := "Victory" if bool(entry.get("victory", false)) else "Defeat"
-		var color := "9ff59b" if result == "Victory" else "e7a6a6"
-		lines.append("[color=#ffd487]#%d[/color]  [b]%d[/b]  [color=#%s]%s[/color]  ·  %s  ·  %d foes  ·  %d gold" % [
-			index + 1,
-			int(entry.get("score", 0)),
-			color,
-			result,
-			String(entry.get("biome", "Unknown")),
-			int(entry.get("enemies", 0)),
-			int(entry.get("gold_earned", 0)),
-		])
-	return "\n\n".join(lines)
+		_add_entry(index, entries[index], archives)
 
 
-func _panel_style() -> StyleBoxFlat:
+func _add_entry(index: int, entry: Dictionary, archives: Array[Dictionary]) -> void:
+	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("21150f")
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.border_color = Color("d89b46")
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
-	style.content_margin_left = 24
-	style.content_margin_top = 22
-	style.content_margin_right = 24
-	style.content_margin_bottom = 22
-	return style
+	style.bg_color = Color("101d2e")
+	style.border_color = Color("6d5b3b")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	panel.add_theme_stylebox_override("panel", style)
+	_list.add_child(panel)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 18)
+	panel.add_child(row)
+	var rank := _label("#%d" % (index + 1), 27, Color("e8c77e"))
+	rank.custom_minimum_size.x = 50
+	row.add_child(rank)
+	var score := _label(str(int(entry.get("score", 0))), 29, Color("fff0cf"))
+	score.custom_minimum_size.x = 110
+	row.add_child(score)
+	var details := RichTextLabel.new()
+	details.bbcode_enabled = true
+	details.fit_content = true
+	details.scroll_active = false
+	details.size_flags_horizontal = SIZE_EXPAND_FILL
+	details.custom_minimum_size.x = 300
+	details.add_theme_font_override("normal_font", FONT)
+	details.add_theme_font_override("bold_font", preload("res://assets/Fonts/Junicode-Bold.ttf"))
+	details.add_theme_font_size_override("normal_font_size", 19)
+	details.add_theme_font_size_override("bold_font_size", 19)
+	var victory: bool = bool(entry.get("victory", false))
+	details.text = "[color=#%s][b]%s[/b][/color] · %s\n%d foes · %d gold earned" % [
+		"9ff59b" if victory else "e7a6a6", "Victory" if victory else "Defeat", entry.get("biome", "Unknown"),
+		int(entry.get("enemies", 0)), int(entry.get("gold_earned", 0))]
+	if float(entry.get("recorded_at", 0)) > 0:
+		details.text += "\n[font_size=16][color=#b8ad98]%s[/color][/font_size]" % RunArchiveOverlay._date(float(entry.recorded_at))
+	row.add_child(details)
+	var saved := _archive_for_entry(entry, archives)
+	var view := Button.new()
+	view.theme = BUTTON_THEME
+	view.theme_type_variation = &"WordWovenActionButton"
+	view.text = "View Loadout"
+	view.custom_minimum_size.x = 145
+	view.disabled = saved.is_empty()
+	view.tooltip_text = "This run has no saved loadout." if saved.is_empty() else "View this run's final equipped letters and powers."
+	if not saved.is_empty():
+		view.pressed.connect(func(): RunArchiveOverlay.open_in(self, saved))
+	row.add_child(view)
+
+
+func _archive_for_entry(entry: Dictionary, archives: Array[Dictionary]) -> Dictionary:
+	var matched: Dictionary = {}
+	for archive: Dictionary in archives:
+		var summary: Dictionary = archive.summary
+		if absf(float(summary.get("recorded_at", 0)) - float(entry.get("recorded_at", -1))) < 0.001 \
+				and summary.get("mode", "Story") == entry.get("mode", "Story") \
+				and summary.get("score", -1) == entry.get("score", -2) \
+				and summary.get("victory", false) == entry.get("victory", false):
+			if not matched.is_empty():
+				return {} # Leave ambiguous legacy matches in the archive browser.
+			matched = archive
+	return matched
+
+
+func _label(text: String, size: int, color: Color = Color("e8dfce")) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", FONT)
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	return label

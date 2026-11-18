@@ -6,6 +6,7 @@ var failures := 0
 
 func _ready() -> void:
 	PlayerStats._persistence_enabled = false
+	OS.set_environment("WORDWOVEN_RUN_ARCHIVE_DIR", "res://.tmp/tavern/guest_test_" + Crypto.new().generate_random_bytes(8).hex_encode())
 	_run.call_deferred()
 
 

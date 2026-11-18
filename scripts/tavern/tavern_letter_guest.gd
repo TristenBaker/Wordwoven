@@ -4,6 +4,7 @@ const WALK_SPEED := 82.0
 const COLORS := [Color("ef735d"), Color("e4c34a"), Color("63b4ef"), Color("a3e9f7"), Color("79d37a"), Color("ca9264")]
 
 var stats: LetterStats
+var archived_guest: Dictionary = {}
 var cosmetic: CharacterCosmetic
 var floor_area: Rect2
 var blocked: Callable
@@ -25,6 +26,9 @@ func setup(letter: LetterStats, area: Rect2) -> void:
 	stats = letter
 	floor_area = area
 	cosmetic = PlayerProfile.combat_cosmetic_for(stats)
+	if not archived_guest.is_empty():
+		var saved_cosmetic := PlayerProfile.cosmetic_resource(String(archived_guest.tile.get("cosmetic", "")))
+		cosmetic = saved_cosmetic if saved_cosmetic != null else PlayerProfile.default_combat_cosmetic(stats.element)
 	sprite.sprite_frames = cosmetic.sprite_frames
 	_play(&"idle")
 	var frame := sprite.sprite_frames.get_frame_texture(sprite.animation, 0)
@@ -53,6 +57,10 @@ func setup(letter: LetterStats, area: Rect2) -> void:
 		info_button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	add_child(info_button)
 	info_button.set_letter_stats(stats)
+	if not archived_guest.is_empty():
+		# Historical guests open saved facts instead of today's damage tooltip.
+		info_button.tooltip_text = ""
+		info_button.letter_stats = null
 	info_button.pressed.connect(_open_information)
 	info_button.mouse_entered.connect(func(): sprite.self_modulate = Color(1.15, 1.15, 1.15))
 	info_button.mouse_exited.connect(func(): sprite.self_modulate = Color.WHITE)
@@ -105,7 +113,10 @@ func _play(action: StringName) -> void:
 func _open_information() -> void:
 	if get_tree().paused or (blocked.is_valid() and bool(blocked.call())):
 		return
-	LetterInspector.open_for(stats)
+	if archived_guest.is_empty():
+		LetterInspector.open_for(stats)
+	else:
+		RunArchiveOverlay.open_in(get_tree().root, archived_guest.run, archived_guest.tile)
 
 
 func _draw() -> void:

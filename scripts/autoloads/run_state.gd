@@ -22,6 +22,8 @@ var player_health: int = STARTING_HEALTH
 var gold: int = STARTING_GOLD
 var gold_earned_this_run: int = 0
 var run_score_recorded: bool = false
+var archive_run_id: String = ""
+var run_started_at: float = 0.0
 var run_mode: RunMode = RunMode.STORY
 var playtest_route: bool = false
 var has_unseen_inventory_items: bool = false
@@ -91,6 +93,7 @@ var recruitment_stock: Array[Dictionary] = []
 # A visual guest snapshot, stable across tavern activities in this shop phase.
 var tavern_guest_phase: int = -1
 var tavern_guest_letter: LetterStats = null
+var tavern_guest_archive: Dictionary = {}
 
 # 1-based index of the next encounter; the last one is the boss.
 var encounter_index: int = 1
@@ -135,6 +138,8 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	gold = STARTING_GOLD
 	gold_earned_this_run = 0
 	run_score_recorded = false
+	archive_run_id = Crypto.new().generate_random_bytes(16).hex_encode()
+	run_started_at = Time.get_unix_time_from_system()
 	has_unseen_inventory_items = false
 	relics = []
 	key_items = []
@@ -174,6 +179,7 @@ func start_new_run(mode: RunMode = RunMode.STORY) -> void:
 	recruitment_stock = []
 	tavern_guest_phase = -1
 	tavern_guest_letter = null
+	tavern_guest_archive = {}
 	encounter_index = 1
 	next_enemy_id = ""
 	pending_encounter_modifier.clear()
@@ -361,6 +367,11 @@ func tavern_guest_for_shop() -> LetterStats:
 	for completed: int in completed_encounters:
 		phase = maxi(phase, completed)
 	if tavern_guest_letter != null and tavern_guest_phase == phase:
+		return tavern_guest_letter
+	tavern_guest_archive = RunArchive.new().random_guest()
+	if not tavern_guest_archive.is_empty():
+		tavern_guest_letter = tavern_guest_archive.stats
+		tavern_guest_phase = phase
 		return tavern_guest_letter
 	var candidates: Array[LetterStats] = combat_letters().duplicate()
 	candidates.append_array(letter_inventory)

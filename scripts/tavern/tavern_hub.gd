@@ -81,7 +81,9 @@ func _add_letter_guest() -> void:
 	panorama.world.add_child(letter_guest)
 	var floor_area := Rect2(640, 740, 1200, 125)
 	letter_guest.position = Vector2(clampf(TavernPanorama.saved_center.x, 700, 1780), 805)
-	letter_guest.setup(RunState.tavern_guest_for_shop(), floor_area)
+	var guest_stats := RunState.tavern_guest_for_shop()
+	letter_guest.archived_guest = RunState.tavern_guest_archive
+	letter_guest.setup(guest_stats, floor_area)
 	letter_guest.blocked = func():
 		return _room_menu_open() or panorama._held_button == letter_guest.info_button
 	panorama.register_actor_hotspot(letter_guest.info_button)
@@ -91,7 +93,8 @@ func _room_menu_open() -> bool:
 	return minigames_popup.visible or get_node_or_null("LeaderboardOverlay") != null \
 		or get_node_or_null("TavernShopOverlay") != null \
 		or $EquipmentOverlay/EquipmentPanel.visible \
-		or get_tree().get_first_node_in_group("letter_inspector") != null
+		or get_tree().get_first_node_in_group("letter_inspector") != null \
+		or get_tree().get_first_node_in_group("run_archive_overlay") != null
 
 
 func _input(event: InputEvent) -> void:
