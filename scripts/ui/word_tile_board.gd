@@ -11,6 +11,10 @@ const MAX_TILE_SIZE := 56.0
 const TILE_GAP := 7.0
 const BOARD_PADDING := 14.0
 
+var word_input: LineEdit
+var _caret_column := -1
+var _blink_elapsed := 0.0
+var _caret_visible := false
 var _word := ""
 var _tile_stats: Array = []
 
@@ -26,9 +30,27 @@ func _ready() -> void:
 
 
 func set_word(word: String, drawn: Array[LetterStats]) -> void:
+	if word.to_upper() != _word:
+		_blink_elapsed = 0.0
 	_word = word.to_upper()
 	_tile_stats = _stats_for_word(word.to_lower(), drawn)
 	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	var column := -1
+	if is_instance_valid(word_input) and word_input.has_focus() and word_input.editable:
+		var raw := word_input.text
+		var leading := raw.length() - raw.strip_edges(true, false).length()
+		column = clampi(word_input.caret_column - leading, 0, _word.length())
+	var visible_now := false
+	if column >= 0:
+		_blink_elapsed = 0.0 if column != _caret_column else fmod(_blink_elapsed + delta, 1.0)
+		visible_now = _blink_elapsed < 0.55
+	if column != _caret_column or visible_now != _caret_visible:
+		_caret_column = column
+		_caret_visible = visible_now
+		queue_redraw()
 
 
 func _stats_for_word(
@@ -64,6 +86,7 @@ func _draw() -> void:
 	draw_style_box(_board_style(), board_rect)
 	if _word.is_empty():
 		_draw_empty_state()
+		_draw_caret()
 		return
 
 	var count := _word.length()
@@ -72,40 +95,54 @@ func _draw() -> void:
 		var letter := _word.substr(index, 1)
 		var tile_rect := _tile_rect_for_index(index)
 		var font_size := int(clampf(
-			tile_rect.size.x * 0.56, 18.0, 32.0
+			tile_rect.size.x * 0.56, 10.0, 32.0
 		))
 		var stats: LetterStats = _tile_stats[index] \
 				if index < _tile_stats.size() else null
 		_draw_tile(tile_rect, letter, stats, font, font_size)
+	_draw_caret()
 
 
 func tile_global_rect_for(stats: LetterStats) -> Rect2:
 	for index in range(_tile_stats.size()):
 		if _tile_stats[index] == stats:
 			var tile_rect := _tile_rect_for_index(index)
-			return Rect2(
-				get_global_transform() * tile_rect.position,
-				tile_rect.size
-			)
+			return get_global_transform() * tile_rect
 	return Rect2()
 
 
 func _tile_rect_for_index(index: int) -> Rect2:
 	var count := maxi(_word.length(), 1)
 	var available_width := maxf(1.0, size.x - BOARD_PADDING * 2.0)
-	var tile_size := clampf(
-		(available_width - TILE_GAP * float(count - 1)) / float(count),
-		MIN_TILE_SIZE,
-		MAX_TILE_SIZE
-	)
-	var total_width := tile_size * float(count - 1) \
-			+ tile_size + TILE_GAP * float(count - 1)
+	var gaps := float(count - 1)
+	var gap := clampf((available_width - MIN_TILE_SIZE * count) / maxf(1.0, gaps), 3.0, TILE_GAP)
+	var tile_size := clampf((available_width - gap * gaps) / float(count), 1.0, MAX_TILE_SIZE)
+	var total_width := tile_size * count + gap * gaps
 	var start_x := maxf(BOARD_PADDING, (size.x - total_width) * 0.5)
 	var start_y := maxf(6.0, (size.y - tile_size) * 0.5)
 	return Rect2(
-		start_x + float(index) * (tile_size + TILE_GAP),
+		start_x + float(index) * (tile_size + gap),
 		start_y, tile_size, tile_size
 	)
+
+
+func _draw_caret() -> void:
+	if not _caret_visible:
+		return
+	var x := BOARD_PADDING
+	var height := 30.0
+	if not _word.is_empty():
+		if _caret_column == 0:
+			var first := _tile_rect_for_index(0)
+			x = first.position.x - 4.0
+			height = first.size.y
+		else:
+			var previous := _tile_rect_for_index(_caret_column - 1)
+			x = previous.end.x + 4.0
+			if _caret_column < _word.length():
+				x = (previous.end.x + _tile_rect_for_index(_caret_column).position.x) * 0.5
+			height = previous.size.y
+	draw_rect(Rect2(x - 1.4, (size.y - height) * 0.5, 2.8, height), Color("fff1bb"))
 
 
 func _draw_empty_state() -> void:

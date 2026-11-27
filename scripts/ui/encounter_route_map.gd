@@ -236,7 +236,7 @@ func _add_node_content(button: Button, data: Dictionary) -> void:
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.texture = data.get("preview_texture") \
-			if data.has("preview_texture") else _preview_texture(data)
+			if data.has("preview_texture") else enemy_preview_texture(data)
 	button.add_child(preview)
 
 
@@ -343,7 +343,7 @@ func _draw_centered_text(
 	)
 
 
-func _preview_texture(data: Dictionary) -> Texture2D:
+static func enemy_preview_texture(data: Dictionary) -> Texture2D:
 	var frame: Texture2D = _enemy_icon(data)
 	if frame == null:
 		return null
@@ -362,7 +362,7 @@ func _preview_texture(data: Dictionary) -> Texture2D:
 	return trimmed
 
 
-func _enemy_icon(data: Dictionary) -> Texture2D:
+static func _enemy_icon(data: Dictionary) -> Texture2D:
 	var texture_path: String = String(data.get("texture", ""))
 	if texture_path.is_empty():
 		return null

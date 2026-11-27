@@ -68,13 +68,13 @@ func next_tags(current: Array[String]) -> Array[String]:
 func victory_bonus() -> int:
 	return 8 if id == "greedy" else 0
 
-func status(word: String = "") -> String:
+func status(_word: String = "") -> String:
 	match id:
-		"drowsy": return "Next: SLEEPING" if retaliations % 2 == 0 else "Next: AWAKE (+25%)"
+		"drowsy": return "Next: SLEEPING" if retaliations % 2 == 0 else "Next: AWAKE"
 		"clumsy": return "Self-hit in %d retaliation(s)" % (3 - retaliations % 3)
-		"long_winded": return "7+ letters: +20% damage" if word.length() >= 7 else "Short words: +2 Guard"
-		"echo_bound": return "First word sets the challenge" if previous_word.is_empty() else "Optional: start with %s (+25%%)" % previous_word.right(1).to_upper()
+		"long_winded": return "7+ letters: +20% damage; shorter: +2 Guard"
+		"echo_bound": return "First word sets the challenge" if previous_word.is_empty() else "Optional: start with %s" % previous_word.right(1).to_upper()
 		"chameleon": return "Tags shift in %d retaliation(s)" % (2 - retaliations % 2)
-		"greedy": return "Cast gold +%d/5; stolen %d/4" % [gold_gained, gold_stolen]
+		"greedy": return "Gold earned %d/5; stolen %d/4" % [gold_gained, gold_stolen]
 		"frostbite_tax": return "Freeze every 2 casts; +2 Heat"
 	return ""

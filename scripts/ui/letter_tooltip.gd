@@ -18,7 +18,7 @@ static func transparent_shell_theme() -> Theme:
 	return _tooltip_shell_theme
 
 
-static func create_for(stats: LetterStats) -> LetterTooltip:
+static func create_for(stats: LetterStats, footer: String = "") -> LetterTooltip:
 	var tooltip := LetterTooltip.new()
 	tooltip.add_theme_stylebox_override("panel", tooltip._panel_style())
 	var text := RichTextLabel.new()
@@ -28,6 +28,8 @@ static func create_for(stats: LetterStats) -> LetterTooltip:
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text.custom_minimum_size = Vector2(330, 0)
 	text.text = tooltip._content_for(stats)
+	if not footer.is_empty():
+		text.text += "\n\n" + footer
 	tooltip.add_child(text)
 	return tooltip
 

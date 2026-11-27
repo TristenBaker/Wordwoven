@@ -62,21 +62,49 @@ func _test_previews() -> void:
 	add_child(viewport)
 	var screen: Control = load(ScenePaths.ENCOUNTER_MODIFIER).instantiate()
 	viewport.add_child(screen)
-	var numeric := RegEx.new()
-	numeric.compile("[0-9%+→]")
 	for resolution: Vector2i in [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]:
 		viewport.size = resolution
+		screen._browse.button_pressed = true
+		var original_confirm: Rect2
 		for entry: Dictionary in MODIFIERS.ENTRIES:
 			screen._choose_example(VOCABULARY.WORDS[entry.id][0])
-			check(screen._effect.text.begins_with("Effect: " + entry.selection_effect), "Preview changes immediately")
-			check(screen._effect.text.contains("Reward: " + MODIFIERS.reward_description(entry)), "Reward changes immediately")
-			check(numeric.search(screen._effect.text) == null, "No numerical effect or reward description")
+			var base: Dictionary = screen._base_spawn
+			var gold: int = MODIFIERS.victory_gold(base.gold, entry)
+			var gold_text := "Victory Gold\n%d" % base.gold
+			if gold != base.gold:
+				gold_text += " → %d" % gold
+			check(screen._enemy_stats.gold.get_parsed_text() == gold_text, "Foe panel uses combat gold and rounding: " + entry.id)
+			for stat: String in ["health", "attack", "gold"]:
+				check(screen._enemy_stats[stat].get_line_count() == 2, "Enemy stat stays in two aligned lines: " + stat + " / " + entry.id)
+			var effect: String = screen._effect.text + " " + screen._tradeoff.text
+			if entry.stat in ["health", "attack"]:
+				var adjusted: Dictionary = MODIFIERS.apply_spawn(base, entry)
+				var stat_text: String = screen._enemy_stats[entry.stat].get_parsed_text()
+				if base[entry.stat] != adjusted[entry.stat]:
+					check(stat_text.contains("%d → %d" % [base[entry.stat], adjusted[entry.stat]]), "Foe panel uses combat stat values: " + entry.id)
+					var accent: Color = screen.HELPFUL if adjusted[entry.stat] < base[entry.stat] else screen.HARMFUL
+					check(screen._enemy_stats[entry.stat].text.contains(accent.to_html(false)), "Changed enemy stat is colored from the player's perspective")
+				else:
+					check(not stat_text.contains("→"), "Rounded unchanged stat remains neutral")
+			elif entry.stat == "player_damage":
+				var expected_effect := "Your words deal more damage." if MODIFIERS.player_factor(entry) > 1.0 else "Your words deal less damage."
+				check(effect.contains(expected_effect), "Preview explains the player damage change: " + entry.id)
+			if entry.id == "greedy":
+				check(effect.contains("up to 5") and effect.contains("up to 4 total") and screen._reward_detail.text.contains("+8 gold on victory"), "Greedy separates earnings, theft and victory bonus")
+			if entry.id == "frostbite_tax":
+				check(effect.contains("2 Heat") and effect.contains("2 casts"), "Frostbite Tax describes both changes")
+			if entry.id == "drowsy":
+				var awake: int = roundi(base.attack * 1.25)
+				check(screen._enemy_stats.attack.get_parsed_text().contains("%d → %d" % [base.attack, awake]) and effect.contains("skips its first retaliation"), "Drowsy shows its incoming attack and sleep cadence")
+			if entry.id == "long_winded":
+				check(effect.contains("7+ letters") and effect.count("20% more damage") == 1 and effect.count("2 Guard") == 1, "Long-Winded lists both branches once")
 			await get_tree().process_frame
 			await get_tree().process_frame
-			check(Rect2(Vector2.ZERO, Vector2(resolution)).encloses(screen.find_child("PreparationPanel", true, false).get_global_rect()), "Selection fits " + str(resolution))
-			check(screen._effect.get_line_count() <= 3, "Effects and rewards fit reserved space")
-		for button: Button in screen._examples:
-			check(numeric.search(button.tooltip_text) == null, "Tooltip effects and rewards also hide statistics")
+			var panel: Control = screen.find_child("PreparationPanel", true, false)
+			check(Rect2(Vector2.ZERO, Vector2(resolution)).encloses(panel.get_global_rect()), "Expanded selection fits " + str(resolution))
+			if original_confirm.has_area():
+				check(screen._confirm.get_global_rect() == original_confirm, "Preview keeps its confirmation position: " + entry.id)
+			original_confirm = screen._confirm.get_global_rect()
 	viewport.queue_free()
 	await get_tree().process_frame
 

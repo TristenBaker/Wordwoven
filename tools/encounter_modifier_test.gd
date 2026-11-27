@@ -46,11 +46,22 @@ func _run() -> void:
 			check(combat.enemy.attack == (int(round(base.attack * entry.factor)) if entry.stat == "attack" else base.attack), "combat attack")
 			check(combat.get_node("Layout/ActiveModifierPanel/Content/ModifierName").text == "Modifier: " + entry.name, "indicator")
 			var panel = combat.get_node("Layout/ActiveModifierPanel")
-			check(panel.effect_label.text.begins_with(entry.effect), "panel displays catalogue effect")
+			if entry.id == "frostbite_tax":
+				check(panel.effect_label.text == "Freeze every 2 casts; +2 Heat", "panel displays one Frostbite Tax effect")
+			elif entry.id == "long_winded":
+				check(panel.effect_label.text == "7+ letters: +20% damage; shorter: +2 Guard", "panel displays both Long-Winded effects once")
+			else:
+				check(panel.effect_label.text.begins_with(entry.effect), "panel displays catalogue effect")
 			if entry.stat != "behavior":
 				check(panel.effect_label.text == entry.effect, "original panel text unchanged")
 			await get_tree().process_frame
-			check(is_equal_approx(panel.get_global_rect().position.y, combat.timer_label.get_global_rect().end.y + 10.0), "panel directly below quick-cast timer")
+			var player_rect: Rect2 = combat.get_node("Layout/StatusArea").get_global_rect()
+			var modifier_rect: Rect2 = panel.get_global_rect()
+			check(is_equal_approx(modifier_rect.position.y, player_rect.end.y + 6.0) and is_equal_approx(modifier_rect.position.x, player_rect.position.x) and is_equal_approx(modifier_rect.size.x, player_rect.size.x), "Modifier fits directly below player status")
+			var modifier_name_rect: Rect2 = panel.name_label.get_global_rect()
+			var effect_rect: Rect2 = panel.effect_label.get_global_rect()
+			check(modifier_name_rect.position.y >= modifier_rect.position.y + 8.0 and effect_rect.position.y >= modifier_name_rect.end.y + 4.0 and effect_rect.end.y <= modifier_rect.end.y - 8.0, "Modifier name and wrapped effect have breathing room")
+			check(modifier_rect.end.y < combat.side_panel.get_global_rect().position.y, "Modifier leaves room for expanded log")
 			check(not combat.has_node("Layout/DevKillButton"), "Dev Auto Kill is no longer on the combat screen")
 			check(DebugTools.auto_kill_button.get_parent().name == "EncounterRow", "Dev Auto Kill is in F12")
 			check(not panel.get_global_rect().intersects(combat.get_node("Layout/StatusArea").get_global_rect()), "panel clears status UI")

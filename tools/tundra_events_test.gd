@@ -18,6 +18,7 @@ func _finish_event(event: Control) -> void:
 			event._next_round()
 		event.input.text = "  " + _valid_word(event.encounter_id).to_upper() + "  "
 		event.input.text_submitted.emit(event.input.text)
+		await get_tree().process_frame
 	check(event._finished, "Mini-game completes: " + event.encounter_id)
 
 func _ready() -> void:
@@ -70,7 +71,7 @@ func _run() -> void:
 		check(RunState.begin_optional_encounter(id, route_key), "Side quest opens: " + id)
 		var event: Control = await _go(ScenePaths.TUNDRA_EVENT)
 		check(event != null and event.encounter_id == id, "Correct side quest scene: " + id)
-		_finish_event(event)
+		await _finish_event(event)
 		check(RunState.optional_encounters.has(id), "Side quest records its result: " + id)
 		event.continue_button.pressed.emit()
 		await _wait(ScenePaths.ENCOUNTER_SELECT)
@@ -172,12 +173,13 @@ func _run_legacy() -> void:
 					check(event.input.get_global_rect() == input_rect, "Validation does not shift input")
 				event.input.text = _valid_word(id)
 				event._submit()
-				check(not event._finished and event.next_button.visible, "First word shows feedback without ending game")
+				var manual_round: bool = id != "treasure_chest"
+				check(not event._finished and event.next_button.visible == manual_round, "First word uses the correct progression for " + id)
 				check(RunState.player_health == initial_hp and RunState.gold == initial_gold, "Rewards wait for final round")
 				var saved: Dictionary = TundraEventScript.progress(id).duplicate(true)
 				event = await _go(ScenePaths.TUNDRA_EVENT)
-				check(TundraEventScript.progress(id) == saved and event.next_button.visible, "Reopening resumes progress and feedback")
-				_finish_event(event)
+				check(TundraEventScript.progress(id) == saved and event.next_button.visible == manual_round, "Reopening resumes progress and feedback")
+				await _finish_event(event)
 				check(event.dialogue.text.to_lower().contains(RunState.optional_encounters[id].word) and event.continue_button.visible, "Last word appears in result: " + id)
 				var hp: int = RunState.player_health
 				var gold: int = RunState.gold
@@ -299,7 +301,11 @@ func _check_layouts() -> void:
 			var event: Control = load(ScenePaths.TUNDRA_EVENT).instantiate()
 			viewport.add_child(event)
 			await _frames()
-			check(bounds.encloses(event.get_node("Margin/Content/InputRow").get_global_rect()), "Input fits " + id + str(dimensions))
+			var chest_sprite_size := Vector2.ZERO
+			if id == "treasure_chest":
+				chest_sprite_size = event.sprite.size
+				check(is_equal_approx(event.sprite.scale.x, 1.5), "Chest sprite is enlarged in encounter " + str(dimensions))
+			check(bounds.encloses(event.input.get_parent().get_global_rect()), "Input fits " + id + str(dimensions))
 			for round_index: int in 6:
 				if event._finished:
 					break
@@ -329,6 +335,9 @@ func _check_layouts() -> void:
 					event._sync_feedback_banner()
 					await _frames()
 			check(event._finished and bounds.encloses(event.continue_button.get_global_rect()), "Result fits " + id + str(dimensions))
+			if id == "treasure_chest":
+				await _frames()
+				check(event.sprite.size == chest_sprite_size and is_equal_approx(event.sprite.scale.x, 1.5), "Chest size remains stable on results " + str(dimensions))
 			event.queue_free()
 			await _frames()
 		viewport.queue_free()
@@ -349,7 +358,7 @@ func _available_combat_button(map: Control) -> Button:
 
 func _check_banner(event: Control, bounds: Rect2, context: String) -> void:
 	var banner: Rect2 = event.feedback_banner.get_global_rect()
-	var controls: Rect2 = event.get_node("Margin/Content/InputRow").get_global_rect()
+	var controls: Rect2 = event.input.get_parent().get_global_rect()
 	check(bounds.encloses(banner), "Banner fits: " + context)
 	check(banner.encloses(event.feedback.get_global_rect()), "Banner encloses text: " + context)
 	check(event.feedback.size.y >= event.feedback.get_combined_minimum_size().y, "Wrapped text is not clipped: " + context)

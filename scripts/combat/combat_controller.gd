@@ -65,6 +65,7 @@ var _retaliation_reduction: int = 0
 var _guard: int = 0
 var cold := preload("res://scripts/combat/tundra_cold.gd").new()
 var heat_meter: PanelContainer
+var _frost_pending := false
 var strike_fx: EnemyStrikeFx
 var _last_allowed_text: String = ""
 var _turn_elapsed_seconds: float = 0.0
@@ -107,14 +108,15 @@ var _feedback_timer: Timer
 @onready var party_stage: PartyStage = $Layout/PartyStage
 @onready var transition_fade: ColorRect = $TransitionFade
 @onready var player_health_bar: ProgressBar = \
-		$Layout/StatusArea/PlayerHealthBar
+		$Layout/StatusArea/Content/PlayerHealthBar
 @onready var player_health_label: Label = \
-		$Layout/StatusArea/PlayerHealthBar/PlayerHealthLabel
+		$Layout/StatusArea/Content/PlayerHealthBar/PlayerHealthLabel
 @onready var player_heal_preview: ColorRect = \
-		$Layout/StatusArea/PlayerHealthBar/HealPreview
-@onready var timer_label: Label = $Layout/StatusArea/TimerLabel
-@onready var gold_label: Label = $Layout/StatusArea/GoldLabel
-@onready var stage_label: Label = $Layout/StatusArea/StageLabel
+		$Layout/StatusArea/Content/PlayerHealthBar/HealPreview
+@onready var quick_cast_panel: PanelContainer = $Layout/QuickCast
+@onready var quick_cast_meter: ProgressBar = $Layout/QuickCast/Content/Countdown
+@onready var timer_label: Label = $Layout/QuickCast/Content/TimerLabel
+@onready var gold_label: Label = $Layout/StatusArea/Content/GoldLabel
 @onready var endless_route: HBoxContainer = $Layout/EndlessRoute
 
 
@@ -140,11 +142,28 @@ func _ready() -> void:
 	$Layout/WordHistoryButton.pressed.connect(_open_word_history)
 	enemy.died.connect(_on_enemy_died)
 	party_stage.gold_stolen.connect(_on_gold_stolen)
-	_move_enemy_info_beneath_endless_route()
+	var enemy_status: VBoxContainer = $Layout/EnemyStatus
+	enemy.info_box.reparent($Layout/EnemyStatus/InfoFrame, false)
+	enemy.info_box.add_theme_constant_override("separation", 6)
+	for panel: PanelContainer in [$Layout/StatusArea, $Layout/EnemyStatus/InfoFrame, quick_cast_panel]:
+		var style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		var vertical_padding := 5.0 if panel == quick_cast_panel else 7.0
+		style.content_margin_top = vertical_padding
+		style.content_margin_bottom = vertical_padding
+		panel.add_theme_stylebox_override("panel", style)
+	enemy.health_bar.add_theme_stylebox_override("background", player_health_bar.get_theme_stylebox("background"))
+	enemy.health_bar.add_theme_stylebox_override("fill", player_health_bar.get_theme_stylebox("fill"))
+	enemy.health_label.add_theme_color_override("font_outline_color", Color("060b14"))
+	enemy.health_label.add_theme_constant_override("outline_size", 3)
+	enemy.tags_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	enemy.tags_label.add_theme_font_size_override("font_size", 20)
+	enemy.info_box.reset_size()
+	word_tile_board.word_input = word_input
 	heat_meter = PanelContainer.new()
 	heat_meter.set_script(preload("res://scripts/ui/heat_meter.gd"))
-	$Layout/InputArea.add_child(heat_meter)
-	$Layout/InputArea.move_child(heat_meter, 1)
+	enemy_status.add_child(heat_meter)
+	enemy_status.resized.connect(_queue_enemy_layout)
+	$Layout.resized.connect(_queue_enemy_layout)
 	# Above the battlefield, below the fade and overlays.
 	strike_fx = EnemyStrikeFx.new()
 	add_child(strike_fx)
@@ -214,17 +233,21 @@ func _on_combat_tutorial_finished() -> void:
 	_enter_player_input(false)
 
 
-func _move_enemy_info_beneath_endless_route() -> void:
-	if not RunState.is_endless():
-		return
-	var info: VBoxContainer = enemy.info_box
-	info.reparent($Layout)
-	info.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	info.offset_left = -170.0
-	info.offset_top = 72.0
-	info.offset_right = 170.0
-	info.offset_bottom = 200.0
-	info.z_index = 2
+func _queue_enemy_layout() -> void:
+	_layout_enemy.call_deferred()
+
+
+func _layout_enemy() -> void:
+	var layout: Control = $Layout
+	var status_rect: Rect2 = $Layout/EnemyStatus.get_global_rect()
+	# The battlefield shares the composer's base anchor, above its padded position.
+	var ground_y: float = layout.global_position.y + layout.size.y * $Layout/InputArea.anchor_top - 12.0
+	# Keep the sprite fitting limit fixed as the padded HUD grows.
+	var hud_clearance := 15.0 if cold.enabled else 8.0
+	enemy.place_sprite(
+		Vector2(layout.global_position.x + layout.size.x * 0.75, ground_y),
+		status_rect.end.y + hud_clearance
+	)
 
 
 func _exit_tree() -> void:
@@ -258,10 +281,6 @@ func _start_encounter() -> void:
 	deck_manager.start_encounter()
 	cold.reset(RunState.selected_biome == "tundra")
 	heat_meter.visible = cold.enabled
-	if cold.enabled:
-		# Reserve vertical room for the meter without crowding prompt/feedback into the hand.
-		$Layout/InputArea.offset_top -= 48.0
-		$Layout/InputArea.offset_bottom -= 48.0
 	_refresh_cold()
 	var spawn_data: Dictionary = _pick_spawn_data()
 	_reward_claim_key = "route:" + RunState.route_current_key if RunState.route_nodes.has(RunState.route_current_key) else "stage:%d" % RunState.encounter_index
@@ -279,6 +298,7 @@ func _start_encounter() -> void:
 	var base_spawn: Dictionary = spawn_data
 	spawn_data = ENCOUNTER_MODIFIERS.apply_spawn(base_spawn, _encounter_modifier)
 	enemy.setup(spawn_data)
+	_queue_enemy_layout()
 	$Layout/ActiveModifierPanel.show_modifier(
 		String(preparation.get("word", "")), _encounter_modifier,
 		base_spawn, spawn_data, ENCOUNTER_MODIFIERS.player_factor(_encounter_modifier)
@@ -388,8 +408,9 @@ func _on_submit() -> void:
 		call_deferred("_focus_word_input")
 		return
 	cold.accept_word()
-	_refresh_cold()
 	_state = State.RESOLVING
+	_frost_pending = cold.enabled and cold.turns % cold.freeze_every == 0
+	_refresh_cold()
 	word_input.editable = false
 	submit_button.disabled = true
 	_set_player_feedback("")
@@ -518,9 +539,7 @@ func _enemy_turn() -> void:
 	var plan: Dictionary = _modifier_runtime.retaliation_plan(enemy.attack)
 	# Sleeping skips only the attack; burn, poison, turn completion and cold still run.
 	if plan.kind != "sleep":
-		enemy.begin_retaliation_lunge(
-			party_stage.get_global_transform() * Vector2(party_stage.line_start_x, party_stage.ground_y)
-		)
+		enemy.begin_retaliation_lunge(party_stage.retaliation_target())
 		await enemy.play_attack()
 		if _state != State.ENEMY_TURN:
 			enemy.cancel_retaliation_lunge()
@@ -557,6 +576,7 @@ func _enemy_turn() -> void:
 		if not new_tags.is_empty():
 			enemy.set_semantic_tags(new_tags)
 			_log("CHAMELEON: new counter targets: %s. 'I contain multitudes. Mostly problems.'" % " • ".join(new_tags))
+		_frost_pending = false
 		var newly_frozen: LetterStats = cold.freeze_after_turn(deck_manager.hand())
 		_refresh_cold(newly_frozen)
 		if newly_frozen != null:
@@ -570,6 +590,8 @@ func _on_enemy_died() -> void:
 	if _state == State.WON:
 		return
 	_state = State.WON
+	_frost_pending = false
+	_refresh_cold()
 	if not RunState.claim_combat_rewards(_reward_claim_key):
 		return
 	var earned: int = ENCOUNTER_MODIFIERS.victory_gold(enemy.gold_reward, _encounter_modifier)
@@ -613,6 +635,8 @@ func _play_victory_transition() -> void:
 
 func _on_player_died() -> void:
 	_state = State.LOST
+	_frost_pending = false
+	_refresh_cold()
 	get_tree().change_scene_to_file(ScenePaths.RUN_LOST)
 
 
@@ -639,13 +663,14 @@ func _layout_feedback_banner() -> void:
 	var input_area: VBoxContainer = $Layout/InputArea
 	var area: Rect2 = input_area.get_global_rect()
 	var cast: Rect2 = submit_button.get_global_rect()
+	var word_board: Rect2 = word_tile_board.get_global_rect()
+	quick_cast_panel.size = Vector2(word_board.size.x, quick_cast_panel.get_combined_minimum_size().y)
+	quick_cast_panel.global_position = Vector2(word_board.position.x, word_board.position.y - quick_cast_panel.size.y - 6.0)
 	var gap: float = input_area.get_theme_constant("separation") * input_area.scale.y
 	var cast_gap: float = $Layout/InputArea/InputRow.get_theme_constant("separation") * input_area.scale.x
-	# Match the heat column, reserving its right-hand lane for the existing Cast button.
+	# Reserve the right-hand lane for the existing Cast button.
 	var width: float = cast.position.x - area.position.x - cast_gap
 	var top: float = cast.position.y
-	if heat_meter.visible:
-		top = heat_meter.get_global_rect().end.y + gap
 	for banner: PanelContainer in [feedback_banner, effectiveness_indicator]:
 		banner.scale = input_area.scale
 		var banner_width: float = cast.end.x - area.position.x if banner == effectiveness_indicator else width
@@ -734,6 +759,11 @@ func _update_timer_display() -> void:
 		remaining, calculator.speed_multiplier(_turn_elapsed_seconds),
 	]
 
+	var fraction := remaining / DamageCalculator.SPEED_BONUS_DURATION
+	quick_cast_meter.value = fraction
+	quick_cast_meter.modulate = Color.WHITE.lerp(Color("df9d69"), 1.0 - clampf(fraction / 0.2, 0.0, 1.0))
+	timer_label.modulate = Color("a8abb7") if remaining <= 0.0 else Color.WHITE
+
 
 func _set_estimated_damage(damage: int) -> void:
 	damage_output.text = str(damage)
@@ -787,7 +817,7 @@ func _fly_tile_to_board(
 	var tween: Tween = create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flying, "global_position", target.position, 0.24)
-	tween.tween_property(flying, "size", target.size, 0.24)
+	tween.tween_property(flying, "scale", target.size / flying.size, 0.24)
 	tween.chain().tween_callback(flying.queue_free)
 
 
@@ -815,6 +845,7 @@ func _show_damage_popup(amount: float) -> void:
 	damage_popup.show()
 	damage_popup.modulate = Color(1.0, 0.25, 0.18, 1.0)
 	damage_popup.pivot_offset = damage_popup.size * 0.5
+	damage_popup.global_position = enemy.strike_point() - damage_popup.pivot_offset
 	damage_popup.scale = Vector2(0.6, 0.6)
 	_damage_popup_tween = create_tween().set_parallel(true)
 	_damage_popup_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -890,10 +921,13 @@ func _refresh_cold(newly_frozen: LetterStats = null) -> void:
 	deck_manager.frozen_letters = cold.frozen
 	if heat_meter == null:
 		return
-	heat_meter.refresh(cold.heat, cold.turns, not cold.frozen.is_empty(), cold.freeze_every)
+	heat_meter.refresh(
+		cold.heat, cold.turns, cold.frozen.size(), cold.freeze_every, cold.heat_per_word,
+		_frost_pending
+	)
 	for tile: LetterTile in hand_box.get_children():
 		tile.set_frozen(cold.frozen.has(tile.stats), cold.heat >= cold.THAW_COST,
-			tile.stats == newly_frozen)
+			tile.stats == newly_frozen, cold.heat_per_word)
 
 
 func _on_hand_tile_activated(tile: LetterTile) -> void:
@@ -907,7 +941,7 @@ func _on_hand_tile_activated(tile: LetterTile) -> void:
 			_on_text_changed(word_input.text)
 		else:
 			tile.deny_thaw()
-			heat_meter.pulse(true)
+			heat_meter.deny_thaw()
 			_set_player_feedback("Thaw needs %d Heat. Each valid word gives +%d." % [cold.THAW_COST, cold.heat_per_word])
 	_focus_word_input()
 
@@ -919,17 +953,9 @@ func _refresh_status() -> void:
 		RunState.player_health, RunState.player_max_health
 	]
 	gold_label.text = "Gold: %d" % RunState.gold
-	if RunState.is_endless():
-		stage_label.text = "ENDLESS · WAVE %d" % RunState.encounter_index
+	endless_route.visible = RunState.is_endless()
+	if endless_route.visible:
 		_refresh_endless_route()
-		return
-	endless_route.visible = false
-	var stage_text: String = "Encounter %d of %d" % [
-		RunState.encounter_index, RunState.ENCOUNTERS_PER_RUN
-	]
-	if RunState.is_boss_next():
-		stage_text = "Final Encounter"
-	stage_label.text = stage_text
 
 
 func _refresh_endless_route() -> void:

@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://ddu4iw847l0b7" path="res://art/backgrounds/volcano.png" id="2_4a6i5"]
 [ext_resource type="PackedScene" uid="uid://ve6fkfdb6uot" path="res://scenes/combat/enemy_display.tscn" id="3_enemy"]
 [ext_resource type="FontFile" uid="uid://cidaxvdq4u675" path="res://assets/Fonts/Junicode.ttf" id="4_body"]
+[ext_resource type="FontFile" uid="uid://rqd0nt2kx661" path="res://assets/Fonts/Junicode-Bold.ttf" id="player_bold"]
 [ext_resource type="Script" uid="uid://dmbnp8acd7eq5" path="res://scripts/word/deck_manager.gd" id="5_deck"]
 [ext_resource type="Script" uid="uid://cfunpsyp0ltqg" path="res://scripts/word/word_validator.gd" id="6_validator"]
 [ext_resource type="Script" uid="uid://drup80ilj554t" path="res://scripts/combat/damage_calculator.gd" id="7_calculator"]
@@ -20,6 +21,18 @@
 [ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
 
 [ext_resource type="Texture2D" path="res://assets/Art/Items/element_damage_badge.png" id="damage_badge"]
+
+[ext_resource type="StyleBox" path="res://assets/Themes/Combat_HUD_Panel.tres" id="hud_frame"]
+
+[ext_resource type="StyleBox" path="res://assets/Themes/Combat_Health_Track.tres" id="health_track"]
+
+[ext_resource type="StyleBox" path="res://assets/Themes/Combat_Health_Fill.tres" id="health_fill"]
+
+[sub_resource type="StyleBoxFlat" id="timer_track"]
+bg_color = Color(0.13, 0.19, 0.27, 1)
+
+[sub_resource type="StyleBoxFlat" id="timer_fill"]
+bg_color = Color(0.82, 0.69, 0.44, 1)
 
 [node name="Combat" type="Control" unique_id=1426086097]
 layout_mode = 3
@@ -74,38 +87,55 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="StatusArea" type="VBoxContainer" parent="Layout" unique_id=471600501]
+[node name="StatusArea" type="PanelContainer" parent="Layout" unique_id=471600501]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 280.0
-offset_bottom = 140.0
-theme_override_constants/separation = 8
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("hud_frame")
+
+[node name="Content" type="VBoxContainer" parent="Layout/StatusArea"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
 
 [node name="EndlessRoute" type="HBoxContainer" parent="Layout"]
 visible = false
 layout_mode = 1
-offset_left = 320.0
+offset_left = 306.0
 offset_top = 16.0
-offset_right = 930.0
+offset_right = 916.0
 offset_bottom = 64.0
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="StageLabel" type="Label" parent="Layout/StatusArea" unique_id=347878440]
+[node name="HeadingSlot" type="Control" parent="Layout/StatusArea/Content"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
-theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 22
-text = "Encounter 1 of 6"
+mouse_filter = 2
 
-[node name="PlayerHealthBar" type="ProgressBar" parent="Layout/StatusArea" unique_id=532476551]
+[node name="PlayerHeading" type="Label" parent="Layout/StatusArea/Content/HeadingSlot" unique_id=347878440]
+layout_mode = 1
+anchor_right = 1.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("player_bold")
+theme_override_font_sizes/font_size = 30
+text = "Player"
+horizontal_alignment = 1
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="Layout/StatusArea/Content" unique_id=532476551]
 custom_minimum_size = Vector2(0, 26)
 layout_mode = 2
 max_value = 50.0
 value = 50.0
 show_percentage = false
+mouse_filter = 2
+theme_override_styles/background = ExtResource("health_track")
+theme_override_styles/fill = ExtResource("health_fill")
 
-[node name="HealPreview" type="ColorRect" parent="Layout/StatusArea/PlayerHealthBar" unique_id=234205742]
+[node name="HealPreview" type="ColorRect" parent="Layout/StatusArea/Content/PlayerHealthBar" unique_id=234205742]
 visible = false
 layout_mode = 1
 anchors_preset = -1
@@ -115,38 +145,82 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.25, 1, 0.45, 0.42)
 
-[node name="PlayerHealthLabel" type="Label" parent="Layout/StatusArea/PlayerHealthBar" unique_id=892103473]
+[node name="PlayerHealthLabel" type="Label" parent="Layout/StatusArea/Content/PlayerHealthBar" unique_id=892103473]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0.025, 0.045, 0.080, 1)
+theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 16
 text = "50 / 50"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GoldLabel" type="Label" parent="Layout/StatusArea" unique_id=727228984]
+[node name="GoldLabel" type="Label" parent="Layout/StatusArea/Content" unique_id=727228984]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_fonts/font = ExtResource("4_body")
 theme_override_font_sizes/font_size = 22
 text = "Gold: 0"
 
-[node name="TimerLabel" type="Label" parent="Layout/StatusArea" unique_id=843357213]
+[node name="QuickCast" type="PanelContainer" parent="Layout"]
+layout_mode = 0
+offset_right = 264.0
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("hud_frame")
+
+[node name="Content" type="VBoxContainer" parent="Layout/QuickCast"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.9, 1, 1)
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="TimerLabel" type="Label" parent="Layout/QuickCast/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.98, 0.89, 0.72, 1)
 theme_override_fonts/font = ExtResource("4_body")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
 text = "Quick-cast: 20.0s  •  Damage ×1.50"
+
+[node name="Countdown" type="ProgressBar" parent="Layout/QuickCast/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 3)
+mouse_filter = 2
+theme_override_styles/background = SubResource("timer_track")
+theme_override_styles/fill = SubResource("timer_fill")
+max_value = 1.0
+step = 0.0
+value = 1.0
+show_percentage = false
+
+[node name="EnemyStatus" type="VBoxContainer" parent="Layout"]
+z_index = 2
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -336.0
+offset_top = 16.0
+offset_right = -16.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="InfoFrame" type="PanelContainer" parent="Layout/EnemyStatus"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = ExtResource("hud_frame")
 
 [node name="EnemyArea" type="CenterContainer" parent="Layout" unique_id=1732673650]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.45
+anchor_left = 0.61
 anchor_top = 0.02
-anchor_right = 0.8
+anchor_right = 0.89
 anchor_bottom = 0.56
 
 [node name="Enemy" parent="Layout/EnemyArea" unique_id=121372541 instance=ExtResource("3_enemy")]
@@ -154,10 +228,6 @@ layout_mode = 2
 
 [node name="ActiveModifierPanel" parent="Layout" unique_id=427591525 instance=ExtResource("modifier_panel")]
 layout_mode = 1
-offset_left = 16.0
-offset_top = 141.0
-offset_right = 280.0
-offset_bottom = 141.0
 
 [node name="PartyStage" parent="Layout" unique_id=1447664616 instance=ExtResource("13_party")]
 layout_mode = 1
@@ -183,18 +253,18 @@ vertical_alignment = 1
 [node name="SidePanel" type="PanelContainer" parent="Layout" unique_id=693606851]
 visible = false
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.81
-anchor_top = 0.02
-anchor_right = 0.99
-anchor_bottom = 0.6
-offset_top = 44.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -510.0
+offset_right = 248.0
+offset_bottom = -130.0
 theme_override_styles/panel = ExtResource("log_panel")
 
 [node name="LogLabel" type="RichTextLabel" parent="Layout/SidePanel" unique_id=678540740]
 layout_mode = 2
 theme_override_colors/default_color = Color(0.92, 0.85, 0.69, 1)
-theme_override_constants/line_separation = 5
+theme_override_constants/line_separation = 6
 theme_override_fonts/normal_font = ExtResource("4_body")
 theme_override_fonts/bold_font = ExtResource("4_body")
 theme_override_font_sizes/normal_font_size = 17
@@ -204,14 +274,12 @@ scroll_following = true
 
 [node name="LogToggleButton" type="Button" parent="Layout" unique_id=128742266]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -134.0
-offset_top = 14.0
-offset_right = -13.0
-offset_bottom = 50.0
-grow_horizontal = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -89.0
+offset_right = 160.0
+offset_bottom = -53.0
 focus_mode = 0
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
@@ -223,13 +291,13 @@ text = "Show Log"
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.25
-anchor_top = 0.52
+anchor_top = 0.59
 anchor_right = 0.75
 anchor_bottom = 0.8
 offset_left = 130.0
-offset_top = 61.600006
+offset_top = 22.0
 offset_right = 130.0
-offset_bottom = 61.599976
+offset_bottom = 83.599976
 scale = Vector2(0.65, 0.65)
 theme_override_constants/separation = 6
 
@@ -322,6 +390,7 @@ theme_override_styles/panel = ExtResource("feedback_frame")
 [node name="Content" type="VBoxContainer" parent="Layout/FeedbackBanner" unique_id=393954060]
 layout_mode = 2
 mouse_filter = 2
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="FeedbackLabel" type="Label" parent="Layout/FeedbackBanner/Content" unique_id=1846545061]
@@ -365,9 +434,11 @@ anchor_left = 0.05
 anchor_top = 0.81
 anchor_right = 0.95
 anchor_bottom = 0.99
+mouse_filter = 2
 
 [node name="HandBox" type="HBoxContainer" parent="Layout/HandArea" unique_id=1243554175]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/separation = 10
 
 [node name="BattleMusic" type="AudioStreamPlayer" parent="." unique_id=408771475]
@@ -390,13 +461,12 @@ layout_mode = 1
 
 [node name="WordHistoryButton" type="Button" parent="Layout"]
 layout_mode = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -286.0
-offset_top = 14.0
-offset_right = -142.0
-offset_bottom = 50.0
-grow_horizontal = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -49.0
+offset_right = 160.0
+offset_bottom = -13.0
 focus_mode = 0
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
