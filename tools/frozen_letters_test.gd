@@ -30,6 +30,8 @@ func _run() -> void:
 		combat.word_input.text = word
 		combat._on_text_changed(word)
 		combat._on_submit()
+		if word == "big":
+			check(combat.heat_meter.frost.text == "Frost pending", "Due frost remains pending through cast resolution")
 		for frame in range(900):
 			await get_tree().process_frame
 			if combat._state == combat.State.PLAYER_INPUT:
@@ -39,6 +41,10 @@ func _run() -> void:
 			check(combat.cold.frozen.is_empty(), "no early freeze")
 	check(combat.cold.heat == 3 and combat.cold.turns == 3, "three words grant three Heat")
 	check(combat.cold.frozen.size() == 1, "third turn freezes exactly one tile")
+	check(combat.heat_meter.frost.text == "Frost in 3 casts" and combat.heat_meter.help.text.contains("Click ice"), "Frozen tile keeps both countdown and thaw prompt")
+	check(combat.heat_meter.title.text == "Heat  3 / 5", "Heat total reflects the accepted casts")
+	for index in combat.heat_meter.fills.size():
+		check(is_equal_approx(combat.heat_meter.fills[index].modulate.a, 1.0 if index < 3 else 0.0), "Heat segment %d shows its settled state" % index)
 	if combat.cold.frozen.is_empty():
 		get_tree().quit(1)
 		return
@@ -57,6 +63,7 @@ func _run() -> void:
 	combat._refresh_cold()
 	combat._on_hand_tile_activated(tile)
 	check(combat.cold.heat == 1 and tile.frozen, "insufficient heat cannot thaw or spend")
+	check(combat.heat_meter.help.modulate != Color.WHITE and combat.heat_meter.title.modulate == Color.WHITE, "Denied thaw highlights the instruction")
 	combat.cold.heat = 2
 	combat._state = combat.State.ENEMY_TURN
 	combat._on_hand_tile_activated(tile)
@@ -69,6 +76,7 @@ func _run() -> void:
 	click.pressed = false
 	tile._gui_input(click)
 	check(combat.cold.heat == 0 and not tile.frozen, "click spends exactly two and thaws immediately")
+	check(combat.heat_meter.title.modulate != Color.WHITE and combat.heat_meter.help.modulate == Color.WHITE, "Successful thaw highlights the spent total")
 	check(combat.deck_manager.split_word(frozen.letter).drawn.has(frozen), "thawed letter usable immediately")
 	var rules := TundraCold.new()
 	rules.reset(true)

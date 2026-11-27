@@ -10,6 +10,7 @@ const LONG_PRESS_MS: int = 450
 
 signal activated(tile: LetterTile)
 var frozen: bool = false
+var _frost_help := ""
 var _affordable: bool = false
 var _frost: Control
 var _badge: Label
@@ -66,7 +67,7 @@ func _open_inspector_if_still_held(token: int) -> void:
 	_long_press_opened = true
 	LetterInspector.open_for(stats)
 
-func set_frozen(value: bool, affordable: bool, animate: bool = false) -> void:
+func set_frozen(value: bool, affordable: bool, animate: bool = false, heat_per_word: int = TundraCold.HEAT_PER_WORD) -> void:
 	if value == frozen and (not value or affordable == _affordable) and not animate:
 		return
 	_affordable = affordable
@@ -84,8 +85,11 @@ func set_frozen(value: bool, affordable: bool, animate: bool = false) -> void:
 	_badge.add_theme_color_override("font_color", Color("ffdaaa") if affordable else Color("c5edf9"))
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if frozen and affordable else Control.CURSOR_ARROW
 	tooltip_text = stats.information_tooltip()
+	_frost_help = "Frozen • Click to thaw for %d Heat. Valid casts grant +%d Heat." % [
+		TundraCold.THAW_COST, heat_per_word
+	] if frozen else ""
 	if frozen:
-		tooltip_text += "\nFrozen — click to thaw for %d Heat. Valid words grant +%d Heat." % [TundraCold.THAW_COST, TundraCold.HEAT_PER_WORD]
+		tooltip_text += "\n" + _frost_help
 	if not animate and was_frozen == frozen and _ice_tween != null and _ice_tween.is_valid():
 		return
 	if _ice_tween != null and _ice_tween.is_valid():
@@ -131,7 +135,7 @@ func setup(new_stats: LetterStats) -> void:
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if stats == null:
 		return null
-	return LetterTooltip.create_for(stats)
+	return LetterTooltip.create_for(stats, _frost_help)
 
 
 ## Brightens or dims the tile while a word is being typed.

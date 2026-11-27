@@ -24,6 +24,12 @@ func _run() -> void:
 		add_child(combat)
 		await get_tree().process_frame
 		var enemy: Enemy = combat.enemy
+		await get_tree().process_frame
+		var art: Rect2 = enemy.sprite_art_global_rect()
+		var hud: Rect2 = combat.get_node("Layout/EnemyStatus").get_global_rect()
+		var input: Rect2 = combat.get_node("Layout/InputArea").get_global_rect()
+		check(is_equal_approx(art.get_center().x, combat.size.x * 0.75), id + ": visible art centered on the right")
+		check(art.position.y > hud.end.y and art.end.y < input.position.y, id + ": visible art clears HUD and composer")
 		var rest: Vector2 = enemy.sprite.position
 		var bar_rest: Vector2 = combat.player_health_bar.position
 		var scale_before: Vector2 = enemy.sprite.scale

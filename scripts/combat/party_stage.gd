@@ -15,9 +15,9 @@ const PERFORM_STAGGER: float = 0.07
 
 @export var member_scene: PackedScene = null
 ## Stage-space y of the ground line the party stands on.
-@export var ground_y: float = 440.0
-## Stage-space x of the first slot in the line.
-@export var line_start_x: float = 80.0
+@export var ground_y: float = 402.0
+## Center of the formation as a fraction of the stage width.
+@export var formation_center: float = 0.25
 @export var slot_spacing: float = 52.0
 ## Off-screen x where members enter from and leave to.
 @export var offstage_left_x: float = -40.0
@@ -92,7 +92,13 @@ func _member_for(stats: LetterStats) -> PartyMember:
 
 
 func _slot_x(index: int) -> float:
-	return line_start_x + slot_spacing * float(index)
+	var gaps := float(_members.size() - 1)
+	var spacing := minf(slot_spacing, size.x * 0.34 / maxf(1.0, gaps))
+	return size.x * formation_center + spacing * (float(index) - gaps * 0.5)
+
+
+func retaliation_target() -> Vector2:
+	return get_global_transform() * Vector2(size.x * formation_center, ground_y)
 
 
 func _on_member_struck(member: PartyMember) -> void:

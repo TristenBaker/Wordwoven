@@ -21,6 +21,22 @@ func escape(menu: PauseMenu) -> void:
 	menu._input(event)
 
 
+func click_at(point: Vector2, button: Button) -> void:
+	var movement := InputEventMouseMotion.new()
+	movement.position = point
+	get_viewport().push_input(movement, true)
+	await get_tree().process_frame
+	check(get_viewport().gui_get_hovered_control() == button, button.name + " receives hover")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = point
+	click.pressed = true
+	get_viewport().push_input(click, true)
+	click = click.duplicate()
+	click.pressed = false
+	get_viewport().push_input(click, true)
+
+
 func dispose(scene: Node) -> void:
 	for audio: AudioStreamPlayer in scene.find_children(
 		"*", "AudioStreamPlayer", true, false
@@ -47,14 +63,32 @@ func _run() -> void:
 	combat._refresh_prompt()
 	var history: ProgressMenu = combat.get_node("PauseMenu/WordHistory")
 	var button: Button = combat.get_node("Layout/WordHistoryButton")
-	check(button.get_global_rect().end.x <
-		combat.log_toggle_button.get_global_rect().position.x,
-		"history button clears log")
+	var history_rect := button.get_global_rect()
+	var toggle_rect: Rect2 = combat.log_toggle_button.get_global_rect()
+	check(is_equal_approx(history_rect.position.x, toggle_rect.position.x) and
+		toggle_rect.end.y < history_rect.position.y, "log toggle stacks above history")
+	var log_rect: Rect2 = combat.side_panel.get_global_rect()
+	check(log_rect.size.y >= 375.0, "Expanded log restores the original reading height")
+	check(log_rect.end.y < toggle_rect.position.y and
+		log_rect.end.y <= combat.hand_box.get_global_rect().position.y,
+		"open log clears history and hand")
+	await click_at(toggle_rect.position + Vector2(5, toggle_rect.size.y * 0.5), combat.log_toggle_button)
+	check(combat.side_panel.visible and combat.log_toggle_button.text == "Hide Log",
+		"log toggle opens the bottom-left combat log")
+	for index in 30:
+		combat._log("Combat log test entry %d" % index)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(combat.log_label.scroll_following and combat.log_label.get_v_scroll_bar().value > 0,
+		"Expanded log still follows appended combat history")
+	await click_at(Vector2(toggle_rect.end.x - 5, toggle_rect.get_center().y), combat.log_toggle_button)
+	check(not combat.side_panel.visible and combat.log_toggle_button.text == "Show Log",
+		"log toggle closes the combat log")
 	combat.word_input.text = "flame"
 	var damage: float = float(PlayerStats.run_snapshot().damage)
-	var elapsed: float = combat._turn_elapsed_seconds
-	combat._open_word_history()
+	await click_at(Vector2(history_rect.end.x - 5, history_rect.get_center().y), button)
 	check(get_tree().paused and history.visible, "history pauses combat")
+	var elapsed: float = combat._turn_elapsed_seconds
 	check(history.entries.text.contains("No words"), "empty history message")
 	await get_tree().create_timer(0.2).timeout
 	check(is_equal_approx(combat._turn_elapsed_seconds, elapsed),
@@ -67,6 +101,10 @@ func _run() -> void:
 	check(not get_tree().paused and not history.visible, "Escape closes")
 	check(not combat.pause_menu.visible, "Escape does not open pause menu")
 	check(combat.word_input.has_focus(), "composer focus restored")
+	await click_at(history_rect.position + Vector2(5, history_rect.size.y * 0.5), button)
+	check(get_tree().paused and history.visible, "history also opens at its left edge")
+	escape(combat.pause_menu)
+	await get_tree().process_frame
 	combat.word_input.text = "zzzzzz"
 	combat._on_submit()
 	check(PlayerStats.run_snapshot().words == 0, "invalid cast excluded")

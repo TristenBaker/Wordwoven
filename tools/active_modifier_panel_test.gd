@@ -17,7 +17,7 @@ func _run() -> void:
 	var panel = PANEL.instantiate()
 	add_child(panel)
 	var style = panel.get_theme_stylebox("panel")
-	_check(style.bg_color == load("res://assets/Themes/Feedback_Banner_Panel.tres").bg_color and style is StyleBoxFlat and style.bg_color.a < 1.0, "Modifier shares plain translucent feedback style")
+	_check(style == preload("res://assets/Themes/Combat_HUD_Panel.tres"), "Modifier uses the shared navy and gold HUD frame")
 	var base: Dictionary = {"health": 41, "attack": 7}
 	for modifier: Dictionary in MODIFIERS.ENTRIES:
 		var applied: Dictionary = MODIFIERS.apply_spawn(base, modifier)

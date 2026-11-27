@@ -7,7 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://csopulerv0ktq" path="res://art/backgrounds/Title Background/Title Background Updated.png" id="6_background"]
 [ext_resource type="AudioStream" uid="uid://c7b8ckewcca6v" path="res://assets/Art/Music/1 - Whispers of the Eldertree (Loop).mp3" id="6_rtw2f"]
 [ext_resource type="PackedScene" path="res://scenes/ui/progress_menu.tscn" id="sprint4_menu"]
+[ext_resource type="Shader" uid="uid://dau4pb4eotokm" path="res://shaders/title_background.gdshader" id="title_atmosphere"]
 [ext_resource type="Theme" uid="uid://by0j3hckfdohw" path="res://assets/Themes/WordWoven_Button_Theme.tres" id="ww_buttons"]
+
+[sub_resource type="ShaderMaterial" id="title_atmosphere"]
+shader = ExtResource("title_atmosphere")
 
 [node name="MainMenu" type="Control" unique_id=1733250631]
 layout_mode = 3
@@ -20,12 +24,14 @@ script = ExtResource("1_menu")
 
 [node name="Background" type="TextureRect" parent="." unique_id=334097872]
 self_modulate = Color(0.8, 0.8, 0.8, 1)
+material = SubResource("title_atmosphere")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("6_background")
 expand_mode = 1
 stretch_mode = 6
@@ -35,12 +41,13 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="CenterBox" unique_id=970838822]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 12
 alignment = 1
 
 [node name="TitleLabel" type="Label" parent="CenterBox/Menu" unique_id=976601386]
@@ -71,27 +78,43 @@ theme_override_font_sizes/font_size = 24
 text = "Spell your way to the final boss"
 horizontal_alignment = 1
 
-[node name="StartButton" type="Button" parent="CenterBox/Menu" unique_id=1580727401]
-custom_minimum_size = Vector2(380, 56)
+[node name="Pages" type="Control" parent="CenterBox/Menu" unique_id=788298065]
+custom_minimum_size = Vector2(0, 284)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Primary" type="VBoxContainer" parent="CenterBox/Menu/Pages" unique_id=1904637815]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 11
+
+[node name="StartButton" type="Button" parent="CenterBox/Menu/Pages/Primary" unique_id=1580727401]
+custom_minimum_size = Vector2(360, 58)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 theme_override_fonts/font = ExtResource("3_body")
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 27
 text = "Begin the Tale"
 
-[node name="AchievementsButton" type="Button" parent="CenterBox/Menu" unique_id=567036995]
-custom_minimum_size = Vector2(320, 44)
+[node name="ExtrasButton" type="Button" parent="CenterBox/Menu/Pages/Primary" unique_id=1932917254]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
+theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
-text = "Achievements"
+text = "Extras"
 
-[node name="SettingsButton" type="Button" parent="CenterBox/Menu" unique_id=1888307953]
-custom_minimum_size = Vector2(320, 44)
+[node name="SettingsButton" type="Button" parent="CenterBox/Menu/Pages/Primary" unique_id=1888307953]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
@@ -100,8 +123,38 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Settings"
 
-[node name="LeaderboardButton" type="Button" parent="CenterBox/Menu" unique_id=1021638235]
-custom_minimum_size = Vector2(320, 44)
+[node name="QuitButton" type="Button" parent="CenterBox/Menu/Pages/Primary" unique_id=889077800]
+custom_minimum_size = Vector2(300, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_fonts/font = ExtResource("3_body")
+theme_override_font_sizes/font_size = 22
+text = "Quit"
+
+[node name="Extras" type="VBoxContainer" parent="CenterBox/Menu/Pages" unique_id=1584251188]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 11
+
+[node name="AchievementsButton" type="Button" parent="CenterBox/Menu/Pages/Extras" unique_id=567036995]
+custom_minimum_size = Vector2(300, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("ww_buttons")
+theme_type_variation = &"WordWovenActionButton"
+theme_override_font_sizes/font_size = 22
+text = "Achievements"
+
+[node name="LeaderboardButton" type="Button" parent="CenterBox/Menu/Pages/Extras" unique_id=1021638235]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
@@ -110,8 +163,8 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Leaderboard"
 
-[node name="PermanentUpgradesButton" type="Button" parent="CenterBox/Menu" unique_id=1035479440]
-custom_minimum_size = Vector2(320, 44)
+[node name="PermanentUpgradesButton" type="Button" parent="CenterBox/Menu/Pages/Extras" unique_id=1035479440]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
@@ -120,8 +173,8 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Elemental Talents"
 
-[node name="CosmeticsButton" type="Button" parent="CenterBox/Menu" unique_id=1726270094]
-custom_minimum_size = Vector2(320, 44)
+[node name="CosmeticsButton" type="Button" parent="CenterBox/Menu/Pages/Extras" unique_id=1726270094]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
@@ -130,15 +183,15 @@ theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
 text = "Cosmetics"
 
-[node name="QuitButton" type="Button" parent="CenterBox/Menu" unique_id=889077800]
-custom_minimum_size = Vector2(320, 44)
+[node name="BackButton" type="Button" parent="CenterBox/Menu/Pages/Extras" unique_id=773962591]
+custom_minimum_size = Vector2(300, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme = ExtResource("ww_buttons")
 theme_type_variation = &"WordWovenActionButton"
 theme_override_fonts/font = ExtResource("3_body")
 theme_override_font_sizes/font_size = 22
-text = "Quit"
+text = "Back"
 
 [node name="StatusLabel" type="Label" parent="CenterBox/Menu" unique_id=2009227656]
 layout_mode = 2

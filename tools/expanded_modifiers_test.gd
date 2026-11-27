@@ -82,6 +82,18 @@ func _run() -> void:
 		await get_tree().process_frame
 		var original_size: Vector2i = get_tree().root.size
 		var panel = combat.get_node("Layout/ActiveModifierPanel")
+		if id == "drowsy":
+			combat._modifier_runtime.retaliations = 1
+			combat._update_modifier_status()
+			check(panel.effect_label.text.count("+25%") == 1 and panel.effect_label.text.contains("Next: AWAKE"), "Drowsy keeps its live phase without repeating the bonus")
+			combat._modifier_runtime.retaliations = 0
+			combat._update_modifier_status()
+		if id == "echo_bound":
+			combat._modifier_runtime.previous_word = "tree"
+			combat._update_modifier_status()
+			check(panel.effect_label.text.count("+25%") == 1 and panel.effect_label.text.contains("start with E"), "Echo-Bound keeps the live link without repeating the bonus")
+			combat._modifier_runtime.previous_word = ""
+			combat._update_modifier_status()
 		for resolution: Vector2i in AppSettings.RESOLUTIONS:
 			get_tree().root.size = resolution
 			await get_tree().process_frame
@@ -126,6 +138,10 @@ func _run() -> void:
 			if id == "long_winded" and turn > 0: check(RunState.player_health == player_before - 2, "short word guard actually reduces retaliation")
 			if id == "frostbite_tax":
 				check(combat.cold.heat == mini(5, (turn + 1) * 2), "actual tax heat")
+				check(panel.effect_label.text == "Freeze every 2 casts; +2 Heat", "Frostbite Tax displays one accurate description")
+				check(combat.heat_meter.help.text.begins_with("+2") and combat.heat_meter.tooltip_text.contains("every 2 casts"), "Heat meter reflects Frostbite Tax")
+				var next_frost: String = "Frost in 2 casts" if turn == 1 else "Frost in 1 cast"
+				check(combat.heat_meter.frost.text == next_frost, "Heat meter reflects the modified frost cadence")
 				check(combat.cold.frozen.size() == (1 if turn == 1 else 0), "actual tax second accepted turn freezes")
 			if id == "chameleon" and turn == 1:
 				check(combat.enemy.tags != original_tags and combat.enemy.tags.size() == 2, "authored tag shift")

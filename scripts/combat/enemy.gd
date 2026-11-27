@@ -40,6 +40,8 @@ var _burn_damage: float = 0.0
 var _poison_damage: float = 0.0
 var _hit_tween: Tween = null
 var _sprite_rest: Vector2 = Vector2.ZERO
+var _authored_scale := Vector2.ONE
+var _art_bounds := Rect2()
 var _retaliation_tween: Tween
 var _retaliation_origin: Vector2
 var _retaliation_peak: Vector2
@@ -66,6 +68,35 @@ var _hit_offset: float = 0.0:
 
 func _ready() -> void:
 	_sprite_rest = sprite.position
+	_authored_scale = sprite.scale
+
+
+## Keep the original sprite scale where the space beneath the HUD allows it.
+func place_sprite(ground_global: Vector2, top_limit: float) -> void:
+	if sprite.texture == null:
+		return
+	var art_rect := _sprite_art_rect()
+	var available_height := maxf(1.0, ground_global.y - top_limit)
+	var fit := minf(1.0, available_height / (art_rect.size.y * _authored_scale.y))
+	sprite.scale = _authored_scale * fit
+	sprite.position = _sprite_rest
+	var rendered: Rect2 = sprite.get_global_transform() * art_rect
+	var delta := ground_global - Vector2(rendered.get_center().x, rendered.end.y)
+	_sprite_rest += get_global_transform().basis_xform_inv(delta)
+	sprite.position = _sprite_rest + Vector2(_hit_offset, 0.0) + _retaliation_offset
+
+
+func _sprite_art_rect() -> Rect2:
+	var texture_size := sprite.texture.get_size()
+	var texture_scale := minf(sprite.size.x / texture_size.x, sprite.size.y / texture_size.y)
+	var inset := (sprite.size - texture_size * texture_scale) * 0.5
+	return Rect2(inset + _art_bounds.position * texture_scale, _art_bounds.size * texture_scale)
+
+
+func sprite_art_global_rect() -> Rect2:
+	if sprite.texture == null:
+		return sprite.get_global_rect()
+	return sprite.get_global_transform() * _sprite_art_rect()
 
 
 ## Applies spawn data from the EnemyFactory to this display.
@@ -100,7 +131,7 @@ func is_alive() -> bool:
 
 ## Global point where party members aim their attacks.
 func strike_point() -> Vector2:
-	var area: Rect2 = sprite.get_global_rect()
+	var area := sprite_art_global_rect()
 	return area.get_center() + Vector2(0.0, area.size.y * 0.12)
 
 
@@ -108,7 +139,7 @@ func strike_point() -> Vector2:
 func begin_retaliation_lunge(target_global: Vector2) -> void:
 	cancel_retaliation_lunge()
 	_retaliation_origin = sprite.position
-	var center: Vector2 = sprite.get_global_rect().get_center()
+	var center: Vector2 = sprite_art_global_rect().get_center()
 	var global_offset: Vector2 = center.direction_to(target_global) * 32.0
 	var inverse: Transform2D = sprite.get_parent().get_global_transform().affine_inverse()
 	_retaliation_peak = _retaliation_origin + (inverse * (center + global_offset) - inverse * center)
@@ -272,10 +303,7 @@ func _apply_texture(
 		return
 	sprite.material = null
 	if data.get("black_matte", false):
-		var matte_material := ShaderMaterial.new()
-		matte_material.shader = preload("res://shaders/tundra_black_key.gdshader")
-		matte_material.set_shader_parameter("matte_mask", _get_matte_mask(texture))
-		sprite.material = matte_material
+		sprite.material = make_matte_material(texture)
 	_idle_frames = int(data.get("idle_frames", 1))
 	# Grid sheets are timed in Aseprite; only the legacy idles are slowed.
 	var speed: float = 1.0 if int(data.get("cell_width", 0)) > 0 \
@@ -321,10 +349,61 @@ func _apply_texture(
 	else:
 		sprite.texture = texture
 
+	_authored_scale = sprite.scale
+	_measure_sprite_art(texture)
+
+
+## Atlas cells include transparent margins. Fit the visible silhouette and
+## include each idle frame so the sprite can keep a stable rest position.
+func _measure_sprite_art(texture: Texture2D) -> void:
+	var atlas := sprite.texture as AtlasTexture
+	var region := Rect2i(atlas.region) if atlas != null else Rect2i(Vector2i.ZERO, texture.get_size())
+	var source: Image = texture.get_image().duplicate()
+	if source.is_compressed():
+		source.decompress()
+	# Ignore nearly transparent spill around some imported sprite sheets.
+	if source.detect_alpha() != Image.ALPHA_NONE:
+		source.convert(Image.FORMAT_RGBA4444)
+	var matte := PackedByteArray()
+	if sprite.material != null and _matte_mask != null:
+		matte = _matte_mask.get_image().get_data()
+	var combined := Rect2i()
+	for index in _idle_frames:
+		var frame := region
+		frame.position.x += index * region.size.x
+		var bounds: Rect2i
+		if matte.is_empty():
+			bounds = source.get_region(frame).get_used_rect()
+		else:
+			bounds = _matte_frame_bounds(matte, source.get_width(), frame)
+		if bounds.has_area():
+			combined = combined.merge(bounds) if combined.has_area() else bounds
+	_art_bounds = Rect2(combined) if combined.has_area() else Rect2(Vector2.ZERO, region.size)
+
+
+func _matte_frame_bounds(matte: PackedByteArray, width: int, frame: Rect2i) -> Rect2i:
+	var first := frame.size
+	var last := Vector2i(-1, -1)
+	for y in frame.size.y:
+		var row := (frame.position.y + y) * width + frame.position.x
+		for x in frame.size.x:
+			if matte[row + x] != 0:
+				first = first.min(Vector2i(x, y))
+				last = last.max(Vector2i(x, y))
+	return Rect2i(first, last - first + Vector2i.ONE)
+
+
+
+static func make_matte_material(texture: Texture2D) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/tundra_black_key.gdshader")
+	material.set_shader_parameter("matte_mask", _get_matte_mask(texture))
+	return material
+
 
 # The supplied Behemoth has an opaque matte. Flood from the sheet border
 # once, so black eyes/body details remain opaque; never modify the source PNG.
-func _get_matte_mask(texture: Texture2D) -> ImageTexture:
+static func _get_matte_mask(texture: Texture2D) -> ImageTexture:
 	if _matte_mask != null:
 		return _matte_mask
 	var source: Image = texture.get_image()

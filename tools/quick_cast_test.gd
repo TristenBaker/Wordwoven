@@ -21,7 +21,10 @@ func _run() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	check(combat._turn_elapsed_seconds == 0.0 and combat.timer_label.text == "Quick-cast: 20.0s  •  Damage ×1.50", "Encounter begins with original bonus and formatting")
-	check(combat.timer_label.get_global_rect().position.y > combat.gold_label.get_global_rect().end.y and combat.timer_label.get_global_rect().end.y < combat.get_node("Layout/ActiveModifierPanel").get_global_rect().position.y, "Timer sits below Gold and clears modifier panel")
+	var timer_rect: Rect2 = combat.get_node("Layout/QuickCast").get_global_rect()
+	var word_rect: Rect2 = combat.word_tile_board.get_global_rect()
+	check(is_equal_approx(timer_rect.position.x, word_rect.position.x) and is_equal_approx(timer_rect.size.x, word_rect.size.x) and is_equal_approx(timer_rect.end.y + 6.0, word_rect.position.y), "Timer aligns directly above the word field")
+	check(combat.word_input.has_focus() and combat.word_tile_board._caret_column == 0, "Empty composer starts focused with its caret")
 	check(combat.timer_label.get_theme_font("font") == load("res://assets/Fonts/Junicode.ttf"), "Timer uses fantasy font")
 	var split: Dictionary = combat.deck_manager.split_word("ox")
 	var base: Dictionary = combat.calculator.calculate("ox", split.drawn, split.undrawn, combat.enemy.tags, "n", combat.enemy.affinities)
@@ -32,14 +35,27 @@ func _run() -> void:
 		check(result.gold == base.gold and result.water_heal == base.water_heal and result.nature_poison == base.nature_poison and result.earth_guard == base.earth_guard and result.ice_slow == base.ice_slow and result.elemental_damage == base.elemental_damage, "Current elemental effects unchanged")
 	combat._process(10.0)
 	check(combat.timer_label.text == "Quick-cast: 10.0s  •  Damage ×1.25", "Countdown updates")
+	check(is_equal_approx(combat.quick_cast_meter.value, 0.5), "Countdown track shows half time")
 	combat.word_input.text = "ox"
 	combat._on_text_changed("ox")
+	combat.word_input.caret_column = 1
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(combat.word_tile_board._caret_column == 1 and combat.word_tile_board._caret_visible, "Visual caret follows an interior insertion point")
+	await get_tree().create_timer(0.62).timeout
+	check(not combat.word_tile_board._caret_visible, "Focused caret blinks")
 	check(combat.damage_output.text == str(int(round(base.damage * 1.25))), "Preview reflects remaining quick-cast bonus")
-	combat._process(10.0)
+	combat._process(7.0)
+	check(is_equal_approx(combat.quick_cast_meter.value, 0.15) and combat.quick_cast_meter.modulate != Color.WHITE, "Countdown track warms near expiration")
+	combat._process(3.0)
+	check(combat.quick_cast_meter.value == 0.0 and combat.timer_label.modulate != Color.WHITE, "Expired countdown is visually subdued")
 	check(combat.timer_label.text == "Quick-cast: 0.0s  •  Damage ×1.00" and combat.damage_output.text == str(int(round(base.damage))), "Expired display resets to original zero and normal damage")
 	combat.word_input.text = "zzzzzz"
 	combat._on_submit()
 	check(combat._turn_elapsed_seconds == 20.0, "Rejected word does not restart bonus")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(combat.word_input.has_focus() and combat.word_tile_board._caret_column == 0, "Rejected word restores focused empty caret")
 	combat._enter_player_input()
 	combat._process(10.0)
 	get_tree().paused = true
@@ -61,6 +77,8 @@ func _run() -> void:
 	while combat._state != combat.State.PLAYER_INPUT and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 	check(combat._state == combat.State.PLAYER_INPUT and combat._turn_elapsed_seconds == 0.0, "Next player turn refreshes bonus without stacking")
+	await get_tree().process_frame
+	check(combat.word_input.has_focus() and combat.word_tile_board._caret_column == 0, "Next player turn restores focused empty caret")
 	check(combat.enemy._health == 10000 - int(round(base.damage * 1.25 * 1.1)), "Actual HP loss matches timed cast")
 	combat._state = combat.State.WON
 	combat._process(5.0)

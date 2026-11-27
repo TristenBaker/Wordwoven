@@ -30,8 +30,10 @@ func play(id: String, words: Array, choice: int = -1) -> Dictionary:
 func _run() -> void:
 	if not WordNet.is_ready:
 		await WordNet.loading_finished
+	_check_chest_pool()
 	_check_non_spoiler_text()
 	await _check_stories()
+	await _check_chest_ui()
 	var chest: GDScript = EVENTS.rules("treasure_chest")
 	check(chest.accepts("valiant", chest.LOCKS[1]), "WordNet accepts valiant as brave synonym")
 	check(not chest.accepts("wooden", chest.LOCKS[1]), "Unrelated adjective does not fit")
@@ -81,6 +83,39 @@ func _assert_no_answers(text: String, answers: Array, context: String) -> void:
 	for token: RegExMatch in tokens.search_all(text.to_lower()):
 		check(not answers.has(token.get_string()), "No answer examples in " + context + ": " + token.get_string())
 
+func _check_chest_pool() -> void:
+	var chest: GDScript = EVENTS.rules("treasure_chest")
+	var validator := WordValidator.new()
+	var names := {}
+	var intentions := {}
+	var messages := {}
+	check(chest.LOCKS.size() >= 30, "At least 30 chest challenges")
+	for lock: Dictionary in chest.LOCKS:
+		var intended: String = lock.anchors[0]
+		check(not names.has(lock.name) and not intentions.has(intended), "Unique lock and intended answer: " + lock.name)
+		check(lock.clue != lock.hint and not lock.success.is_empty() and not messages.has(lock.success), "Distinct clue, retry hint, and success message: " + lock.name)
+		names[lock.name] = true
+		intentions[intended] = true
+		messages[lock.success] = true
+		for answer: String in lock.accepted + lock.anchors:
+			check(validator.validate(answer, "a").valid and chest.accepts(answer, lock), "Adjective works for %s: %s" % [lock.name, answer])
+	validator.free()
+	var previous_order: Array[String] = []
+	for cycle in 2:
+		var order: Array[String] = []
+		while order.size() < chest.LOCKS.size():
+			setup("treasure_chest")
+			var locks: Array = EVENTS.progress("treasure_chest").locks
+			check(locks.size() == 3, "Each encounter draws three locks")
+			check(EVENTS.progress("treasure_chest").locks == locks, "Reopening keeps the existing draw")
+			for lock: Dictionary in locks:
+				check(not order.has(lock.name), "No repeats before pool exhaustion: " + lock.name)
+				order.append(lock.name)
+		if cycle > 0:
+			check(order != previous_order, "Pool reshuffles after exhaustion")
+		previous_order = order
+
+
 func _check_non_spoiler_text() -> void:
 	var chest: GDScript = EVENTS.rules("treasure_chest")
 	var adjectives: Array = []
@@ -88,17 +123,17 @@ func _check_non_spoiler_text() -> void:
 		adjectives.append_array(lock.accepted)
 	_assert_no_answers(EVENTS.definition("treasure_chest").description, adjectives, "chest description")
 	for lock: Dictionary in chest.LOCKS:
-		_assert_no_answers(lock.clue + " " + lock.hint, adjectives, "chest clue and hint: " + lock.name)
+		_assert_no_answers(lock.clue + " " + lock.hint, lock.accepted, "chest clue and hint: " + lock.name)
 		check(not String(lock.clue).contains("opposite of"), "Clues avoid direct antonyms")
 		var puzzle: Dictionary = chest.initial_state()
 		puzzle.locks = [lock, lock, lock]
 		for guesses: int in 2:
 			puzzle.guesses = guesses
 			var baseline: Dictionary = chest.presentation(puzzle)
-			_assert_no_answers(JSON.stringify(baseline), adjectives, "chest gameplay hints")
+			_assert_no_answers(baseline.instruction + " " + baseline.preview, lock.accepted, "chest gameplay hints")
 			check(baseline.preview.contains("ADJECTIVE") and baseline.preview.contains("10 gold"), "Chest POS and reward remain visible")
 		chest.play(puzzle, "wooden", -1)
-		_assert_no_answers(puzzle.feedback, adjectives, "incorrect answer feedback")
+		_assert_no_answers(puzzle.feedback, lock.accepted, "incorrect answer feedback")
 
 func _check_stories() -> void:
 	var traveler: GDScript = EVENTS.rules("frozen_traveler")
@@ -239,5 +274,73 @@ func _check_entry_ui() -> void:
 	check(event.feedback.text.contains(pos) and event.feedback_banner.visible, "Invalid feedback names requested POS")
 	check(Rect2(0, 0, 1280, 720).encloses(event.game_panel.get_global_rect()), "Story prompt fits existing panel")
 	check(Rect2(0, 0, 1280, 720).encloses(event.input.get_global_rect()), "Story input fits existing layout")
+	viewport.queue_free()
+	await get_tree().process_frame
+
+
+func _check_chest_ui() -> void:
+	setup("treasure_chest")
+	var state: Dictionary = EVENTS.progress("treasure_chest")
+	state.locks = EVENTS.rules("treasure_chest").LOCKS.slice(0, 3).duplicate(true)
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1280, 720)
+	add_child(viewport)
+	var event: Control = load(ScenePaths.TUNDRA_EVENT).instantiate()
+	viewport.add_child(event)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var original_input: Rect2 = event.input.get_global_rect()
+	check(event.heading.text == "Write an adjective" and event.input.has_focus() and event.input.caret_blink, "Chest starts with adjective heading and a focused blinking caret")
+	check(event.heading.get_global_rect().end.y < event.instruction.get_global_rect().position.y and event.instruction.get_global_rect().end.y < original_input.position.y, "Heading, hint, and input appear in order")
+	check(event.instruction.text == "Hint: " + state.locks[0].clue, "First lock shows the labeled authored clue")
+	var frame_texture := preload("res://assets/Themes/encounters/fantasy_panel.svg")
+	for panel: PanelContainer in [event.game_panel, event.feedback_banner, event.result_panel]:
+		var style := panel.get_theme_stylebox("panel") as StyleBoxTexture
+		check(style != null and style.texture == frame_texture, "Chest panel uses the original ornamental texture")
+	check(not event.input.has_theme_stylebox_override("normal") and not event.input.has_theme_stylebox_override("focus") and not event.skip.flat, "Original field and decorative Skip styles are restored")
+	check(event.locks_row.get_child(0).get_child(0).text.contains("Current") and event.locks_row.get_child(1).get_child(0).text.contains("Sealed"), "Initial lock states differ")
+	event.input.text = "quickly"
+	event.submit.pressed.emit()
+	await get_tree().process_frame
+	check(state.guesses == 0 and event.input.has_focus() and event.feedback.text.contains("adjective"), "Invalid input gets feedback and returns focus without spending a guess")
+	event.input.text = "warm"
+	event.input.caret_column = event.input.text.length()
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	enter.pressed = true
+	viewport.push_input(enter, true)
+	check(state.lock_index == 1 and event.input.text.is_empty() and event.input.has_focus(), "Keyboard success advances and restores input immediately")
+	check(event.instruction.text == "Hint: " + state.locks[1].clue, "Unlock shows the next lock's initial hint")
+	check(event.locks_row.get_child(0).get_child(0).text.contains("Opened") and event.locks_row.get_child(1).get_child(0).text.contains("Current"), "Success updates opened and current indicators")
+	check(event.feedback.text.contains("+10 gold") and event.feedback.get_theme_color("font_color") == event.SUCCESS and not event.next_button.visible and RunState.gold == 0, "Green success shows earned gold before payout and requires no next button")
+	event.submit.pressed.emit()
+	event.skip.pressed.emit()
+	check(state.turn == 1 and not event._finished, "Same-transition submission and skip are ignored")
+	await get_tree().process_frame
+	event.submit.pressed.emit()
+	check(state.turn == 1 and event.feedback.text.contains("+10 gold"), "Extra Unlock click leaves success feedback intact")
+	event.input.text = "wooden"
+	event.submit.pressed.emit()
+	await get_tree().process_frame
+	check(state.guesses == 1 and event.preview.text == "1 guess remaining" and event.instruction.text == "New Hint: " + state.locks[1].hint, "Wrong answer spends one guess and reveals the retry hint")
+	check(state.locks[1].hint != state.locks[1].clue and event.feedback.text == "That adjective doesn't fit. Try again.", "Retry shows distinct authored information and concise feedback")
+	event.input.text = "wooden"
+	event.submit.pressed.emit()
+	await get_tree().process_frame
+	check(state.lock_index == 2 and event.locks_row.get_child(1).get_child(0).text.contains("Failed") and event.feedback.text.contains("No guesses left"), "Exhaustion marks failed and advances")
+	check(event.instruction.text == "Hint: " + state.locks[2].clue, "Exhaustion resets the hint label and content")
+	check(event.input.has_focus() and event.input.get_global_rect() == original_input, "Feedback and lock changes keep the focused input in place")
+	event._set_chest_feedback("The locksmith examines the answer, consults a very large book, and places a small brass plaque beneath the keyhole explaining why this particular lock still needs a different adjective.", event.ERROR)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(event.feedback.get_line_count() > 1 and event.feedback_banner.get_global_rect().encloses(event.feedback.get_global_rect()), "Long feedback wraps inside the ornamental frame")
+	event.skip.pressed.emit()
+	check(event._finished and event.locks_row.get_child(2).get_child(0).text.contains("Skipped"), "Skip marks the remaining lock")
+	check(RunState.gold == 0 and event.continue_button.visible, "Skip forfeits gold and offers return to map")
+	event.reward.text = "Found 30 gold. Bonus: level 1 letter W! The letter has been added to your inventory and is ready to equip for the next encounter."
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check(event.reward.get_line_count() > 1 and event.result_panel.get_global_rect().encloses(event.reward.get_global_rect()), "Long bonus reward wraps inside the results frame")
+	check(event.sprite.get_global_rect().end.y < event.game_panel.get_global_rect().position.y and event.continue_button.get_global_rect().end.y <= viewport.size.y, "Results remain clear of the chest and fit the viewport")
 	viewport.queue_free()
 	await get_tree().process_frame
